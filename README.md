@@ -6,6 +6,12 @@ Built for JEE/NEET/CBSE/MHT CET/CUET/GATE/CAT/UPSC prep but works for any exam o
 
 ## Features
 
+### 🔐 Authentication
+- Signup/login with zero-dependency crypto-based auth (Web Crypto API, SHA-256)
+- Session tokens with 7-day cookie expiry
+- Full **user data isolation** — every user sees only their own entries, reviews, syllabus progress, and settings
+- All existing data defaults to the first registered user
+
 ### 📝 Daily Study Log
 - One entry per day — write what you studied, how many hours, and your focus level
 - AI automatically extracts subjects, chapters, and tags from your entry
@@ -22,6 +28,9 @@ Built for JEE/NEET/CBSE/MHT CET/CUET/GATE/CAT/UPSC prep but works for any exam o
 - Can quiz you, clarify doubts, and suggest what to study next
 - Streaming responses via SSE with markdown rendering
 - Chip suggestions for quick questions
+- **Provider diagnostics** — shows which AI model is responding and latency
+- **Retry button** on failed responses
+- **Provider fallback** — auto-fails over Groq → Gemini → Mock silently
 
 ### 📚 Syllabus Tracker — 6-State Revision System
 - **8 exam syllabi pre-seeded** (381 chapters total):
@@ -42,6 +51,7 @@ Built for JEE/NEET/CBSE/MHT CET/CUET/GATE/CAT/UPSC prep but works for any exam o
 - Revision timestamps and revision count tracking
 - Color-coded segmented slider for fast status updates
 - Subject-level and overall weighted completion percentages
+- **Commerce stream support** — 5 commerce subjects (Accountancy, Business Studies, Economics, Applied Mathematics, English) under CBSE 12
 
 ### 📊 Analytics Dashboard
 - **Streak tracking** — consecutive study days
@@ -75,6 +85,25 @@ Built for JEE/NEET/CBSE/MHT CET/CUET/GATE/CAT/UPSC prep but works for any exam o
 - Subject-level breakdown with color-coded bars
 - Quick add-test flow from dashboard
 
+### ⏱️ Study Timer
+- Start/pause/resume/stop with subject and topic tracking
+- Counts up in real-time (HH:MM:SS)
+- **Save as Entry** — saves duration, subject, and topic directly to the Daily Log via sessionStorage
+- Dedicated `/timer` page with sidebar link
+
+### 🎵 Ambience Player
+- Built-in ambient sounds in the sidebar: White Noise, Pink Noise, Brown Noise (Web Audio API — zero audio files needed)
+- Rain sound (external URL)
+- Volume slider and per-sound volume memory
+- Active sound indicator, Stop All button
+- Collapsible panel that stays between page navigations
+
+### 🚀 Onboarding & Tour
+- **4-step onboarding wizard** after signup: Name → Stream → Goal → Weekly Target
+- **Guided tour** auto-starts on first dashboard visit with 5-step walkthrough
+- **Getting Started checklist** — 5 trackable first steps with live progress
+- **Tour tooltips** — reusable one-time tooltips on key pages (dashboard, syllabus, timer)
+
 ### ⚙️ Customizable
 - Set weekly study hour targets
 - Choose your exam type (8 pre-seeded syllabi)
@@ -86,8 +115,10 @@ Built for JEE/NEET/CBSE/MHT CET/CUET/GATE/CAT/UPSC prep but works for any exam o
 
 - **Framework:** [Astro 5](https://astro.build/) (SSR)
 - **Database:** SQLite via [sql.js](https://github.com/sql-js/sql.js)
-- **AI:** [Google Gemini 2.0 Flash](https://ai.google.dev/) (free tier) + Mock fallback
+- **AI:** [Google Gemini 2.0 Flash](https://ai.google.dev/) (free tier), [Groq Llama 3 70B](https://groq.com/), + Mock fallback
 - **Charts:** Pure CSS + SVG — no external chart library
+- **Auth:** Zero-dependency Web Crypto API (SHA-256, crypto.getRandomValues)
+- **Audio:** Web Audio API noise synthesis — no audio files required
 - **Styling:** Dark theme, scoped CSS, Inter + JetBrains Mono fonts
 - **Adapter:** @astrojs/node (standalone)
 
@@ -100,7 +131,7 @@ npm install
 npm run dev
 ```
 
-Open **http://localhost:4321** and start logging.
+Open **http://localhost:4321** — sign up, complete onboarding, and start logging.
 
 ### Environment Variables
 
@@ -139,45 +170,61 @@ The free tier uses a persistent filesystem — sql.js database works out of the 
 
 ```
 src/
-├── ai/              # AI service (Gemini + Mock)
-│   ├── interface.ts       # AIService interface
-│   ├── gemini.ts          # Google Gemini implementation
-│   ├── mock.ts            # Mock fallback implementation
-│   └── index.ts           # Factory / provider selection
-├── components/      # Astro components
-│   ├── EntryForm.astro          # Daily entry form
-│   ├── ChapterList.astro        # 6-state syllabus list
-│   ├── SyllabusCard.astro       # Subject progress card
-│   ├── Sidebar.astro            # Navigation sidebar
-│   ├── WeakChapters.astro       # Weak chapter health card
-│   ├── DailyActionCard.astro    # Priority recommendations
-│   ├── ExamPaceWidget.astro     # Pace prediction widget
-│   ├── MockTestWidget.astro     # Test score tracker
-│   ├── MentorChat.astro         # AI Mentor chat UI
-│   └── ...                      # Analytics chart components
-├── db/              # Database layer
-│   ├── schema.ts              # SQL schema definitions
-│   ├── interface.ts           # DB interface
-│   └── sqlite-adapter.ts      # sql.js implementation
-├── layouts/         # BaseLayout with sidebar
-├── pages/           # Routes and API endpoints
-│   ├── index.astro            # Dashboard
+├── ai/                  # AI service (Gemini + Groq + Mock)
+│   ├── interface.ts           # AIService interface
+│   ├── gemini.ts              # Google Gemini implementation
+│   ├── groq.ts                # Groq Llama implementation
+│   ├── mock.ts                # Mock fallback implementation
+│   └── index.ts               # Factory / provider selection
+├── components/          # Astro components
+│   ├── EntryForm.astro        # Daily entry form
+│   ├── ChapterList.astro      # 6-state syllabus list
+│   ├── SyllabusCard.astro     # Subject progress card
+│   ├── Sidebar.astro          # Navigation sidebar + ambience player
+│   ├── WeakChapters.astro     # Weak chapter health card
+│   ├── DailyActionCard.astro  # Priority recommendations
+│   ├── ExamPaceWidget.astro   # Pace prediction widget
+│   ├── MockTestWidget.astro   # Test score tracker
+│   ├── MentorChat.astro       # AI Mentor chat UI with diagnostics
+│   ├── StudyTimer.astro       # Study timer with save-as-entry
+│   ├── AmbiencePlayer.astro   # Ambient sound player (Web Audio API)
+│   ├── GuidedTour.astro       # Multi-step post-signup walkthrough
+│   ├── GettingStarted.astro   # First-steps checklist card
+│   ├── TourTooltip.astro      # Reusable one-time page tooltips
+│   └── ...                    # Analytics chart components
+├── db/                 # Database layer
+│   ├── schema.ts              # SQL schema with user_id on all tables
+│   ├── interface.ts           # DB interface with setCurrentUser
+│   └── sqlite-adapter.ts      # sql.js implementation (user-scoped)
+├── layouts/            # BaseLayout with sidebar + session user
+├── pages/              # Routes and API endpoints
+│   ├── index.astro            # Daily log / entry form
+│   ├── dashboard.astro        # Analytics dashboard + tour + checklist
+│   ├── login.astro            # Login page
+│   ├── signup.astro           # Signup page
+│   ├── onboarding.astro       # 4-step onboarding wizard
 │   ├── syllabus.astro         # Syllabus tracker page
 │   ├── mentor.astro           # AI Mentor chat page
+│   ├── timer.astro            # Study timer page
 │   ├── settings.astro         # Settings page
 │   ├── api/
+│   │   ├── auth/              # Login, signup, logout, session
 │   │   ├── chapter-health/    # Weak chapter health API
 │   │   ├── exam-pace/         # Pace prediction API
-│   │   ├── mentor/            # AI Mentor streaming API
+│   │   ├── mentor/            # AI Mentor streaming API (SSE)
 │   │   ├── mock-tests/        # Mock test CRUD
+│   │   ├── onboarding/        # Onboarding config endpoint
 │   │   └── ...                # Existing API routes
 │   └── weekly/                # Weekly review detail page
-├── services/        # Business logic layer
-├── types/           # TypeScript interfaces
-│   ├── entry.ts, review.ts, settings.ts
-│   ├── ai.ts, mock-test.ts
+├── services/           # Business logic layer
+│   ├── auth-service.ts        # Password hashing, session management
+│   ├── user-scope.ts          # Request-scoped DB user context
 │   └── ...
-└── utils/           # Helpers (dates, UUID, syllabus data)
+├── types/              # TypeScript interfaces
+│   ├── entry.ts, review.ts, settings.ts
+│   ├── ai.ts, mock-test.ts, auth.ts
+│   └── ...
+└── utils/              # Helpers (dates, UUID, syllabus data)
 
 scripts/
 ├── seed-fake-entries.mjs    # Generate test data
