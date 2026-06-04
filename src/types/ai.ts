@@ -43,7 +43,7 @@ export interface AIService {
 }
 
 export interface AIServiceConfig {
-  provider: 'mock' | 'gemini';
+  provider: 'mock' | 'gemini' | 'groq';
   apiKey?: string;
   modelName?: string;
 }

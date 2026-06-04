@@ -106,9 +106,11 @@ Open **http://localhost:4321** and start logging.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `AI_PROVIDER` | `mock` | AI backend (`mock` or `gemini`) |
-| `GEMINI_API_KEY` | — | Google Gemini API key (if using `gemini`) |
-| `AI_MODEL` | `gemini-2.0-flash` | Gemini model name |
+| `AI_PROVIDER` | auto-detect | AI backend: `mock`, `gemini`, or `groq` (auto: gemini if key found, groq if Groq key, else mock) |
+| `GEMINI_API_KEY` | — | Google Gemini API key |
+| `GROQ_API_KEY` | — | Groq API key ([console.groq.com/keys](https://console.groq.com/keys)) |
+| `AI_MODEL` | provider default | Model override (Gemini: `gemini-2.0-flash`, Groq: `llama3-70b-8192`) |
+| `HOST` | `localhost` | Bind address for production (`0.0.0.0` for Render) |
 | `STUDYLOG_DB_PATH` | `./db/studylog.db` | SQLite database file path |
 
 Set `AI_PROVIDER=mock` for offline use — no API key needed.
