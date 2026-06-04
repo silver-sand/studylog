@@ -19,12 +19,15 @@ export function createAIService(config?: AIServiceConfig): AIService {
  * Priority: env vars > passed config
  */
 export function createAIServiceFromEnv(): AIService {
-  const provider = import.meta.env.AI_PROVIDER as string | undefined;
-  const apiKey = import.meta.env.GEMINI_API_KEY as string | undefined;
-  const modelName = import.meta.env.AI_MODEL as string | undefined;
+  // Use both import.meta.env (build-time) and process.env (runtime fallback)
+  const provider = (import.meta.env.AI_PROVIDER || process.env.AI_PROVIDER) as string | undefined;
+  const apiKey = (import.meta.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY) as string | undefined;
+  const modelName = (import.meta.env.AI_MODEL || process.env.AI_MODEL) as string | undefined;
 
   // Auto-detect gemini if API key is set, even without explicit AI_PROVIDER
   const resolvedProvider = provider || (apiKey ? 'gemini' : 'mock');
+
+  console.log(`[AI] provider=${resolvedProvider} hasKey=${!!apiKey} model=${modelName || 'default'}`);
 
   return createAIService({
     provider: resolvedProvider as 'mock' | 'gemini',

@@ -428,7 +428,8 @@ If the user asks about a specific topic, quiz them on it. If they describe what 
         }
       }
     } catch (e) {
-      console.warn('Gemini generateMentorResponse failed:', e);
+      console.warn('Gemini generateMentorResponse failed:', e instanceof Error ? e.message : e);
+      if (e instanceof Error && e.stack) console.warn(e.stack.split('\n').slice(0, 3).join('\n'));
       yield "I'm having trouble connecting right now. Please try again in a moment.";
     }
   }

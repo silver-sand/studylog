@@ -67,8 +67,10 @@ export const POST: APIRoute = async ({ request }) => {
             : '';
 
           for await (const chunk of ai.generateMentorResponse(query, context)) {
-            const data = JSON.stringify({ type: 'chunk', text: chunk });
-            controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+            if (chunk) {
+              const data = JSON.stringify({ type: 'chunk', text: chunk });
+              controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+            }
           }
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
         } catch (err) {
