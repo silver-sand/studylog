@@ -726,7 +726,8 @@ export class SQLiteAdapter implements DatabaseInterface {
     stmt.free();
 
     // Create default settings for this user
-    const id = generateId();
+    // Use Date.now() as numeric ID for INTEGER PRIMARY KEY compatibility
+    const id = Date.now();
     db.run(
       `INSERT INTO settings (id, user_id, target_hours_per_week, subjects, exam_type, theme, created_at, updated_at)
        VALUES (?, ?, 35, '["Physics","Chemistry","Mathematics"]', 'JEE', 'dark', datetime('now'), datetime('now'))`,
@@ -748,7 +749,8 @@ export class SQLiteAdapter implements DatabaseInterface {
 
     if (!hasRow) {
       // Create settings row first
-      const newId = generateId();
+      // Use Date.now() as numeric ID for INTEGER PRIMARY KEY compatibility
+      const newId = Date.now();
       db.run(
         `INSERT INTO settings (id, user_id, target_hours_per_week, subjects, exam_type, exam_date, theme, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
