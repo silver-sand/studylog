@@ -220,6 +220,9 @@ const { title = 'AI Mentor' } = Astro.props;
     addMessage('user', text);
     history.push({ role: 'user', content: text });
 
+    // Track for getting-started checklist
+    try { localStorage.setItem('sl-checklist-mentor', '1'); } catch(e) {}
+
     // Add placeholder mentor message
     addMessage('mentor', '▊', true);
     isStreaming = true;

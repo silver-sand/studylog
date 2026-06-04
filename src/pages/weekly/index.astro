@@ -94,6 +94,8 @@ const currentReview = db.getReviewByWeek(range.weekStart);
         throw new Error(err.error || `HTTP ${res.status}`);
       }
       const review = await res.json();
+      // Track for getting-started checklist
+      try { localStorage.setItem('sl-checklist-review', '1'); } catch(e) {}
       window.location.href = `/weekly/${review.weekStart}`;
     } catch (err) {
       errorDiv.textContent = err instanceof Error ? err.message : 'Something went wrong';

@@ -160,7 +160,7 @@ if (!user) {
           throw new Error(err.error || 'Save failed');
         }
 
-        window.location.href = '/dashboard';
+        window.location.href = '/dashboard?tour=1';
       } catch (err) {
         showError(err instanceof Error ? err.message : 'Something went wrong');
         nextBtn.disabled = false;

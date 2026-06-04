@@ -1,0 +1,453 @@
+---
+export interface TourStep {
+  title: string;
+  description: string;
+  /** CSS selector for the element to highlight. Omit for a centered tooltip with no highlight. */
+  targetSelector?: string;
+  position?: 'top' | 'bottom' | 'left' | 'right';
+  /** Optional action button that navigates to another page */
+  action?: {
+    label: string;
+    href: string;
+  };
+}
+
+export interface Props {
+  tourId: string;
+  steps: TourStep[];
+}
+
+const { tourId, steps } = Astro.props;
+const stepCount = steps.length;
+---
+
+<div class="gt-host" id={`gt-${tourId}`}>
+  <!-- Backdrop -->
+  <div class="gt-backdrop hidden" id={`gt-${tourId}-backdrop`}></div>
+
+  <!-- Highlight ring around the target -->
+  <div class="gt-ring hidden" id={`gt-${tourId}-ring`}></div>
+
+  <!-- Tooltip card -->
+  <div class="gt-card hidden" id={`gt-${tourId}-card`}>
+    <div class="gt-pointer" id={`gt-${tourId}-ptr`}></div>
+    <div class="gt-body">
+      <div class="gt-counter" id={`gt-${tourId}-ctr`}>1 / {stepCount}</div>
+      <h4 class="gt-title" id={`gt-${tourId}-title`}></h4>
+      <p class="gt-desc" id={`gt-${tourId}-desc`}></p>
+      <div class="gt-dots" id={`gt-${tourId}-dots`}></div>
+      <div class="gt-actions">
+        <button class="gt-btn gt-btn-back hidden" id={`gt-${tourId}-back`}>← Back</button>
+        <div class="gt-right">
+          <button class="gt-btn gt-btn-skip" id={`gt-${tourId}-skip`}>Skip</button>
+          <button class="gt-btn gt-btn-primary gt-btn-next" id={`gt-${tourId}-next`}>Next →</button>
+          <button class="gt-btn gt-btn-primary gt-btn-done hidden" id={`gt-${tourId}-done`}>Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script define:vars={{ tourId, steps }}>
+(function () {
+  // ── State ──
+  let current = 0;
+  const total = steps.length;
+  const key = `guided-tour:${tourId}`;
+
+  const backdrop = document.getElementById(`gt-${tourId}-backdrop`);
+  const ring = document.getElementById(`gt-${tourId}-ring`);
+  const card = document.getElementById(`gt-${tourId}-card`);
+  const ptr = document.getElementById(`gt-${tourId}-ptr`);
+  const ctr = document.getElementById(`gt-${tourId}-ctr`);
+  const title = document.getElementById(`gt-${tourId}-title`);
+  const desc = document.getElementById(`gt-${tourId}-desc`);
+  const dots = document.getElementById(`gt-${tourId}-dots`);
+  const backBtn = document.getElementById(`gt-${tourId}-back`);
+  const skipBtn = document.getElementById(`gt-${tourId}-skip`);
+  const nextBtn = document.getElementById(`gt-${tourId}-next`);
+  const doneBtn = document.getElementById(`gt-${tourId}-done`);
+
+  // ── Start condition ──
+  function shouldStart() {
+    // Previously completed — never show again
+    if (localStorage.getItem(key)) return false;
+    // URL param ?tour=1 triggers the tour
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('tour') === '1') {
+      // Clean the param so refresh doesn't restart
+      const url = new URL(window.location.href);
+      url.searchParams.delete('tour');
+      window.history.replaceState({}, '', url.toString());
+      return true;
+    }
+    return false;
+  }
+
+  if (!shouldStart()) return;
+
+  // ── Render step ──
+  function renderStep(idx) {
+    const step = steps[idx];
+    if (!step) return;
+
+    // Counter
+    ctr.textContent = `${idx + 1} / ${total}`;
+
+    // Title & description
+    title.textContent = step.title;
+    desc.textContent = step.description;
+
+    // Progress dots
+    dots.innerHTML = '';
+    for (let i = 0; i < total; i++) {
+      const dot = document.createElement('span');
+      dot.className = 'gt-dot' + (i <= idx ? ' gt-dot-filled' : '');
+      dots.appendChild(dot);
+    }
+
+    // Buttons
+    backBtn.classList.toggle('hidden', idx === 0);
+    nextBtn.classList.toggle('hidden', idx >= total - 1);
+    doneBtn.classList.toggle('hidden', idx < total - 1);
+
+    // Highlight target
+    clearHighlight();
+    const target = step.targetSelector
+      ? document.querySelector(step.targetSelector)
+      : null;
+
+    if (target) {
+      const rect = target.getBoundingClientRect();
+      ring.classList.remove('hidden');
+      ring.style.top = rect.top + 'px';
+      ring.style.left = rect.left + 'px';
+      ring.style.width = rect.width + 'px';
+      ring.style.height = rect.height + 'px';
+
+      // Scroll target into view if needed
+      target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+
+      positionCard(step.position || 'bottom', rect);
+    } else {
+      ring.classList.add('hidden');
+      // Center the card
+      card.style.position = 'fixed';
+      card.style.top = '50%';
+      card.style.left = '50%';
+      card.style.transform = 'translate(-50%, -50%)';
+      ptr.style.display = 'none';
+    }
+
+    // If step has an action link, add it to description area
+    const existingAction = desc.nextElementSibling;
+    if (step.action) {
+      if (existingAction && existingAction.classList.contains('gt-action-link')) {
+        existingAction.innerHTML = `<a href="${step.action.href}" class="gt-link">${step.action.label} →</a>`;
+      } else {
+        const linkWrap = document.createElement('div');
+        linkWrap.className = 'gt-action-link';
+        linkWrap.innerHTML = `<a href="${step.action.href}" class="gt-link">${step.action.label} →</a>`;
+        desc.parentNode.insertBefore(linkWrap, desc.nextSibling);
+      }
+    } else {
+      if (existingAction && existingAction.classList.contains('gt-action-link')) {
+        existingAction.remove();
+      }
+    }
+  }
+
+  function positionCard(pos, targetRect) {
+    const cardRect = card.getBoundingClientRect();
+    const gap = 14;
+    let top = 0, left = 0;
+    let pointerTop = 0, pointerLeft = 0;
+    let pointerPos = '';
+
+    card.style.transform = 'none';
+
+    switch (pos) {
+      case 'top':
+        top = targetRect.top - cardRect.height - gap;
+        left = targetRect.left + (targetRect.width - cardRect.width) / 2;
+        pointerTop = cardRect.height - 6;
+        pointerLeft = cardRect.width / 2 - 6;
+        pointerPos = 'bottom';
+        break;
+      case 'bottom':
+        top = targetRect.bottom + gap;
+        left = targetRect.left + (targetRect.width - cardRect.width) / 2;
+        pointerTop = -8;
+        pointerLeft = cardRect.width / 2 - 6;
+        pointerPos = 'top';
+        break;
+      case 'left':
+        top = targetRect.top + (targetRect.height - cardRect.height) / 2;
+        left = targetRect.left - cardRect.width - gap;
+        pointerTop = cardRect.height / 2 - 6;
+        pointerLeft = cardRect.width - 6;
+        pointerPos = 'right';
+        break;
+      case 'right':
+        top = targetRect.top + (targetRect.height - cardRect.height) / 2;
+        left = targetRect.right + gap;
+        pointerTop = cardRect.height / 2 - 6;
+        pointerLeft = -8;
+        pointerPos = 'left';
+        break;
+    }
+
+    // Clamp to viewport
+    if (left < 12) left = 12;
+    if (top < 12) top = 12;
+    if (left + cardRect.width > window.innerWidth - 12) {
+      left = window.innerWidth - cardRect.width - 12;
+    }
+    if (top + cardRect.height > window.innerHeight - 12) {
+      top = window.innerHeight - cardRect.height - 12;
+    }
+
+    card.style.position = 'fixed';
+    card.style.top = top + 'px';
+    card.style.left = left + 'px';
+
+    ptr.style.display = 'block';
+    ptr.setAttribute('data-pos', pointerPos);
+    ptr.style.top = pointerTop + 'px';
+    ptr.style.left = pointerLeft + 'px';
+  }
+
+  function clearHighlight() {
+    ring.classList.add('hidden');
+    document.querySelectorAll('.gt-target-highlight').forEach(el => {
+      el.classList.remove('gt-target-highlight');
+    });
+  }
+
+  // ── Navigation ──
+  function goTo(idx) {
+    if (idx < 0 || idx >= total) return;
+    current = idx;
+    renderStep(current);
+  }
+
+  function next() {
+    if (current < total - 1) goTo(current + 1);
+  }
+
+  function prev() {
+    if (current > 0) goTo(current - 1);
+  }
+
+  function finish() {
+    clearHighlight();
+    card.classList.add('hidden');
+    backdrop.classList.add('hidden');
+    localStorage.setItem(key, '1');
+  }
+
+  // ── Event listeners ──
+  backBtn.addEventListener('click', prev);
+  nextBtn.addEventListener('click', next);
+  doneBtn.addEventListener('click', finish);
+  skipBtn.addEventListener('click', finish);
+
+  // Keyboard nav
+  document.addEventListener('keydown', (e) => {
+    if (card.classList.contains('hidden')) return;
+    if (e.key === 'Escape') finish();
+    if (e.key === 'ArrowRight') next();
+    if (e.key === 'ArrowLeft') prev();
+  });
+
+  // ── Init ──
+  // Brief delay so everything renders
+  setTimeout(() => {
+    backdrop.classList.remove('hidden');
+    card.classList.remove('hidden');
+    renderStep(0);
+  }, 600);
+})();
+</script>
+
+<style>
+  /* ── Backdrop ── */
+  .gt-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.6);
+    z-index: 998;
+    animation: gt-fade-in 0.3s ease;
+  }
+
+  /* ── Highlight ring ── */
+  .gt-ring {
+    position: fixed;
+    z-index: 999;
+    border-radius: 0.5rem;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.5), 0 0 0 1px rgba(59, 130, 246, 0.3);
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* ── Tooltip card ── */
+  .gt-card {
+    position: fixed;
+    z-index: 1000;
+    max-width: 360px;
+    background: #1e293b;
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    border-radius: 0.75rem;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.45);
+    animation: gt-pop 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes gt-pop {
+    from { opacity: 0; transform: scale(0.92) translateY(6px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  @keyframes gt-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .gt-body {
+    padding: 1rem 1.15rem;
+  }
+
+  .gt-counter {
+    font-size: 0.65rem;
+    color: #475569;
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 0.35rem;
+  }
+
+  .gt-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin: 0 0 0.4rem;
+    line-height: 1.4;
+  }
+
+  .gt-desc {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin: 0 0 0.1rem;
+    line-height: 1.55;
+  }
+
+  .gt-action-link {
+    margin: 0.5rem 0 0.1rem;
+  }
+  .gt-link {
+    display: inline-block;
+    font-size: 0.8rem;
+    color: #60a5fa;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.3rem 0.6rem;
+    border-radius: 0.375rem;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    transition: all 0.15s;
+  }
+  .gt-link:hover {
+    background: rgba(59, 130, 246, 0.18);
+    border-color: rgba(59, 130, 246, 0.35);
+  }
+
+  /* Dots */
+  .gt-dots {
+    display: flex;
+    gap: 5px;
+    margin: 0.7rem 0;
+  }
+  .gt-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(51, 65, 85, 0.6);
+    transition: background 0.2s;
+  }
+  .gt-dot-filled {
+    background: #60a5fa;
+  }
+
+  /* Actions */
+  .gt-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .gt-right {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-left: auto;
+  }
+
+  .gt-btn {
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.35rem 0.75rem;
+    border-radius: 0.375rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Inter', sans-serif;
+  }
+  .gt-btn-back {
+    background: transparent;
+    color: #64748b;
+  }
+  .gt-btn-back:hover {
+    color: #94a3b8;
+  }
+  .gt-btn-skip {
+    background: transparent;
+    color: #475569;
+  }
+  .gt-btn-skip:hover {
+    color: #64748b;
+  }
+  .gt-btn-primary {
+    background: #2563eb;
+    color: white;
+  }
+  .gt-btn-primary:hover {
+    background: #3b82f6;
+  }
+
+  /* Pointer arrow */
+  .gt-pointer {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: #1e293b;
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    z-index: -1;
+  }
+  .gt-pointer[data-pos="top"] {
+    border-right: none;
+    border-bottom: none;
+    transform: rotate(45deg);
+  }
+  .gt-pointer[data-pos="bottom"] {
+    border-left: none;
+    border-top: none;
+    transform: rotate(45deg);
+  }
+  .gt-pointer[data-pos="left"] {
+    border-right: none;
+    border-bottom: none;
+    transform: rotate(45deg);
+  }
+  .gt-pointer[data-pos="right"] {
+    border-left: none;
+    border-top: none;
+    transform: rotate(45deg);
+  }
+
+  .hidden { display: none !important; }
+</style>

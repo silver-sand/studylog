@@ -1,0 +1,292 @@
+---
+export interface ChecklistItem {
+  label: string;
+  key: string;
+  href: string;
+  /** Auto-completed without user action */
+  auto?: boolean;
+}
+
+const items: ChecklistItem[] = [
+  { label: 'Log your first study session', key: 'entry', href: '/' },
+  { label: 'Update a syllabus chapter', key: 'syllabus', href: '/syllabus' },
+  { label: 'Generate an AI review', key: 'review', href: '/weekly' },
+  { label: 'Chat with your AI Mentor', key: 'mentor', href: '/?mentor=1' },
+  { label: 'Visit your Dashboard', key: 'dashboard', href: '/dashboard', auto: true },
+];
+const total = items.length;
+const storagePrefix = 'sl-checklist-';
+---
+
+<div class="gs-card hidden" id="getting-started">
+  <div class="gs-header">
+    <div class="gs-title-row">
+      <span class="gs-icon">🚀</span>
+      <h3 class="gs-title">Getting Started</h3>
+    </div>
+    <button class="gs-dismiss" id="gs-dismiss" title="Dismiss">✕</button>
+  </div>
+
+  <p class="gs-sub">Complete these steps to get the most out of StudyLog.</p>
+
+  <div class="gs-progress-wrap">
+    <div class="gs-progress-bar" id="gs-progress-bar">
+      <div class="gs-progress-fill" id="gs-progress-fill"></div>
+    </div>
+    <span class="gs-progress-text" id="gs-progress-text">0 / {total}</span>
+  </div>
+
+  <ul class="gs-list" id="gs-list">
+    {items.map((item) => (
+      <li class="gs-item" data-key={item.key}>
+        <span class="gs-check" id={`gs-check-${item.key}`}>○</span>
+        <a href={item.href} class="gs-item-link" data-key={item.key}>{item.label}</a>
+        {item.auto && <span class="gs-auto-badge">auto</span>}
+      </li>
+    ))}
+  </ul>
+
+  <div class="gs-done hidden" id="gs-done">
+    <p class="gs-done-text">🎉 All done! You're all set to use StudyLog.</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  const prefix = 'sl-checklist-';
+  const total = 5;
+  const keys = ['entry', 'syllabus', 'review', 'mentor', 'dashboard'];
+  const card = document.getElementById('getting-started');
+  const progressFill = document.getElementById('gs-progress-fill');
+  const progressText = document.getElementById('gs-progress-text');
+  const doneSection = document.getElementById('gs-done');
+  const listEl = document.getElementById('gs-list');
+  const dismissBtn = document.getElementById('gs-dismiss');
+
+  function getCompleted() {
+    return keys.filter(k => k === 'dashboard' || localStorage.getItem(prefix + k) === '1');
+  }
+
+  function update() {
+    const completed = getCompleted();
+    const count = completed.length;
+
+    // Update progress
+    const pct = Math.round((count / total) * 100);
+    progressFill.style.width = pct + '%';
+    progressText.textContent = `${count} / ${total}`;
+
+    // Update checkmarks
+    document.querySelectorAll('.gs-item').forEach(el => {
+      const key = el.dataset.key;
+      const check = el.querySelector('.gs-check');
+      if (completed.includes(key)) {
+        check.textContent = '●';
+        check.classList.add('gs-checked');
+        el.classList.add('gs-item-done');
+      } else {
+        check.textContent = '○';
+        check.classList.remove('gs-checked');
+        el.classList.remove('gs-item-done');
+      }
+    });
+
+    // Show done state
+    if (count >= total) {
+      doneSection.classList.remove('hidden');
+      listEl.classList.add('hidden');
+      document.querySelector('.gs-sub')?.classList.add('hidden');
+    }
+  }
+
+  // Show card if not all completed
+  const dismissed = localStorage.getItem('sl-checklist-dismissed');
+  const allDone = getCompleted().length >= total;
+
+  if (!dismissed) {
+    card.classList.remove('hidden');
+    // If all done and not dismissed, show the done state briefly
+    if (allDone) {
+      doneSection.classList.remove('hidden');
+      listEl.classList.add('hidden');
+      document.querySelector('.gs-sub')?.classList.add('hidden');
+      progressText.textContent = `${total} / ${total}`;
+      progressFill.style.width = '100%';
+    } else {
+      update();
+    }
+  }
+
+  // Listen for storage changes (other tabs) and custom events
+  window.addEventListener('storage', (e) => {
+    if (e.key && e.key.startsWith(prefix)) update();
+  });
+  document.addEventListener('checklist-update', update);
+
+  // Dismiss
+  dismissBtn.addEventListener('click', () => {
+    localStorage.setItem('sl-checklist-dismissed', '1');
+    card.classList.add('hidden');
+  });
+
+  // Link clicks mark as visited
+  document.querySelectorAll('.gs-item-link').forEach(link => {
+    link.addEventListener('click', () => {
+      const key = link.dataset.key;
+      if (key && key !== 'dashboard') {
+        localStorage.setItem(prefix + key, '1');
+        update();
+      }
+    });
+  });
+})();
+</script>
+
+<style>
+  .gs-card {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 0.75rem;
+    padding: 1.25rem 1.25rem 1rem;
+    margin-bottom: 1.5rem;
+    animation: gs-slide-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes gs-slide-in {
+    from { opacity: 0; transform: translateY(-12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .gs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .gs-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .gs-icon {
+    font-size: 1.2rem;
+  }
+  .gs-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin: 0;
+  }
+  .gs-dismiss {
+    background: none;
+    border: none;
+    color: #475569;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0.15rem 0.3rem;
+    border-radius: 0.25rem;
+    transition: color 0.15s;
+  }
+  .gs-dismiss:hover {
+    color: #94a3b8;
+  }
+
+  .gs-sub {
+    font-size: 0.78rem;
+    color: #64748b;
+    margin: 0.35rem 0 0.85rem;
+  }
+
+  /* Progress */
+  .gs-progress-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.85rem;
+  }
+  .gs-progress-bar {
+    flex: 1;
+    height: 5px;
+    background: rgba(51, 65, 85, 0.5);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .gs-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    border-radius: 999px;
+    transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    width: 0%;
+  }
+  .gs-progress-text {
+    font-size: 0.7rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: #64748b;
+    white-space: nowrap;
+  }
+
+  /* List */
+  .gs-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .gs-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.5rem;
+    border-radius: 0.375rem;
+    transition: all 0.2s;
+  }
+  .gs-item:hover {
+    background: rgba(51, 65, 85, 0.25);
+  }
+  .gs-item-done {
+    opacity: 0.5;
+  }
+  .gs-check {
+    font-size: 0.7rem;
+    color: #475569;
+    width: 1rem;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .gs-checked {
+    color: #22c55e;
+    font-size: 0.8rem;
+  }
+  .gs-item-link {
+    font-size: 0.8rem;
+    color: #cbd5e1;
+    text-decoration: none;
+    flex: 1;
+    transition: color 0.15s;
+  }
+  .gs-item-link:hover {
+    color: #93c5fd;
+  }
+  .gs-auto-badge {
+    font-size: 0.6rem;
+    color: #475569;
+    background: rgba(51, 65, 85, 0.4);
+    padding: 0.1rem 0.35rem;
+    border-radius: 0.25rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Done state */
+  .gs-done {
+    text-align: center;
+    padding: 0.5rem 0 0.25rem;
+  }
+  .gs-done-text {
+    font-size: 0.85rem;
+    color: #22c55e;
+    font-weight: 500;
+    margin: 0;
+  }
+
+  .hidden { display: none !important; }
+</style>

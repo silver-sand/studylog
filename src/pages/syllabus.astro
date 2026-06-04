@@ -244,6 +244,9 @@ const filteredExams = selectedKey ? exams.filter(e => e.key === selectedKey) : e
           if (countEl) countEl.textContent = `${overallPercent}%`;
         }
       });
+
+      // Track for getting-started checklist
+      try { localStorage.setItem('sl-checklist-syllabus', '1'); } catch(e) {}
     } catch (err) {
       // Silently fail — the individual button already updated
     }

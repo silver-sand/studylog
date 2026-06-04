@@ -525,6 +525,8 @@ const STUDY_TYPES = [
       }
 
       window.location.reload();
+      // Track for getting-started checklist
+      try { localStorage.setItem('sl-checklist-entry', '1'); } catch(e) {}
     } catch (err) {
       showError(err instanceof Error ? err.message : 'Something went wrong');
       submitBtn.disabled = false;

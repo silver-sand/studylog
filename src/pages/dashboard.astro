@@ -13,6 +13,8 @@ import DailyActionCard from '../components/DailyActionCard.astro';
 import ExamPaceWidget from '../components/ExamPaceWidget.astro';
 import MockTestWidget from '../components/MockTestWidget.astro';
 import TourTooltip from '../components/TourTooltip.astro';
+import GuidedTour from '../components/GuidedTour.astro';
+import GettingStarted from '../components/GettingStarted.astro';
 import { getDashboardStats } from '../services/stats-service';
 import { getDb } from '../db';
 import { scopeDbToUser } from '../services/user-scope';
@@ -36,8 +38,11 @@ const examKey = examKeyMap[settings.examType] || 'JEE';
       <p class="page-sub">Your study progress at a glance</p>
     </div>
 
+    <!-- Getting Started Checklist -->
+    <GettingStarted />
+
     <!-- Top Row: Streak + Progress -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6" id="tour-progress">
       <div>
         <StreakDisplay streak={stats.streak} />
       </div>
@@ -51,7 +56,7 @@ const examKey = examKeyMap[settings.examType] || 'JEE';
     </div>
 
     <!-- Stats Grid -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="tour-stats">
       <StatsCard
         label="This Week"
         value={`${stats.entriesThisWeek}`}
@@ -67,9 +72,7 @@ const examKey = examKeyMap[settings.examType] || 'JEE';
     </div>
 
     <!-- Two-column chart row -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
-      <DailyActionCard examType={examKey} />
-      <WeakChapters examType={examKey} />
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6" id="tour-daily">
     </div>
 
     <!-- Two-column chart row -->
@@ -97,6 +100,41 @@ const examKey = examKeyMap[settings.examType] || 'JEE';
     description="See your study streak, weekly progress, charts, and weak areas at a glance. Log your study sessions from the Daily Log page."
     selector=".page-title"
     position="bottom"
+  />
+
+  <GuidedTour
+    tourId="dashboard-walkthrough"
+    steps={[
+      {
+        title: '👋 Welcome to StudyLog!',
+        description: 'This is your command center. Everything you need to track your studies — streak, progress, insights, and AI-powered guidance — all in one place.',
+        targetSelector: '#tour-progress',
+        position: 'bottom',
+      },
+      {
+        title: '📊 Key Stats at a Glance',
+        description: 'Quick overview of your study days this week, monthly entries, mock test scores, and your exam pace prediction.',
+        targetSelector: '#tour-stats',
+        position: 'top',
+      },
+      {
+        title: '🎯 Daily Action & Weak Areas',
+        description: 'Get AI-powered suggestions for what to study today and see which chapters need the most attention.',
+        targetSelector: '#tour-daily',
+        position: 'bottom',
+      },
+      {
+        title: '📈 Charts & Insights',
+        description: 'Visualize your study trends, subject breakdowns, week-over-week comparisons, and focus patterns across time.',
+        targetSelector: '.grid-cols-1.md\\:grid-cols-2',
+        position: 'top',
+      },
+      {
+        title: '✅ You\'re Ready!',
+        description: 'Start by logging your first study session. Use the sidebar to explore the timer, AI Mentor, syllabus tracker, weekly reviews, and more.',
+        position: 'bottom',
+      },
+    ]}
   />
 </BaseLayout>
 
