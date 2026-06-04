@@ -1,0 +1,478 @@
+<div class="auth-popup-overlay" id="auth-popup">
+  <div class="auth-popup-modal">
+    <!-- Close button -->
+    <button class="auth-popup-close" id="auth-popup-close" title="Continue without account">✕</button>
+
+    <!-- Tabs -->
+    <div class="auth-popup-tabs">
+      <button class="auth-popup-tab active" data-tab="login" id="tab-login">Log In</button>
+      <button class="auth-popup-tab" data-tab="signup" id="tab-signup">Sign Up</button>
+    </div>
+
+    <div class="auth-popup-header">
+      <h2 class="auth-popup-title" id="auth-popup-title">Welcome back</h2>
+      <p class="auth-popup-sub" id="auth-popup-sub">Log in to continue your study journey</p>
+    </div>
+
+    <!-- Login form -->
+    <form class="auth-popup-form" id="login-form">
+      <div class="auth-popup-field">
+        <label for="popup-email" class="auth-popup-label">Email</label>
+        <input type="email" id="popup-email" class="auth-popup-input" placeholder="you@example.com" required autocomplete="email" />
+      </div>
+      <div class="auth-popup-field">
+        <label for="popup-password" class="auth-popup-label">Password</label>
+        <input type="password" id="popup-password" class="auth-popup-input" placeholder="At least 6 characters" required minlength="6" autocomplete="current-password" />
+      </div>
+      <div class="auth-popup-error hidden" id="popup-error"></div>
+      <button type="submit" class="auth-popup-btn" id="popup-submit-btn">Log in</button>
+    </form>
+
+    <!-- Signup form -->
+    <form class="auth-popup-form hidden" id="signup-form">
+      <div class="auth-popup-field">
+        <label for="popup-name" class="auth-popup-label">Name</label>
+        <input type="text" id="popup-name" class="auth-popup-input" placeholder="Your name" required autocomplete="name" />
+      </div>
+      <div class="auth-popup-field">
+        <label for="popup-signup-email" class="auth-popup-label">Email</label>
+        <input type="email" id="popup-signup-email" class="auth-popup-input" placeholder="you@example.com" required autocomplete="email" />
+      </div>
+      <div class="auth-popup-field">
+        <label for="popup-signup-password" class="auth-popup-label">Password</label>
+        <input type="password" id="popup-signup-password" class="auth-popup-input" placeholder="At least 6 characters" required minlength="6" autocomplete="new-password" />
+      </div>
+      <div class="auth-popup-error hidden" id="popup-signup-error"></div>
+      <button type="submit" class="auth-popup-btn" id="popup-signup-btn">Create account</button>
+    </form>
+
+    <!-- Guest link -->
+    <div class="auth-popup-guest">
+      <button class="auth-popup-guest-btn" id="auth-guest-btn">Continue without account →</button>
+    </div>
+  </div>
+
+  <!-- Warning overlay -->
+  <div class="auth-warning hidden" id="auth-warning">
+    <div class="auth-warning-card">
+      <div class="auth-warning-icon">⚠️</div>
+      <h3 class="auth-warning-title">Your data won't be saved!</h3>
+      <p class="auth-warning-desc">
+        Without an account, any study data you enter — entries, progress, reviews — will be lost when you close the browser or clear your cache.
+      </p>
+      <div class="auth-warning-actions">
+        <button class="auth-popup-btn" id="warning-signup">Sign up now</button>
+        <button class="auth-warning-dismiss" id="warning-dismiss">I understand, continue anyway</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const popup = document.getElementById('auth-popup');
+  const closeBtn = document.getElementById('auth-popup-close');
+  const guestBtn = document.getElementById('auth-guest-btn');
+  const warning = document.getElementById('auth-warning');
+  const warningSignup = document.getElementById('warning-signup');
+  const warningDismiss = document.getElementById('warning-dismiss');
+
+  const tabLogin = document.getElementById('tab-login');
+  const tabSignup = document.getElementById('tab-signup');
+  const loginForm = document.getElementById('login-form');
+  const signupForm = document.getElementById('signup-form');
+  const popupTitle = document.getElementById('auth-popup-title');
+  const popupSub = document.getElementById('auth-popup-sub');
+
+  const loginEmail = document.getElementById('popup-email');
+  const loginPassword = document.getElementById('popup-password');
+  const loginError = document.getElementById('popup-error');
+  const loginBtn = document.getElementById('popup-submit-btn');
+
+  const signupName = document.getElementById('popup-name');
+  const signupEmail = document.getElementById('popup-signup-email');
+  const signupPassword = document.getElementById('popup-signup-password');
+  const signupError = document.getElementById('popup-signup-error');
+  const signupBtn = document.getElementById('popup-signup-btn');
+
+  // Check if user has dismissed before
+  const dismissed = localStorage.getItem('sl-auth-dismissed');
+  if (dismissed) {
+    popup.classList.add('hidden');
+    return;
+  }
+
+  // ── Tab switching ──
+  function showTab(tab) {
+    const isLogin = tab === 'login';
+    tabLogin.classList.toggle('active', isLogin);
+    tabSignup.classList.toggle('active', !isLogin);
+    loginForm.classList.toggle('hidden', !isLogin);
+    signupForm.classList.toggle('hidden', isLogin);
+    popupTitle.textContent = isLogin ? 'Welcome back' : 'Create your account';
+    popupSub.textContent = isLogin ? 'Log in to continue your study journey' : 'Start tracking your study journey';
+  }
+
+  tabLogin.addEventListener('click', () => showTab('login'));
+  tabSignup.addEventListener('click', () => showTab('signup'));
+
+  // ── Close / Guest flow ──
+  function showWarning() {
+    warning.classList.remove('hidden');
+  }
+
+  closeBtn.addEventListener('click', showWarning);
+  guestBtn.addEventListener('click', showWarning);
+
+  warningSignup.addEventListener('click', () => {
+    warning.classList.add('hidden');
+    showTab('signup');
+  });
+
+  warningDismiss.addEventListener('click', () => {
+    localStorage.setItem('sl-auth-dismissed', '1');
+    warning.classList.add('hidden');
+    popup.classList.add('hidden');
+  });
+
+  // ── Login submit ──
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    loginError.classList.add('hidden');
+    loginBtn.disabled = true;
+    loginBtn.textContent = 'Logging in...';
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: loginEmail.value.trim(),
+          password: loginPassword.value,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Login failed');
+
+      window.location.reload();
+    } catch (err) {
+      loginError.textContent = err instanceof Error ? err.message : 'Something went wrong';
+      loginError.classList.remove('hidden');
+      loginBtn.disabled = false;
+      loginBtn.textContent = 'Log in';
+    }
+  });
+
+  // ── Signup submit ──
+  signupForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    signupError.classList.add('hidden');
+    signupBtn.disabled = true;
+    signupBtn.textContent = 'Creating account...';
+
+    const name = signupName.value.trim();
+    if (!name) {
+      signupError.textContent = 'Name is required';
+      signupError.classList.remove('hidden');
+      signupBtn.disabled = false;
+      signupBtn.textContent = 'Create account';
+      return;
+    }
+    if (signupPassword.value.length < 6) {
+      signupError.textContent = 'Password must be at least 6 characters';
+      signupError.classList.remove('hidden');
+      signupBtn.disabled = false;
+      signupBtn.textContent = 'Create account';
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          email: signupEmail.value.trim(),
+          password: signupPassword.value,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Signup failed');
+
+      window.location.href = '/onboarding';
+    } catch (err) {
+      signupError.textContent = err instanceof Error ? err.message : 'Something went wrong';
+      signupError.classList.remove('hidden');
+      signupBtn.disabled = false;
+      signupBtn.textContent = 'Create account';
+    }
+  });
+})();
+</script>
+
+<style>
+  /* ── Overlay ── */
+  .auth-popup-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(2, 6, 23, 0.7);
+    backdrop-filter: blur(4px);
+    animation: ap-fade-in 0.25s ease;
+  }
+  @keyframes ap-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* ── Modal ── */
+  .auth-popup-modal {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    max-height: 90vh;
+    overflow-y: auto;
+    background: #1e293b;
+    border: 1px solid rgba(51, 65, 85, 0.5);
+    border-radius: 1rem;
+    padding: 2rem 1.75rem 1.5rem;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+    animation: ap-pop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    margin: 1rem;
+  }
+  @keyframes ap-pop {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  @media (max-width: 480px) {
+    .auth-popup-modal {
+      max-width: 100%;
+      margin: 0.5rem;
+      border-radius: 0.75rem;
+      padding: 1.5rem 1.25rem 1.25rem;
+      max-height: 95vh;
+    }
+  }
+
+  /* ── Close ── */
+  .auth-popup-close {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(51, 65, 85, 0.4);
+    border: none;
+    border-radius: 0.5rem;
+    color: #64748b;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .auth-popup-close:hover {
+    color: #e2e8f0;
+    background: rgba(51, 65, 85, 0.6);
+  }
+
+  /* ── Tabs ── */
+  .auth-popup-tabs {
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 1.25rem;
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 0.5rem;
+    padding: 0.2rem;
+  }
+  .auth-popup-tab {
+    flex: 1;
+    padding: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #64748b;
+    background: transparent;
+    border: none;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Inter', sans-serif;
+  }
+  .auth-popup-tab.active {
+    color: #f1f5f9;
+    background: rgba(59, 130, 246, 0.15);
+  }
+  .auth-popup-tab:hover:not(.active) {
+    color: #94a3b8;
+  }
+
+  /* ── Header ── */
+  .auth-popup-header {
+    text-align: center;
+    margin-bottom: 1.25rem;
+  }
+  .auth-popup-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin: 0 0 0.25rem;
+  }
+  .auth-popup-sub {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin: 0;
+  }
+
+  /* ── Forms ── */
+  .auth-popup-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+  .auth-popup-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .auth-popup-label {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: #94a3b8;
+  }
+  .auth-popup-input {
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(51, 65, 85, 0.6);
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    color: #e2e8f0;
+    outline: none;
+    transition: border-color 0.15s;
+    box-sizing: border-box;
+  }
+  .auth-popup-input:focus {
+    border-color: rgba(59, 130, 246, 0.5);
+  }
+  .auth-popup-input::placeholder {
+    color: #475569;
+  }
+
+  .auth-popup-error {
+    color: #ef4444;
+    font-size: 0.78rem;
+    padding: 0.4rem 0.65rem;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 0.375rem;
+  }
+
+  .auth-popup-btn {
+    width: 100%;
+    padding: 0.6rem 1rem;
+    background: #2563eb;
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background 0.15s;
+    font-family: 'Inter', sans-serif;
+  }
+  .auth-popup-btn:hover:not(:disabled) {
+    background: #3b82f6;
+  }
+  .auth-popup-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* ── Guest link ── */
+  .auth-popup-guest {
+    text-align: center;
+    margin-top: 0.85rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid rgba(51, 65, 85, 0.3);
+  }
+  .auth-popup-guest-btn {
+    background: none;
+    border: none;
+    color: #475569;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: color 0.15s;
+    font-family: 'Inter', sans-serif;
+  }
+  .auth-popup-guest-btn:hover {
+    color: #94a3b8;
+  }
+
+  /* ── Warning overlay ── */
+  .auth-warning {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(2, 6, 23, 0.85);
+    border-radius: 1rem;
+    z-index: 10;
+    padding: 1.5rem;
+    animation: ap-fade-in 0.2s ease;
+  }
+  @media (max-width: 480px) {
+    .auth-warning {
+      border-radius: 0.75rem;
+    }
+  }
+  .auth-warning-card {
+    text-align: center;
+    max-width: 320px;
+  }
+  .auth-warning-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .auth-warning-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #fca5a5;
+    margin: 0 0 0.6rem;
+  }
+  .auth-warning-desc {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    line-height: 1.55;
+    margin: 0 0 1.25rem;
+  }
+  .auth-warning-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .auth-warning-dismiss {
+    background: transparent;
+    border: 1px solid rgba(51, 65, 85, 0.5);
+    color: #64748b;
+    font-size: 0.78rem;
+    padding: 0.55rem 1rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Inter', sans-serif;
+  }
+  .auth-warning-dismiss:hover {
+    color: #94a3b8;
+    border-color: rgba(71, 85, 105, 0.7);
+  }
+
+  .hidden { display: none !important; }
+</style>

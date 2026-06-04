@@ -10,10 +10,6 @@
 
   <div class="ambience-panel hidden" id="ambience-panel">
     <div class="ambience-grid">
-      <button class="ambience-btn" data-sound="white-noise" title="White noise">
-        <span class="ambience-btn-icon">🤍</span>
-        <span class="ambience-btn-label">White</span>
-      </button>
       <button class="ambience-btn" data-sound="brown-noise" title="Brown noise">
         <span class="ambience-btn-icon">🤎</span>
         <span class="ambience-btn-label">Brown</span>
@@ -67,17 +63,13 @@
       return audioCtx;
     }
 
-    function generateNoise(type: 'white' | 'pink' | 'brown'): AudioNode {
+    function generateNoise(type: 'pink' | 'brown'): AudioNode {
       const ctx = getAudioContext();
       const bufferSize = ctx.sampleRate * 2;
       const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
       const data = buffer.getChannelData(0);
 
-      if (type === 'white') {
-        for (let i = 0; i < bufferSize; i++) {
-          data[i] = Math.random() * 2 - 1;
-        }
-      } else if (type === 'pink') {
+      if (type === 'pink') {
         // Voss-McCartney pink noise
         let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
         for (let i = 0; i < bufferSize; i++) {
@@ -108,7 +100,7 @@
       return source;
     }
 
-    function startNoise(type: 'white' | 'pink' | 'brown') {
+    function startNoise(type: 'pink' | 'brown') {
       stopAll();
 
       const ctx = getAudioContext();
@@ -186,8 +178,7 @@
     panel.querySelectorAll('.ambience-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const sound = btn.dataset.sound;
-        if (sound === 'white-noise') startNoise('white');
-        else if (sound === 'pink-noise') startNoise('pink');
+        if (sound === 'pink-noise') startNoise('pink');
         else if (sound === 'brown-noise') startNoise('brown');
         else if (sound === 'rain') startRain();
 

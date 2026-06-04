@@ -1,5 +1,6 @@
 ---
 import Sidebar from '../components/Sidebar.astro';
+import AuthPopup from '../components/AuthPopup.astro';
 import { getSessionUser, getTokenFromCookie } from '../services/auth-service';
 
 export interface Props {
@@ -8,6 +9,9 @@ export interface Props {
 
 const { title } = Astro.props;
 const user = getSessionUser(getTokenFromCookie(Astro.request));
+const currentPath = Astro.url.pathname;
+// Don't show auth popup on auth/onboarding pages
+const showAuthPopup = !user && !['/login', '/signup', '/onboarding'].includes(currentPath);
 ---
 
 <!DOCTYPE html>
@@ -30,6 +34,8 @@ const user = getSessionUser(getTokenFromCookie(Astro.request));
         <slot />
       </main>
     </div>
+
+    {showAuthPopup && <AuthPopup />}
 
     <style>
       ::selection {
