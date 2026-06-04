@@ -1,0 +1,81 @@
+---
+export interface Props {
+  streak: number;
+}
+
+const { streak } = Astro.props;
+---
+
+<div class="streak-card">
+  <div class="streak-header">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="streak-icon">
+      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+    </svg>
+    <span class="streak-label">Streak</span>
+  </div>
+  <div class="streak-value">{streak}</div>
+  <p class="streak-sub">
+    {streak === 0 ? 'No active streak. Start today!' :
+     streak === 1 ? '1 day' :
+     `${streak} days`}
+  </p>
+  {streak > 0 && (
+    <div class="streak-dots">
+      {Array.from({ length: Math.min(streak, 14) }).map(() => (
+        <div class="dot" />
+      ))}
+    </div>
+  )}
+</div>
+
+<style>
+  .streak-card {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(23, 32, 51, 0.8));
+    border: 1px solid rgba(51, 65, 85, 0.4);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    text-align: center;
+  }
+  .streak-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    margin-bottom: 0.5rem;
+  }
+  .streak-icon {
+    color: #3b82f6;
+  }
+  .streak-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .streak-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+  }
+  .streak-sub {
+    font-size: 0.8rem;
+    color: #64748b;
+  }
+  .streak-dots {
+    display: flex;
+    justify-content: center;
+    gap: 0.25rem;
+    margin-top: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: #22c55e;
+  }
+</style>

@@ -1,0 +1,77 @@
+export const SCHEMA_SQL = `
+CREATE TABLE IF NOT EXISTS entries (
+  id TEXT PRIMARY KEY,
+  date TEXT NOT NULL,
+  content TEXT NOT NULL,
+  subjects TEXT NOT NULL DEFAULT '[]',
+  chapters TEXT NOT NULL DEFAULT '[]',
+  hours_studied REAL NOT NULL DEFAULT 0,
+  study_type TEXT NOT NULL DEFAULT 'other',
+  focus_rating INTEGER NOT NULL DEFAULT 0,
+  exam_type TEXT NOT NULL DEFAULT '',
+  tags TEXT NOT NULL DEFAULT '[]',
+  ai_raw TEXT,
+  ai_status TEXT NOT NULL DEFAULT 'pending',
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_entries_date ON entries(date);
+
+CREATE TABLE IF NOT EXISTS weekly_reviews (
+  id TEXT PRIMARY KEY,
+  week_start TEXT NOT NULL,
+  week_end TEXT NOT NULL,
+  content TEXT NOT NULL DEFAULT '',
+  insights TEXT NOT NULL DEFAULT '[]',
+  topic_coverage TEXT NOT NULL DEFAULT '{}',
+  strengths TEXT NOT NULL DEFAULT '[]',
+  weaknesses TEXT NOT NULL DEFAULT '[]',
+  recommendations TEXT NOT NULL DEFAULT '[]',
+  entry_ids TEXT NOT NULL DEFAULT '[]',
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_weekly_week_start ON weekly_reviews(week_start);
+
+CREATE TABLE IF NOT EXISTS daily_reviews (
+  id TEXT PRIMARY KEY,
+  date TEXT NOT NULL UNIQUE,
+  content TEXT NOT NULL DEFAULT '',
+  insights TEXT NOT NULL DEFAULT '[]',
+  total_hours REAL NOT NULL DEFAULT 0,
+  subjects TEXT NOT NULL DEFAULT '[]',
+  strengths TEXT NOT NULL DEFAULT '[]',
+  weaknesses TEXT NOT NULL DEFAULT '[]',
+  recommendations TEXT NOT NULL DEFAULT '[]',
+  entry_ids TEXT NOT NULL DEFAULT '[]',
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_daily_date ON daily_reviews(date);
+
+CREATE TABLE IF NOT EXISTS settings (
+  id INTEGER PRIMARY KEY DEFAULT 1,
+  target_hours_per_week REAL NOT NULL DEFAULT 35,
+  subjects TEXT NOT NULL DEFAULT '["Physics","Chemistry","Mathematics"]',
+  exam_type TEXT NOT NULL DEFAULT 'JEE',
+  theme TEXT NOT NULL DEFAULT 'dark',
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+INSERT OR IGNORE INTO settings (id) VALUES (1);
+
+CREATE TABLE IF NOT EXISTS syllabus (
+  id TEXT PRIMARY KEY,
+  exam_type TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  chapter TEXT NOT NULL,
+  class_level TEXT,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'not_started',
+  completed_at TEXT
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_syllabus_unique ON syllabus(exam_type, subject, chapter);
+CREATE INDEX IF NOT EXISTS idx_syllabus_exam ON syllabus(exam_type, subject);
+`;

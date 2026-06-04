@@ -1,0 +1,26 @@
+---
+import EntryCard from './EntryCard.astro';
+import EmptyState from './EmptyState.astro';
+import type { Entry } from '../types/entry';
+
+export interface Props {
+  entries: Entry[];
+}
+
+const { entries } = Astro.props;
+---
+
+<div>
+  {entries.length === 0 ? (
+    <EmptyState
+      title="No entries yet"
+      description="Write your first study log above to start tracking!"
+    />
+  ) : (
+    <div class="space-y-3">
+      {entries.map(entry => (
+        <EntryCard entry={entry} />
+      ))}
+    </div>
+  )}
+</div>

@@ -1,0 +1,129 @@
+---
+import type { DailyTrendItem } from '../services/stats-service';
+
+export interface Props {
+  data: DailyTrendItem[];
+}
+
+const { data } = Astro.props;
+const maxHours = Math.max(...data.map((d) => d.hours), 1);
+const chartHeight = 120;
+const barAreaHeight = chartHeight - 20; // leave room for labels
+
+// SVG polyline points
+const points = data
+  .map((d, i) => {
+    const x = i * (100 / (data.length - 1 || 1));
+    const y = barAreaHeight - (d.hours / maxHours) * (barAreaHeight - 10);
+    return `${x},${y}`;
+  })
+  .join(' ');
+---
+
+<div class="card">
+  <h3 class="card-title">Study Trend — Last {data.length} Days</h3>
+  {data.length === 0 || data.every((d) => d.hours === 0) ? (
+    <p class="empty">No study data yet.</p>
+  ) : (
+    <div class="chart-wrap">
+      <svg viewBox={`0 0 100 ${chartHeight}`} class="chart-svg" preserveAspectRatio="none">
+        <!-- Grid lines -->
+        <line x1="0" y1="0" x2="100" y2="0" stroke="rgba(51,65,85,0.4)" stroke-width="0.3" />
+        <line x1="0" y1={barAreaHeight * 0.5} x2="100" y2={barAreaHeight * 0.5} stroke="rgba(51,65,85,0.3)" stroke-width="0.3" />
+        <line x1="0" y1={barAreaHeight} x2="100" y2={barAreaHeight} stroke="rgba(51,65,85,0.4)" stroke-width="0.3" />
+
+        <!-- Area fill -->
+        <polygon
+          points={`0,${barAreaHeight} ${points} 100,${barAreaHeight}`}
+          fill="url(#trendGrad)"
+          opacity="0.25"
+        />
+
+        <!-- Line -->
+        <polyline
+          points={points}
+          fill="none"
+          stroke="#3b82f6"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+
+        <!-- Dots -->
+        {data.map((d, i) => {
+          const x = i * (100 / (data.length - 1 || 1));
+          const y = barAreaHeight - (d.hours / maxHours) * (barAreaHeight - 10);
+          return (
+            <circle
+              cx={x}
+              cy={y}
+              r={d.hours > 0 ? 1.5 : 0}
+              fill="#3b82f6"
+              stroke="#0f172a"
+              stroke-width="0.5"
+            />
+          );
+        })}
+
+        <defs>
+          <linearGradient id="trendGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3b82f6" />
+            <stop offset="100%" stop-color="#3b82f6" stop-opacity="0" />
+          </linearGradient>
+        </defs>
+      </svg>
+
+      <!-- X-axis labels -->
+      <div class="x-labels">
+        {data.map((d) => (
+          <span class="x-label">{d.label}</span>
+        ))}
+      </div>
+    </div>
+  )}
+</div>
+
+<style>
+  .card {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(51, 65, 85, 0.4);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+  }
+  .card-title {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+  }
+  .empty {
+    font-size: 0.85rem;
+    color: #475569;
+  }
+  .chart-wrap {
+    width: 100%;
+  }
+  .chart-svg {
+    width: 100%;
+    height: 120px;
+    overflow: visible;
+  }
+  .x-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.25rem;
+    padding: 0 0;
+  }
+  .x-label {
+    font-size: 0.6rem;
+    color: #475569;
+    font-family: 'JetBrains Mono', monospace;
+    text-align: center;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+</style>

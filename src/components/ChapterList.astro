@@ -1,0 +1,148 @@
+---
+import type { SyllabusChapter } from '../types/review';
+
+export interface Props {
+  chapters: SyllabusChapter[];
+  subject: string;
+}
+
+const { chapters, subject } = Astro.props;
+
+function subjectColor(s: string): string {
+  const name = s.toLowerCase();
+  if (name.includes('physics')) return 'blue';
+  if (name.includes('chemistry')) return 'green';
+  if (name.includes('math')) return 'amber';
+  if (name.includes('biology')) return 'pink';
+  return 'gray';
+}
+
+const statusColors: Record<string, string> = {
+  not_started: '#64748b',
+  in_progress: '#f59e0b',
+  completed: '#22c55e',
+};
+
+const statusLabels: Record<string, string> = {
+  not_started: 'Not Started',
+  in_progress: 'In Progress',
+  completed: 'Completed',
+};
+
+const color = subjectColor(subject);
+const accentColor = {
+  blue: '#3b82f6',
+  green: '#22c55e',
+  amber: '#f59e0b',
+  pink: '#ec4899',
+  gray: '#64748b',
+}[color];
+---
+
+<div class="chapter-list">
+  {chapters.map((ch) => (
+    <div class="chapter-row" data-chapter-id={ch.id}>
+      <div class="chapter-info">
+        <span class="chapter-name">{ch.chapter}</span>
+        {ch.classLevel && (
+          <span class="class-badge">Class {ch.classLevel}</span>
+        )}
+      </div>
+      <div class="status-group">
+        <button
+          class:list={{ 'status-btn': true, active: ch.status === 'not_started' }}
+          data-status="not_started"
+          style={ch.status === 'not_started' ? `border-color: ${statusColors.not_started}; color: ${statusColors.not_started}` : ''}
+        >
+          Not Started
+        </button>
+        <button
+          class:list={{ 'status-btn': true, active: ch.status === 'in_progress' }}
+          data-status="in_progress"
+          style={ch.status === 'in_progress' ? `border-color: ${statusColors.in_progress}; color: ${statusColors.in_progress}` : ''}
+        >
+          In Progress
+        </button>
+        <button
+          class:list={{ 'status-btn': true, active: ch.status === 'completed' }}
+          data-status="completed"
+          style={ch.status === 'completed' ? `border-color: ${statusColors.completed}; color: ${statusColors.completed}` : ''}
+        >
+          Done
+        </button>
+      </div>
+    </div>
+  ))}
+</div>
+
+<style>
+  .chapter-list {
+    border: 1px solid rgba(51, 65, 85, 0.4);
+    border-top: none;
+    border-radius: 0 0 0.75rem 0.75rem;
+    overflow: hidden;
+  }
+  .chapter-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.25rem;
+    background: rgba(15, 23, 42, 0.5);
+    border-bottom: 1px solid rgba(51, 65, 85, 0.3);
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .chapter-row:last-child {
+    border-bottom: none;
+  }
+  .chapter-row:hover {
+    background: rgba(30, 41, 59, 0.5);
+  }
+  .chapter-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
+  }
+  .chapter-name {
+    font-size: 0.85rem;
+    color: #cbd5e1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .class-badge {
+    font-size: 0.65rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 0.25rem;
+    background: rgba(100, 116, 139, 0.2);
+    color: #94a3b8;
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+  }
+  .status-group {
+    display: flex;
+    gap: 0.25rem;
+    flex-shrink: 0;
+  }
+  .status-btn {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    border: 1px solid rgba(100, 116, 139, 0.3);
+    background: transparent;
+    color: #64748b;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+  .status-btn:hover {
+    border-color: rgba(100, 116, 139, 0.6);
+    color: #94a3b8;
+  }
+  .status-btn.active {
+    background: rgba(255, 255, 255, 0.05);
+  }
+</style>

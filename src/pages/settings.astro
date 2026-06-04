@@ -1,0 +1,308 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getDb } from '../db';
+import { SUBJECTS_LIST, EXAM_TYPES_LIST } from '../utils/constants';
+
+const db = getDb();
+const settings = db.getSettings();
+---
+
+<BaseLayout title="Settings">
+  <div class="max-w-2xl mx-auto">
+    <div class="mb-8">
+      <h1 class="page-title">Settings</h1>
+      <p class="page-sub">Configure your study preferences</p>
+    </div>
+
+    <form id="settings-form" class="space-y-6">
+      <!-- Target Hours -->
+      <div class="card">
+        <h2 class="card-title">Weekly Target</h2>
+        <p class="card-desc">Your goal for total study hours per week.</p>
+        <div class="flex items-center gap-3 mt-3">
+          <input
+            type="number"
+            id="target-hours"
+            name="targetHoursPerWeek"
+            min="1"
+            max="168"
+            step="1"
+            value={settings.targetHoursPerWeek}
+            class="form-input w-20 text-center font-mono"
+          />
+          <span class="text-sm text-slate-500">hours per week</span>
+        </div>
+      </div>
+
+      <!-- Subjects -->
+      <div class="card">
+        <h2 class="card-title">Subjects</h2>
+        <p class="card-desc">Select the subjects you're studying.</p>
+
+        <div class="subject-grid" id="subjects-grid">
+          {SUBJECTS_LIST.map(subject => {
+            const isSelected = settings.subjects.includes(subject);
+            return (
+              <label class:list={{ 'subject-chip': true, 'selected': isSelected }}>
+                <input
+                  type="checkbox"
+                  name="subjects"
+                  value={subject}
+                  checked={isSelected}
+                  class="hidden"
+                />
+                <span>{subject}</span>
+              </label>
+            );
+          })}
+        </div>
+        <p class="chip-hint">Minimum 1 subject required.</p>
+      </div>
+
+      <!-- Exam Type -->
+      <div class="card">
+        <h2 class="card-title">Exam / Entrance</h2>
+        <p class="card-desc">Which exam are you preparing for? This will appear on your entries.</p>
+        <div class="exam-grid" id="exam-grid">
+          {EXAM_TYPES_LIST.map(exam => {
+            const isSelected = settings.examType === exam;
+            return (
+              <label class:list={{ 'exam-chip': true, 'selected': isSelected }}>
+                <input
+                  type="radio"
+                  name="examType"
+                  value={exam}
+                  checked={isSelected}
+                  class="hidden"
+                />
+                <span>{exam}</span>
+              </label>
+            );
+          })}
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center gap-3">
+        <button type="submit" id="save-btn" class="btn-primary">
+          Save Settings
+        </button>
+        <div id="settings-success" class="text-sm text-emerald-400 hidden">Saved.</div>
+      </div>
+      <div id="settings-error" class="error hidden"></div>
+    </form>
+  </div>
+</BaseLayout>
+
+<script>
+  const form = document.getElementById('settings-form') as HTMLFormElement;
+  const saveBtn = document.getElementById('save-btn') as HTMLButtonElement;
+  const successDiv = document.getElementById('settings-success') as HTMLDivElement;
+  const errorDiv = document.getElementById('settings-error') as HTMLDivElement;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    successDiv.classList.add('hidden');
+    errorDiv.classList.add('hidden');
+
+    const targetHours = parseFloat((document.getElementById('target-hours') as HTMLInputElement).value);
+    const subjectCheckboxes = form.querySelectorAll('input[name="subjects"]:checked');
+    const subjects = Array.from(subjectCheckboxes).map(cb => (cb as HTMLInputElement).value);
+    const examRadio = form.querySelector('input[name="examType"]:checked') as HTMLInputElement;
+    const examType = examRadio?.value || 'JEE';
+
+    if (subjects.length === 0) {
+      errorDiv.textContent = 'Select at least one subject.';
+      errorDiv.classList.remove('hidden');
+      return;
+    }
+
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving...';
+
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetHoursPerWeek: targetHours, subjects, examType }),
+      });
+
+      if (!res.ok) throw new Error('Failed to save');
+
+      successDiv.classList.remove('hidden');
+      saveBtn.textContent = 'Saved';
+      setTimeout(() => {
+        saveBtn.textContent = 'Save Settings';
+        saveBtn.disabled = false;
+        successDiv.classList.add('hidden');
+      }, 2000);
+    } catch (err) {
+      errorDiv.textContent = 'Failed to save settings.';
+      errorDiv.classList.remove('hidden');
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save Settings';
+    }
+  });
+
+  form.querySelectorAll('.subject-chip').forEach(chip => {
+    chip.addEventListener('click', function(this: HTMLElement) {
+      const input = this.querySelector('input') as HTMLInputElement;
+      input.checked = !input.checked;
+      this.classList.toggle('selected');
+    });
+  });
+
+  form.querySelectorAll('.exam-chip').forEach(chip => {
+    chip.addEventListener('click', function(this: HTMLElement) {
+      const input = this.querySelector('input') as HTMLInputElement;
+      if (input.checked) return; // already selected
+      form.querySelectorAll('.exam-chip').forEach(c => c.classList.remove('selected'));
+      input.checked = true;
+      this.classList.add('selected');
+    });
+  });
+</script>
+
+<style>
+  .page-title {
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.25rem;
+  }
+  .page-sub {
+    font-size: 0.875rem;
+    color: #64748b;
+  }
+  .card {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(51, 65, 85, 0.4);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+  }
+  .card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin-bottom: 0.25rem;
+  }
+  .card-desc {
+    font-size: 0.825rem;
+    color: #64748b;
+  }
+  .form-input {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(51, 65, 85, 0.6);
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    color: #e2e8f0;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .form-input:focus {
+    border-color: rgba(59, 130, 246, 0.5);
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
+  }
+  .subject-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+  @media (min-width: 768px) {
+    .subject-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  .subject-chip {
+    display: block;
+    padding: 0.5rem 1rem;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(51, 65, 85, 0.5);
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    font-size: 0.825rem;
+    color: #94a3b8;
+    user-select: none;
+  }
+  .subject-chip:hover {
+    border-color: rgba(71, 85, 105, 0.8);
+    color: #e2e8f0;
+  }
+  .subject-chip.selected {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.4);
+    color: #93c5fd;
+  }
+  .exam-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+  @media (min-width: 768px) {
+    .exam-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  .exam-chip {
+    display: block;
+    padding: 0.5rem 1rem;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(51, 65, 85, 0.5);
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    font-size: 0.825rem;
+    color: #94a3b8;
+    user-select: none;
+  }
+  .exam-chip:hover {
+    border-color: rgba(71, 85, 105, 0.8);
+    color: #e2e8f0;
+  }
+  .exam-chip.selected {
+    background: rgba(236, 72, 153, 0.1);
+    border-color: rgba(236, 72, 153, 0.4);
+    color: #f9a8d4;
+  }
+  .chip-hint {
+    font-size: 0.7rem;
+    color: #475569;
+    margin-top: 0.5rem;
+  }
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #2563eb;
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.625rem 1.25rem;
+    border-radius: 0.5rem;
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: #3b82f6;
+  }
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .error {
+    color: #ef4444;
+    font-size: 0.8rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 0.375rem;
+  }
+</style>

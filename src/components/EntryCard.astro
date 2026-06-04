@@ -1,0 +1,265 @@
+---
+import { formatDisplayDate, isToday } from '../utils/date';
+import type { Entry } from '../types/entry';
+
+export interface Props {
+  entry: Entry;
+}
+
+const { entry } = Astro.props;
+const isTodaysEntry = isToday(entry.date);
+
+const STUDY_TYPE_LABELS: Record<string, string> = {
+  theory: '📖 Theory',
+  problem_solving: '✍️ Problem Solving',
+  revision: '🔄 Revision',
+  test: '📝 Test',
+  other: 'Other',
+};
+
+const STUDY_TYPE_VARIANTS: Record<string, string> = {
+  theory: 'badge-blue',
+  problem_solving: 'badge-amber',
+  revision: 'badge-purple',
+  test: 'badge-green',
+  other: 'badge-slate',
+};
+
+function subjectColor(subject: string): string {
+  const name = subject.toLowerCase();
+  if (name.includes('physics')) return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+  if (name.includes('chemistry')) return 'bg-green-500/10 text-green-400 border-green-500/20';
+  if (name.includes('math')) return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+  if (name.includes('biology')) return 'bg-pink-500/10 text-pink-400 border-pink-500/20';
+  if (name.includes('english')) return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+  return 'bg-slate-800 text-slate-400 border-slate-700';
+}
+---
+
+<div class="entry-card">
+  <div class="card-top">
+    <div class="card-left">
+      <span class:list={{ 'date-badge': true, 'today': isTodaysEntry }}>
+        {isTodaysEntry ? 'Today' : formatDisplayDate(entry.date)}
+      </span>
+      <span class="time">
+        {entry.createdAt
+          ? new Date(entry.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          : ''}
+      </span>
+    </div>
+    <div class="card-right">
+      {entry.hoursStudied > 0 && (
+        <span class="hours-badge">{entry.hoursStudied}h</span>
+      )}
+      <span class:list={{
+        'status-badge': true,
+        'done': entry.aiStatus === 'done',
+        'processing': entry.aiStatus === 'pending' || entry.aiStatus === 'processing',
+        'error': entry.aiStatus === 'error',
+      }}>
+        {entry.aiStatus === 'done' ? 'AI' : entry.aiStatus === 'error' ? 'Error' : '...'}
+      </span>
+    </div>
+  </div>
+
+  <!-- Meta row: study type + focus + exam -->
+  <div class="meta-row">
+    {entry.studyType && entry.studyType !== 'other' && (
+      <span class={`meta-badge ${STUDY_TYPE_VARIANTS[entry.studyType] || 'badge-slate'}`}>
+        {STUDY_TYPE_LABELS[entry.studyType] || entry.studyType}
+      </span>
+    )}
+    {entry.focusRating > 0 && (
+      <span class="focus-stars">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
+            fill={i < entry.focusRating ? '#f59e0b' : 'none'}
+            stroke={i < entry.focusRating ? '#f59e0b' : '#475569'}
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="star-icon"
+          >
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+        ))}
+      </span>
+    )}
+    {entry.examType && (
+      <span class="exam-badge">{entry.examType}</span>
+    )}
+  </div>
+
+  <p class="content-preview">{entry.content}</p>
+
+  {entry.subjects.length > 0 && (
+    <div class="tags-row">
+      {entry.subjects.map(subject => (
+        <span class={"tag " + subjectColor(subject)}>{subject}</span>
+      ))}
+    </div>
+  )}
+
+  {entry.chapters.length > 0 && (
+    <div class="tags-row">
+      {entry.chapters.slice(0, 4).map(chapter => (
+        <span class="tag bg-slate-800 text-slate-400 border-slate-700">{chapter}</span>
+      ))}
+      {entry.chapters.length > 4 && (
+        <span class="tag bg-slate-800 text-slate-500">+{entry.chapters.length - 4} more</span>
+      )}
+    </div>
+  )}
+</div>
+
+<style>
+  .entry-card {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(51, 65, 85, 0.4);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    transition: border-color 0.15s;
+  }
+  .entry-card:hover {
+    border-color: rgba(51, 65, 85, 0.8);
+  }
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  .card-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .card-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .date-badge {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #94a3b8;
+  }
+  .date-badge.today {
+    color: #60a5fa;
+  }
+  .time {
+    font-size: 0.75rem;
+    color: #475569;
+  }
+  .hours-badge {
+    font-size: 0.8rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: #94a3b8;
+    background: rgba(51, 65, 85, 0.3);
+    padding: 0.1rem 0.45rem;
+    border-radius: 0.25rem;
+  }
+  .status-badge {
+    font-size: 0.65rem;
+    padding: 0.125rem 0.45rem;
+    border-radius: 0.25rem;
+    font-weight: 500;
+  }
+  .status-badge.done {
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+  }
+  .status-badge.processing {
+    background: rgba(250, 204, 21, 0.15);
+    color: #facc15;
+  }
+  .status-badge.error {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+  }
+  .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+  .meta-badge {
+    font-size: 0.7rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.25rem;
+    font-weight: 500;
+  }
+  .badge-blue {
+    background: rgba(59, 130, 246, 0.12);
+    color: #93c5fd;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+  }
+  .badge-amber {
+    background: rgba(245, 158, 11, 0.12);
+    color: #fcd34d;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+  }
+  .badge-purple {
+    background: rgba(139, 92, 246, 0.12);
+    color: #c4b5fd;
+    border: 1px solid rgba(139, 92, 246, 0.2);
+  }
+  .badge-green {
+    background: rgba(34, 197, 94, 0.12);
+    color: #86efac;
+    border: 1px solid rgba(34, 197, 94, 0.2);
+  }
+  .badge-slate {
+    background: rgba(100, 116, 139, 0.12);
+    color: #94a3b8;
+    border: 1px solid rgba(100, 116, 139, 0.2);
+  }
+  .focus-stars {
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+  }
+  .star-icon {
+    display: block;
+  }
+  .exam-badge {
+    font-size: 0.65rem;
+    padding: 0.125rem 0.45rem;
+    border-radius: 0.25rem;
+    background: rgba(236, 72, 153, 0.1);
+    color: #f472b6;
+    border: 1px solid rgba(236, 72, 153, 0.2);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .content-preview {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    line-height: 1.6;
+    margin-bottom: 0.75rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .tags-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    margin-bottom: 0.375rem;
+  }
+  .tags-row:last-child {
+    margin-bottom: 0;
+  }
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.1rem 0.45rem;
+    border-radius: 0.25rem;
+    font-size: 0.7rem;
+    font-weight: 500;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+</style>

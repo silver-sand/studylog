@@ -1,0 +1,142 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ReviewCard from '../../components/ReviewCard.astro';
+import EmptyState from '../../components/EmptyState.astro';
+import { getDb } from '../../db';
+import { formatDisplayDate, getMonday, getSunday } from '../../utils/date';
+
+const { weekStart } = Astro.params;
+const db = getDb();
+const review = weekStart ? db.getReviewByWeek(weekStart) : null;
+const validDate = weekStart && /^\d{4}-\d{2}-\d{2}$/.test(weekStart);
+
+// Compute prev/next week for navigation
+function shiftWeek(dateStr: string, delta: number): string {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + delta);
+  return d.toISOString().split('T')[0];
+}
+const prevWeekStart = weekStart ? shiftWeek(weekStart, -7) : '';
+const nextWeekStart = weekStart ? shiftWeek(weekStart, 7) : '';
+const hasPrev = !!db.getReviewByWeek(prevWeekStart);
+const hasNext = !!db.getReviewByWeek(nextWeekStart);
+---
+
+<BaseLayout title={review ? 'Weekly Review' : 'Not Found'}>
+  <div class="max-w-3xl mx-auto">
+    {!validDate ? (
+      <EmptyState
+        title="Invalid Date"
+        description="The week identifier doesn't look like a valid date."
+      />
+    ) : !review ? (
+      <EmptyState
+        title="No Review Found"
+        description={`No review for the week starting ${weekStart}. Go to the Weekly page to generate one.`}
+      />
+    ) : (
+      <>
+        <div class="mb-8">
+          <a href="/weekly" class="back-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            Back to Weekly Reviews
+          </a>
+          <div class="review-header">
+            <div class="review-nav">
+              {hasPrev ? (
+                <a href={`/weekly/${prevWeekStart}`} class="nav-arrow" title="Previous week">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                </a>
+              ) : (
+                <span class="nav-arrow disabled">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                </span>
+              )}
+            </div>
+            <div class="review-header-text">
+              <h1 class="page-title">Weekly Review</h1>
+              <p class="page-sub">
+                {formatDisplayDate(review.weekStart)} — {formatDisplayDate(review.weekEnd)}
+              </p>
+            </div>
+            <div class="review-nav">
+              {hasNext ? (
+                <a href={`/weekly/${nextWeekStart}`} class="nav-arrow" title="Next week">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                </a>
+              ) : (
+                <span class="nav-arrow disabled">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <ReviewCard review={review} />
+      </>
+    )}
+  </div>
+</BaseLayout>
+
+<style>
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+    color: #60a5fa;
+    text-decoration: none;
+    margin-bottom: 0.75rem;
+    transition: color 0.15s;
+  }
+  .back-link:hover {
+    color: #93c5fd;
+  }
+  .page-title {
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.25rem;
+  }
+  .page-sub {
+    font-size: 0.875rem;
+    color: #64748b;
+  }
+  .review-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .review-header-text {
+    flex: 1;
+  }
+  .review-nav {
+    display: flex;
+    align-items: center;
+  }
+  .nav-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.5rem;
+    color: #64748b;
+    transition: all 0.15s ease;
+    text-decoration: none;
+  }
+  .nav-arrow:hover {
+    color: #e2e8f0;
+    background: rgba(51, 65, 85, 0.4);
+  }
+  .nav-arrow.disabled {
+    opacity: 0.25;
+    cursor: default;
+  }
+  .nav-arrow.disabled:hover {
+    color: #64748b;
+    background: transparent;
+  }
+</style>

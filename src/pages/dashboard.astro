@@ -1,0 +1,92 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import StreakDisplay from '../components/StreakDisplay.astro';
+import WeeklyProgress from '../components/WeeklyProgress.astro';
+import StatsCard from '../components/StatsCard.astro';
+import SubjectHoursChart from '../components/SubjectHoursChart.astro';
+import StudyTrendChart from '../components/StudyTrendChart.astro';
+import StudyTypeBreakdown from '../components/StudyTypeBreakdown.astro';
+import FocusTrend from '../components/FocusTrend.astro';
+import WeekComparison from '../components/WeekComparison.astro';
+import { getDashboardStats } from '../services/stats-service';
+
+const stats = getDashboardStats();
+---
+
+<BaseLayout title="Dashboard">
+  <div class="max-w-4xl mx-auto">
+    <div class="mb-8">
+      <h1 class="page-title">Dashboard</h1>
+      <p class="page-sub">Your study progress at a glance</p>
+    </div>
+
+    <!-- Top Row: Streak + Progress -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+      <div>
+        <StreakDisplay streak={stats.streak} />
+      </div>
+      <div class="md:col-span-2">
+        <WeeklyProgress
+          currentHours={stats.totalHoursThisWeek}
+          targetHours={stats.targetHoursPerWeek}
+          percent={stats.weeklyProgressPercent}
+        />
+      </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <StatsCard
+        label="This Week"
+        value={`${stats.entriesThisWeek}`}
+        subtext="study days"
+      />
+      <StatsCard
+        label="This Month"
+        value={`${stats.entriesThisMonth}`}
+        subtext="entries logged"
+      />
+      <StatsCard
+        label="Total"
+        value={`${stats.totalEntries}`}
+        subtext="entries all time"
+      />
+      <StatsCard
+        label="Hours"
+        value={`${stats.totalHoursThisWeek.toFixed(1)}`}
+        subtext={`of ${stats.targetHoursPerWeek}h target`}
+      />
+    </div>
+
+    <!-- Two-column chart row -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+      <StudyTrendChart data={stats.dailyTrend} />
+      <StudyTypeBreakdown data={stats.typeDistribution} />
+    </div>
+
+    <!-- Two-column row: subject hours + week comparison -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+      <SubjectHoursChart data={stats.subjectBreakdown} />
+      <WeekComparison data={stats.weekComparison} />
+    </div>
+
+    <!-- Focus trend row -->
+    <div class="mb-6">
+      <FocusTrend data={stats.focusTrend} />
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .page-title {
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.25rem;
+  }
+  .page-sub {
+    font-size: 0.875rem;
+    color: #64748b;
+  }
+</style>

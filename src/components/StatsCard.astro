@@ -1,0 +1,48 @@
+---
+export interface Props {
+  label: string;
+  value: string | number;
+  subtext?: string;
+}
+
+const { label, value, subtext } = Astro.props;
+---
+
+<div class="stat-card group">
+  <p class="stat-label">{label}</p>
+  <p class="stat-value">{value}</p>
+  {subtext && <p class="stat-subtext">{subtext}</p>}
+</div>
+
+<style>
+  .stat-card {
+    background: #0f172a;
+    border: 1px solid rgba(51, 65, 85, 0.4);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    transition: border-color 0.15s;
+  }
+  .stat-card:hover {
+    border-color: rgba(51, 65, 85, 0.8);
+  }
+  .stat-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+  }
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1.2;
+  }
+  .stat-subtext {
+    font-size: 0.75rem;
+    color: #475569;
+    margin-top: 0.25rem;
+  }
+</style>

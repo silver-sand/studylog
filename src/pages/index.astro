@@ -1,0 +1,216 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import EntryForm from '../components/EntryForm.astro';
+import EntryList from '../components/EntryList.astro';
+import DailyReviewCard from '../components/DailyReviewCard.astro';
+import { createAIServiceFromEnv } from '../ai';
+import { getDb } from '../db';
+import { formatDate } from '../utils/date';
+import { getDailyReviewByDate } from '../services/daily-review-service';
+
+const db = getDb();
+const today = formatDate(new Date());
+const todayEntry = db.getEntryByDate(today);
+const recentEntries = db.listEntries({ limit: 50 });
+const settings = db.getSettings();
+const ai = createAIServiceFromEnv();
+const aiProvider = ai.constructor.name;
+
+// Try to load today's daily review
+const todayReview = getDailyReviewByDate(today);
+const hasEntriesToday = recentEntries.some(e => e.date === today);
+---
+
+<BaseLayout title="Daily Log">
+  <div class="max-w-3xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="page-title">Daily Study Log</h1>
+      <p class="page-sub">
+        {todayEntry ? 'Update today\'s entry' : 'What did you study today?'}
+      </p>
+      <p class="ai-badge">
+        AI: {aiProvider === 'MockAIService' ? 'Offline mode' : 'Gemini'}
+      </p>
+    </div>
+
+    <!-- Entry Form -->
+    <div class="mb-8">
+      <EntryForm todayEntry={todayEntry ? {
+        id: todayEntry.id,
+        date: todayEntry.date,
+        content: todayEntry.content,
+        hoursStudied: todayEntry.hoursStudied,
+        studyType: todayEntry.studyType,
+        focusRating: todayEntry.focusRating,
+        examType: todayEntry.examType,
+      } : null} />
+    </div>
+
+    <!-- Daily Review -->
+    {hasEntriesToday && (
+      <div class="mb-8" id="daily-review-section">
+        <div class="daily-review-actions">
+          {todayReview ? (
+            <DailyReviewCard review={todayReview} />
+          ) : (
+            <div class="generate-prompt">
+              <p class="generate-text">You have entries for today. Generate an AI-powered daily review to summarize your progress.</p>
+              <button id="generate-daily-btn" class="btn-secondary">
+                Generate Daily Review
+              </button>
+            </div>
+          )}
+          {todayReview && (
+            <button id="refresh-daily-btn" class="btn-ghost mt-3">
+              Refresh Review
+            </button>
+          )}
+        </div>
+      </div>
+    )}
+
+    <!-- Recent Entries -->
+    <div>
+      <h2 class="section-title">Recent Entries</h2>
+      <EntryList entries={recentEntries} />
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  const generateBtn = document.getElementById('generate-daily-btn');
+  const refreshBtn = document.getElementById('refresh-daily-btn');
+  const section = document.getElementById('daily-review-section');
+
+  async function loadDailyReview() {
+    if (!section) return;
+    section.innerHTML = '<p class="text-sm text-slate-500">Generating daily review...</p>';
+
+    try {
+      const res = await fetch('/api/daily', { method: 'POST' });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Failed' }));
+        throw new Error(err.error || 'Failed to generate');
+      }
+      const review = await res.json();
+
+      // Re-render the section with the new review
+      // We need to fetch the page partial — simplest: reload
+      window.location.reload();
+    } catch (err) {
+      section.innerHTML = `
+        <div class="p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-400">
+          Failed to generate daily review: ${err.message}
+        </div>
+        <button onclick="loadDailyReview()" class="btn-secondary mt-2">
+          Try Again
+        </button>
+      `;
+    }
+  }
+
+  generateBtn?.addEventListener('click', loadDailyReview);
+  refreshBtn?.addEventListener('click', loadDailyReview);
+
+  // Auto-dismiss entry form success — refresh daily review when entries change
+  const form = document.querySelector('form');
+  form?.addEventListener('submit', async (e) => {
+    // After a short delay, check if a daily review should appear
+    setTimeout(async () => {
+      if (generateBtn && section) {
+        // Check if entries exist now
+        try {
+          const res = await fetch('/api/daily?date=' + new Date().toISOString().split('T')[0]);
+          if (res.ok) {
+            const review = await res.json();
+            if (review && review.id) {
+              window.location.reload();
+            }
+          }
+        } catch {}
+      }
+    }, 2000);
+  });
+</script>
+
+<style>
+  .page-title {
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.25rem;
+  }
+  .page-sub {
+    font-size: 0.875rem;
+    color: #64748b;
+  }
+  .ai-badge {
+    font-size: 0.7rem;
+    color: #475569;
+    margin-top: 0.25rem;
+  }
+  .section-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.75rem;
+  }
+  .daily-review-actions {
+    display: flex;
+    flex-direction: column;
+  }
+  .generate-prompt {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(51, 65, 85, 0.4);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    text-align: center;
+  }
+  .generate-text {
+    font-size: 0.875rem;
+    color: #94a3b8;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+  }
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(59, 130, 246, 0.1);
+    color: #93c5fd;
+    font-size: 0.825rem;
+    font-weight: 500;
+    padding: 0.6rem 1.25rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-secondary:hover {
+    background: rgba(59, 130, 246, 0.2);
+  }
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    color: #64748b;
+    font-size: 0.75rem;
+    padding: 0.4rem 1rem;
+    border-radius: 0.375rem;
+    border: 1px solid rgba(51, 65, 85, 0.4);
+    cursor: pointer;
+    transition: all 0.15s;
+    align-self: flex-start;
+  }
+  .btn-ghost:hover {
+    color: #94a3b8;
+    border-color: rgba(71, 85, 105, 0.6);
+  }
+  .mt-2 { margin-top: 0.5rem; }
+  .mt-3 { margin-top: 0.75rem; }
+</style>

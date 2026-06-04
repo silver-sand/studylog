@@ -1,0 +1,248 @@
+---
+import type { DailyReview } from '../types/review';
+
+export interface Props {
+  review: DailyReview;
+}
+
+const { review } = Astro.props;
+
+function mdToHtml(md: string): string {
+  let html = md
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+  html = html.replace(/`(.+?)`/g, '<code>$1</code>');
+  html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+  html = html.replace(/((?:<li>.*?<\/li>\n?)+)/g, '<ul>$1</ul>');
+  html = html.replace(/^---$/gm, '<hr>');
+  html = html.replace(/\n\n/g, '</p><p>');
+  html = html.replace(/\n/g, '<br>');
+
+  if (!html.startsWith('<h') && !html.startsWith('<ul')) {
+    html = '<p>' + html + '</p>';
+  }
+
+  html = html.replace(/<p><\/p>/g, '');
+  html = html.replace(/<br><\/p>/g, '</p>');
+  html = html.replace(/<p><br>/g, '<p>');
+
+  return html;
+}
+
+const renderedContent = mdToHtml(review.content);
+---
+
+<div class="daily-review-card">
+  <div class="daily-review-header">
+    <h2 class="daily-review-title">Today's Review</h2>
+    {review.totalHours > 0 && (
+      <span class="hours-badge">{Math.round(review.totalHours * 10) / 10}h studied</span>
+    )}
+  </div>
+
+  <div class="daily-review-content" set:html={renderedContent}></div>
+
+  {review.insights.length > 0 && (
+    <div class="insights-section">
+      <h3 class="section-label">Insights</h3>
+      <ul class="insights-list">
+        {review.insights.map(insight => (
+          <li>{insight}</li>
+        ))}
+      </ul>
+    </div>
+  )}
+
+  {review.subjects.length > 0 && (
+    <div class="subjects-section">
+      <h3 class="section-label">Subjects</h3>
+      <div class="subjects-row">
+        {review.subjects.map(subject => (
+          <span class="subject-badge">{subject}</span>
+        ))}
+      </div>
+    </div>
+  )}
+
+  {review.strengths.length > 0 && (
+    <div class="strengths-section">
+      <h3 class="section-label">Strengths</h3>
+      <ul class="strengths-list">
+        {review.strengths.map(s => (
+          <li class="positive">{s}</li>
+        ))}
+      </ul>
+    </div>
+  )}
+
+  {review.weaknesses.length > 0 && (
+    <div class="weaknesses-section">
+      <h3 class="section-label">To Improve</h3>
+      <ul class="weaknesses-list">
+        {review.weaknesses.map(w => (
+          <li class="negative">{w}</li>
+        ))}
+      </ul>
+    </div>
+  )}
+
+  {review.recommendations.length > 0 && (
+    <div class="recs-section">
+      <h3 class="section-label">Recommendations</h3>
+      <ul class="recs-list">
+        {review.recommendations.map(r => (
+          <li>{r}</li>
+        ))}
+      </ul>
+    </div>
+  )}
+</div>
+
+<style>
+  .daily-review-card {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(51, 65, 85, 0.4);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+  }
+  .daily-review-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  .daily-review-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .hours-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #93c5fd;
+    background: rgba(59, 130, 246, 0.1);
+    padding: 0.2rem 0.6rem;
+    border-radius: 0.375rem;
+  }
+  .daily-review-content :global(h2) {
+    color: #e2e8f0;
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    margin-top: 1rem;
+  }
+  .daily-review-content :global(h2:first-child) {
+    margin-top: 0;
+  }
+  .daily-review-content :global(h1) {
+    color: #f1f5f9;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+  }
+  .daily-review-content :global(p) {
+    color: #94a3b8;
+    line-height: 1.7;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+  }
+  .daily-review-content :global(ul) {
+    list-style: none;
+    padding: 0;
+    margin: 0.25rem 0 0.5rem 0;
+  }
+  .daily-review-content :global(li) {
+    color: #94a3b8;
+    padding: 0.15rem 0;
+    padding-left: 1.25rem;
+    position: relative;
+    font-size: 0.85rem;
+  }
+  .daily-review-content :global(li::before) {
+    content: '';
+    width: 4px;
+    height: 4px;
+    background: #3b82f6;
+    border-radius: 50%;
+    position: absolute;
+    left: 0.4rem;
+    top: 0.55rem;
+  }
+  .section-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.5rem;
+  }
+  .insights-section,
+  .subjects-section,
+  .strengths-section,
+  .weaknesses-section,
+  .recs-section {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(51, 65, 85, 0.25);
+  }
+  .insights-list,
+  .strengths-list,
+  .weaknesses-list,
+  .recs-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .insights-list li,
+  .strengths-list li,
+  .weaknesses-list li,
+  .recs-list li {
+    font-size: 0.825rem;
+    color: #94a3b8;
+    padding: 0.2rem 0;
+    padding-left: 1rem;
+    position: relative;
+  }
+  .insights-list li::before,
+  .strengths-list li::before,
+  .weaknesses-list li::before,
+  .recs-list li::before {
+    content: '';
+    width: 3px;
+    height: 3px;
+    background: #475569;
+    border-radius: 50%;
+    position: absolute;
+    left: 0.25rem;
+    top: 0.55rem;
+  }
+  .strengths-list li.positive::before {
+    background: #22c55e;
+  }
+  .weaknesses-list li.negative::before {
+    background: #ef4444;
+  }
+  .subjects-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .subject-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.55rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background: rgba(99, 102, 241, 0.1);
+    color: #a5b4fc;
+    border: 1px solid rgba(99, 102, 241, 0.2);
+  }
+</style>

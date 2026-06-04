@@ -1,0 +1,213 @@
+---
+import { formatFullDate } from '../utils/date';
+import type { WeeklyReview } from '../types/review';
+
+export interface Props {
+  review: WeeklyReview;
+}
+
+const { review } = Astro.props;
+
+function mdToHtml(md: string): string {
+  // Escape HTML entities first
+  let html = md
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  // Bold
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+  // Convert ## headings
+  html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+  // Convert inline code
+  html = html.replace(/`(.+?)`/g, '<code>$1</code>');
+
+  // Convert - list items
+  html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+
+  // Wrap consecutive <li> in <ul>
+  html = html.replace(/((?:<li>.*?<\/li>\n?)+)/g, '<ul>$1</ul>');
+
+  // Horizontal rules
+  html = html.replace(/^---$/gm, '<hr>');
+
+  // Paragraphs: double newline = paragraph break
+  html = html.replace(/\n\n/g, '</p><p>');
+
+  // Single newline = line break (within a paragraph context)
+  html = html.replace(/\n/g, '<br>');
+
+  // Wrap in paragraph if not already wrapped
+  if (!html.startsWith('<h') && !html.startsWith('<ul')) {
+    html = '<p>' + html + '</p>';
+  }
+
+  // Clean up empty paragraphs
+  html = html.replace(/<p><\/p>/g, '');
+  html = html.replace(/<br><\/p>/g, '</p>');
+  html = html.replace(/<p><br>/g, '<p>');
+
+  return html;
+}
+
+const renderedContent = mdToHtml(review.content);
+---
+
+<div class="review-card">
+  <div class="review-content" set:html={renderedContent}></div>
+
+  {review.insights.length > 0 && (
+    <div class="insights-section">
+      <h3 class="insights-title">Key Insights</h3>
+      <ul class="insights-list">
+        {review.insights.map(insight => (
+          <li>{insight}</li>
+        ))}
+      </ul>
+    </div>
+  )}
+
+  <div class="review-footer">
+    <span>Generated {formatFullDate(review.createdAt)}</span>
+    <span class="dot">•</span>
+    <span>Based on {review.entryIds?.length || 0} entries</span>
+  </div>
+</div>
+
+<style>
+  .review-card {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(51, 65, 85, 0.4);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+  }
+  .review-content :global(h1) {
+    color: #f1f5f9;
+    font-size: 1.375rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    margin-top: 1.5rem;
+  }
+  .review-content :global(h1:first-child) {
+    margin-top: 0;
+  }
+  .review-content :global(h2) {
+    color: #e2e8f0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    margin-top: 1.25rem;
+  }
+  .review-content :global(h3) {
+    color: #cbd5e1;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    margin-top: 1rem;
+  }
+  .review-content :global(p) {
+    color: #94a3b8;
+    line-height: 1.7;
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+  }
+  .review-content :global(strong) {
+    color: #e2e8f0;
+  }
+  .review-content :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.75rem 0;
+  }
+  .review-content :global(th) {
+    background: rgba(51, 65, 85, 0.4);
+    color: #cbd5e1;
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.8rem;
+  }
+  .review-content :global(td) {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid rgba(51, 65, 85, 0.3);
+    color: #94a3b8;
+    font-size: 0.8rem;
+  }
+  .review-content :global(ul) {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0;
+  }
+  .review-content :global(li) {
+    color: #94a3b8;
+    padding: 0.2rem 0;
+    padding-left: 1.25rem;
+    position: relative;
+    font-size: 0.85rem;
+  }
+  .review-content :global(li::before) {
+    content: '';
+    width: 4px;
+    height: 4px;
+    background: #3b82f6;
+    border-radius: 50%;
+    position: absolute;
+    left: 0.4rem;
+    top: 0.6rem;
+  }
+  .review-content :global(hr) {
+    border: 0;
+    border-top: 1px solid rgba(51, 65, 85, 0.4);
+    margin: 1rem 0;
+  }
+  .insights-section {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(51, 65, 85, 0.3);
+  }
+  .insights-title {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.75rem;
+  }
+  .insights-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .insights-list li {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    padding: 0.25rem 0;
+    padding-left: 1rem;
+    position: relative;
+  }
+  .insights-list li::before {
+    content: '';
+    width: 3px;
+    height: 3px;
+    background: #475569;
+    border-radius: 50%;
+    position: absolute;
+    left: 0.25rem;
+    top: 0.6rem;
+  }
+  .review-footer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    font-size: 0.75rem;
+    color: #475569;
+  }
+  .dot {
+    color: #334155;
+  }
+</style>

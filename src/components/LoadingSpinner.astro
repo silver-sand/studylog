@@ -1,0 +1,32 @@
+<div class="spinner">
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+</div>
+
+<style>
+  .spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    padding: 1rem;
+  }
+  .dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: #3b82f6;
+    animation: bounce 1.4s ease-in-out infinite;
+  }
+  .dot:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+  .dot:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+  @keyframes bounce {
+    0%, 80%, 100% { opacity: 0.2; transform: translateY(0); }
+    40% { opacity: 1; transform: translateY(-4px); }
+  }
+</style>

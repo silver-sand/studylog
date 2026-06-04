@@ -1,0 +1,118 @@
+---
+import type { WeekComparisonData } from '../services/stats-service';
+
+export interface Props {
+  data: WeekComparisonData;
+}
+
+const { data } = Astro.props;
+const isUp = data.change > 0;
+const isDown = data.change < 0;
+const arrowSvg = isUp
+  ? `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>`
+  : isDown
+  ? `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`
+  : '';
+---
+
+<div class="card">
+  <h3 class="card-title">Week Over Week</h3>
+  <div class="columns">
+    <div class="col prev">
+      <span class="col-label">Last Week</span>
+      <span class="col-hours">{data.previous.hours}h</span>
+      <span class="col-days">{data.previous.days} days</span>
+    </div>
+    <div class="vs">
+      <span class="arrow-icon" set:html={arrowSvg}></span>
+      <span class="change" class:list={{ up: isUp, down: isDown, flat: !isUp && !isDown }}>
+        {data.change > 0 ? '+' : ''}{data.change}h
+      </span>
+      <span class="change-pct" class:list={{ up: isUp, down: isDown }}>
+        {data.changePercent > 0 ? '+' : ''}{data.changePercent}%
+      </span>
+    </div>
+    <div class="col current">
+      <span class="col-label">This Week</span>
+      <span class="col-hours">{data.current.hours}h</span>
+      <span class="col-days">{data.current.days} days</span>
+    </div>
+  </div>
+</div>
+
+<style>
+  .card {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(51, 65, 85, 0.4);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+  }
+  .card-title {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+    text-align: center;
+  }
+  .columns {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+  }
+  .col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+  }
+  .col-label {
+    font-size: 0.65rem;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+  }
+  .col-hours {
+    font-size: 1.25rem;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    color: #e2e8f0;
+  }
+  .col-days {
+    font-size: 0.7rem;
+    color: #64748b;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .prev .col-hours,
+  .prev .col-days {
+    color: #64748b;
+  }
+  .vs {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    flex-shrink: 0;
+    min-width: 5rem;
+  }
+  .arrow-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .change {
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .change-pct {
+    font-size: 0.65rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .up { color: #22c55e; }
+  .down { color: #ef4444; }
+  .flat { color: #64748b; }
+</style>

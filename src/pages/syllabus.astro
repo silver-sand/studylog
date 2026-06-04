@@ -1,0 +1,327 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SyllabusCard from '../components/SyllabusCard.astro';
+import ChapterList from '../components/ChapterList.astro';
+import { getDb } from '../db';
+import { EXAM_TYPES_FOR_SYLLABUS } from '../utils/syllabus-data';
+
+const db = getDb();
+db.seedSyllabusData();
+
+interface ExamData {
+  key: string;
+  label: string;
+  progress: import('../types/review').SyllabusProgress[];
+  chapters: import('../types/review').SyllabusChapter[];
+  totalChapters: number;
+  completedChapters: number;
+  overallPercent: number;
+}
+
+const exams: ExamData[] = EXAM_TYPES_FOR_SYLLABUS.map((exam) => {
+  const progress = db.getSyllabusProgress(exam.key);
+  const chapters = db.getSyllabus(exam.key);
+  const totalChapters = progress.reduce((s, p) => s + p.total, 0);
+  const completedChapters = progress.reduce((s, p) => s + p.completed, 0);
+  const overallPercent = totalChapters > 0 ? Math.round((completedChapters / totalChapters) * 100) : 0;
+  return {
+    ...exam,
+    progress,
+    chapters,
+    totalChapters,
+    completedChapters,
+    overallPercent,
+  };
+});
+
+const defaultExam = exams[0];
+const defaultKey = defaultExam.key;
+---
+
+<BaseLayout title="Syllabus Tracker">
+  <div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="page-title">Syllabus Tracker</h1>
+      <p class="page-sub">Track your syllabus completion across subjects and chapters</p>
+    </div>
+
+    <!-- Exam Tabs -->
+    <div class="exam-tabs" role="tablist">
+      {exams.map((exam) => (
+        <button
+          class:list={{ 'exam-tab': true, active: exam.key === defaultKey }}
+          data-exam={exam.key}
+          role="tab"
+          aria-selected={exam.key === defaultKey}
+        >
+          {exam.label}
+          <span class="exam-tab-count">{exam.overallPercent}%</span>
+        </button>
+      ))}
+    </div>
+
+    <!-- Per-Exam Content -->
+    {exams.map((exam) => (
+      <div
+        class:list={{ 'exam-content': true, hidden: exam.key !== defaultKey }}
+        data-exam-content={exam.key}
+      >
+        <!-- Overall progress summary -->
+        <div class="overall-bar-wrap">
+          <div class="overall-bar-label">
+            <span>Overall Progress</span>
+            <span class="overall-bar-numbers">{exam.completedChapters}/{exam.totalChapters} chapters ({exam.overallPercent}%)</span>
+          </div>
+          <div class="overall-bar-bg">
+            <div class="overall-bar-fill" style={`width: ${exam.overallPercent}%`}></div>
+          </div>
+        </div>
+
+        <!-- Subject Cards Grid -->
+        <div class="subject-grid">
+          {exam.progress.map((p) => {
+            const subjectChapters = exam.chapters.filter(
+              (ch) => ch.subject === p.subject
+            );
+            return (
+              <div class="subject-block">
+                <div
+                  class="syllabus-card-wrap"
+                  data-subject={p.subject}
+                  role="button"
+                  tabindex="0"
+                >
+                  <SyllabusCard subject={p.subject} progress={p} isExpanded={false} onToggle="" />
+                </div>
+                <div
+                  class="chapter-list-wrap hidden"
+                  data-chapters={p.subject}
+                >
+                  <ChapterList chapters={subjectChapters} subject={p.subject} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    ))}
+  </div>
+</BaseLayout>
+
+<script>
+  // ── Exam tab switching ──
+  const tabs = document.querySelectorAll('.exam-tab');
+  const contents = new Map();
+  document.querySelectorAll('.exam-content').forEach((el) => {
+    contents.set(el.dataset.examContent, el);
+  });
+
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const exam = tab.dataset.exam;
+      tabs.forEach((t) => t.classList.remove('active'));
+      tab.classList.add('active');
+      contents.forEach((content, key) => {
+        content.classList.toggle('hidden', key !== exam);
+      });
+    });
+  });
+
+  // ── Card expand/collapse ──
+  document.querySelectorAll('.syllabus-card-wrap').forEach((wrap) => {
+    const subject = wrap.dataset.subject;
+    const chapterList = document.querySelector(
+      `[data-chapters="${CSS.escape(subject)}"]`
+    );
+
+    function toggle() {
+      if (!chapterList) return;
+      const isHidden = chapterList.classList.toggle('hidden');
+      wrap.classList.toggle('expanded', !isHidden);
+    }
+
+    wrap.addEventListener('click', (e) => {
+      if (e.target.closest('.chapter-row')) return;
+      toggle();
+    });
+
+    wrap.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggle();
+      }
+    });
+  });
+
+  // ── Chapter status update ──
+  document.querySelectorAll('.status-btn').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const row = btn.closest('.chapter-row');
+      if (!row) return;
+      const chapterId = row.dataset.chapterId;
+      const status = btn.dataset.status;
+      if (!chapterId || !status) return;
+
+      // Optimistic UI update
+      const siblings = row.querySelectorAll('.status-btn');
+      siblings.forEach((s) => s.classList.remove('active'));
+      const colors = { not_started: '#64748b', in_progress: '#f59e0b', completed: '#22c55e' };
+      btn.classList.add('active');
+      if (status in colors) {
+        btn.style.borderColor = colors[status as keyof typeof colors];
+        btn.style.color = colors[status as keyof typeof colors];
+      }
+
+      try {
+        const res = await fetch('/api/syllabus', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: chapterId, status }),
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: 'Update failed' }));
+          throw new Error(err.error);
+        }
+
+        // Reload to refresh progress bars
+        setTimeout(() => window.location.reload(), 300);
+      } catch (err) {
+        // Revert optimistic update
+        siblings.forEach((s) => s.classList.remove('active'));
+        alert('Failed to update status: ' + err.message);
+      }
+    });
+  });
+</script>
+
+<style>
+  .page-title {
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.25rem;
+  }
+  .page-sub {
+    font-size: 0.875rem;
+    color: #64748b;
+  }
+
+  /* Exam tabs */
+  .exam-tabs {
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 1.5rem;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(51, 65, 85, 0.4);
+    border-radius: 0.625rem;
+    padding: 0.25rem;
+    overflow-x: auto;
+  }
+  .exam-tab {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #64748b;
+    background: transparent;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+  }
+  .exam-tab:hover {
+    color: #94a3b8;
+  }
+  .exam-tab.active {
+    color: #f1f5f9;
+    background: rgba(59, 130, 246, 0.15);
+  }
+  .exam-tab-count {
+    font-size: 0.65rem;
+    font-family: 'JetBrains Mono', monospace;
+    opacity: 0.7;
+  }
+
+  /* Overall progress bar */
+  .overall-bar-wrap {
+    margin-bottom: 1.5rem;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(51, 65, 85, 0.4);
+    border-radius: 0.75rem;
+    padding: 1rem 1.25rem;
+  }
+  .overall-bar-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin-bottom: 0.5rem;
+  }
+  .overall-bar-numbers {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: #64748b;
+  }
+  .overall-bar-bg {
+    width: 100%;
+    height: 0.5rem;
+    background: rgba(51, 65, 85, 0.5);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .overall-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Subject grid */
+  .subject-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  @media (min-width: 640px) {
+    .subject-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .subject-block {
+    display: flex;
+    flex-direction: column;
+  }
+  .syllabus-card-wrap {
+    cursor: pointer;
+    user-select: none;
+  }
+  .syllabus-card-wrap:focus-visible {
+    outline: 2px solid rgba(59, 130, 246, 0.5);
+    outline-offset: 2px;
+    border-radius: 0.75rem;
+  }
+
+  .chapter-list-wrap {
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+  .hidden {
+    display: none;
+  }
+
+  .exam-content {
+    transition: opacity 0.15s ease;
+  }
+</style>
