@@ -23,8 +23,11 @@ export function createAIServiceFromEnv(): AIService {
   const apiKey = import.meta.env.GEMINI_API_KEY as string | undefined;
   const modelName = import.meta.env.AI_MODEL as string | undefined;
 
+  // Auto-detect gemini if API key is set, even without explicit AI_PROVIDER
+  const resolvedProvider = provider || (apiKey ? 'gemini' : 'mock');
+
   return createAIService({
-    provider: (provider as 'mock' | 'gemini') || 'mock',
+    provider: resolvedProvider as 'mock' | 'gemini',
     apiKey,
     modelName,
   });
