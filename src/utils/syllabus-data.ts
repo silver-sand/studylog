@@ -305,6 +305,188 @@ export const EXAM_SYLLABI: SyllabusChapter[] = [
   { examType: 'MHT_CET', subject: 'Biology', chapter: 'Genetics and Biotechnology', sortOrder: 8 },
   { examType: 'MHT_CET', subject: 'Biology', chapter: 'Biology in Human Welfare', sortOrder: 9 },
   { examType: 'MHT_CET', subject: 'Biology', chapter: 'Ecology', sortOrder: 10 },
+
+  // ═══════════════════════════════════════════
+  // CUET (Common University Entrance Test)
+  // ═══════════════════════════════════════════
+
+  // ── English Language ──
+  { examType: 'CUET', subject: 'English Language', chapter: 'Reading Comprehension', sortOrder: 1 },
+  { examType: 'CUET', subject: 'English Language', chapter: 'Vocabulary and Word Meaning', sortOrder: 2 },
+  { examType: 'CUET', subject: 'English Language', chapter: 'Grammar and Sentence Correction', sortOrder: 3 },
+  { examType: 'CUET', subject: 'English Language', chapter: 'Para Jumbles', sortOrder: 4 },
+  { examType: 'CUET', subject: 'English Language', chapter: 'Cloze Test', sortOrder: 5 },
+  { examType: 'CUET', subject: 'English Language', chapter: 'Verbal Analogies', sortOrder: 6 },
+  { examType: 'CUET', subject: 'English Language', chapter: 'Idioms and Phrases', sortOrder: 7 },
+  { examType: 'CUET', subject: 'English Language', chapter: 'Error Spotting', sortOrder: 8 },
+
+  // ── General Knowledge ──
+  { examType: 'CUET', subject: 'General Knowledge', chapter: 'Indian History and Culture', sortOrder: 1 },
+  { examType: 'CUET', subject: 'General Knowledge', chapter: 'Indian Geography', sortOrder: 2 },
+  { examType: 'CUET', subject: 'General Knowledge', chapter: 'Indian Polity and Constitution', sortOrder: 3 },
+  { examType: 'CUET', subject: 'General Knowledge', chapter: 'Indian Economy', sortOrder: 4 },
+  { examType: 'CUET', subject: 'General Knowledge', chapter: 'Science and Technology', sortOrder: 5 },
+  { examType: 'CUET', subject: 'General Knowledge', chapter: 'Awards, Honors and Sports', sortOrder: 6 },
+  { examType: 'CUET', subject: 'General Knowledge', chapter: 'Books and Authors', sortOrder: 7 },
+
+  // ── Logical Reasoning ──
+  { examType: 'CUET', subject: 'Logical Reasoning', chapter: 'Analogies and Classification', sortOrder: 1 },
+  { examType: 'CUET', subject: 'Logical Reasoning', chapter: 'Coding-Decoding', sortOrder: 2 },
+  { examType: 'CUET', subject: 'Logical Reasoning', chapter: 'Blood Relations', sortOrder: 3 },
+  { examType: 'CUET', subject: 'Logical Reasoning', chapter: 'Direction Sense', sortOrder: 4 },
+  { examType: 'CUET', subject: 'Logical Reasoning', chapter: 'Syllogisms', sortOrder: 5 },
+  { examType: 'CUET', subject: 'Logical Reasoning', chapter: 'Puzzles and Seating Arrangement', sortOrder: 6 },
+  { examType: 'CUET', subject: 'Logical Reasoning', chapter: 'Statement and Assumptions', sortOrder: 7 },
+  { examType: 'CUET', subject: 'Logical Reasoning', chapter: 'Data Sufficiency', sortOrder: 8 },
+
+  // ── Numerical Ability ──
+  { examType: 'CUET', subject: 'Numerical Ability', chapter: 'Number System', sortOrder: 1 },
+  { examType: 'CUET', subject: 'Numerical Ability', chapter: 'Averages and Percentages', sortOrder: 2 },
+  { examType: 'CUET', subject: 'Numerical Ability', chapter: 'Profit, Loss and Discount', sortOrder: 3 },
+  { examType: 'CUET', subject: 'Numerical Ability', chapter: 'Time, Speed and Distance', sortOrder: 4 },
+  { examType: 'CUET', subject: 'Numerical Ability', chapter: 'Time and Work', sortOrder: 5 },
+  { examType: 'CUET', subject: 'Numerical Ability', chapter: 'Ratio, Proportion and Mixtures', sortOrder: 6 },
+  { examType: 'CUET', subject: 'Numerical Ability', chapter: 'Algebra and Linear Equations', sortOrder: 7 },
+  { examType: 'CUET', subject: 'Numerical Ability', chapter: 'Geometry and Mensuration', sortOrder: 8 },
+  { examType: 'CUET', subject: 'Numerical Ability', chapter: 'Probability and Statistics', sortOrder: 9 },
+  { examType: 'CUET', subject: 'Numerical Ability', chapter: 'Data Interpretation', sortOrder: 10 },
+
+  // ── Current Affairs ──
+  { examType: 'CUET', subject: 'Current Affairs', chapter: 'National Affairs', sortOrder: 1 },
+  { examType: 'CUET', subject: 'Current Affairs', chapter: 'International Affairs', sortOrder: 2 },
+  { examType: 'CUET', subject: 'Current Affairs', chapter: 'Sports News', sortOrder: 3 },
+  { examType: 'CUET', subject: 'Current Affairs', chapter: 'Appointments and Resignations', sortOrder: 4 },
+  { examType: 'CUET', subject: 'Current Affairs', chapter: 'Summits and Conferences', sortOrder: 5 },
+  { examType: 'CUET', subject: 'Current Affairs', chapter: 'Schemes and Policies', sortOrder: 6 },
+
+  // ═══════════════════════════════════════════
+  // GATE (Graduate Aptitude Test in Engineering)
+  // ═══════════════════════════════════════════
+
+  // ── General Aptitude ──
+  { examType: 'GATE', subject: 'General Aptitude', chapter: 'Verbal Ability: Grammar and Vocabulary', sortOrder: 1 },
+  { examType: 'GATE', subject: 'General Aptitude', chapter: 'Verbal Ability: Sentence Completion', sortOrder: 2 },
+  { examType: 'GATE', subject: 'General Aptitude', chapter: 'Numerical Ability: Basic Mathematics', sortOrder: 3 },
+  { examType: 'GATE', subject: 'General Aptitude', chapter: 'Numerical Ability: Estimation and Approximation', sortOrder: 4 },
+  { examType: 'GATE', subject: 'General Aptitude', chapter: 'Spatial Aptitude', sortOrder: 5 },
+
+  // ── Engineering Mathematics ──
+  { examType: 'GATE', subject: 'Engineering Mathematics', chapter: 'Linear Algebra', sortOrder: 1 },
+  { examType: 'GATE', subject: 'Engineering Mathematics', chapter: 'Calculus', sortOrder: 2 },
+  { examType: 'GATE', subject: 'Engineering Mathematics', chapter: 'Differential Equations', sortOrder: 3 },
+  { examType: 'GATE', subject: 'Engineering Mathematics', chapter: 'Probability and Statistics', sortOrder: 4 },
+  { examType: 'GATE', subject: 'Engineering Mathematics', chapter: 'Numerical Methods', sortOrder: 5 },
+  { examType: 'GATE', subject: 'Engineering Mathematics', chapter: 'Complex Variables', sortOrder: 6 },
+  { examType: 'GATE', subject: 'Engineering Mathematics', chapter: 'Transform Theory', sortOrder: 7 },
+  { examType: 'GATE', subject: 'Engineering Mathematics', chapter: 'Discrete Mathematics', sortOrder: 8 },
+
+  // ── Computer Science and IT ──
+  { examType: 'GATE', subject: 'Computer Science', chapter: 'Data Structures', sortOrder: 1 },
+  { examType: 'GATE', subject: 'Computer Science', chapter: 'Algorithms', sortOrder: 2 },
+  { examType: 'GATE', subject: 'Computer Science', chapter: 'Programming and C', sortOrder: 3 },
+  { examType: 'GATE', subject: 'Computer Science', chapter: 'Computer Organization and Architecture', sortOrder: 4 },
+  { examType: 'GATE', subject: 'Computer Science', chapter: 'Operating Systems', sortOrder: 5 },
+  { examType: 'GATE', subject: 'Computer Science', chapter: 'Databases', sortOrder: 6 },
+  { examType: 'GATE', subject: 'Computer Science', chapter: 'Computer Networks', sortOrder: 7 },
+  { examType: 'GATE', subject: 'Computer Science', chapter: 'Theory of Computation', sortOrder: 8 },
+  { examType: 'GATE', subject: 'Computer Science', chapter: 'Compiler Design', sortOrder: 9 },
+  { examType: 'GATE', subject: 'Computer Science', chapter: 'Digital Logic', sortOrder: 10 },
+  { examType: 'GATE', subject: 'Computer Science', chapter: 'Software Engineering', sortOrder: 11 },
+  { examType: 'GATE', subject: 'Computer Science', chapter: 'Web Technologies', sortOrder: 12 },
+
+  // ═══════════════════════════════════════════
+  // CAT (Common Admission Test)
+  // ═══════════════════════════════════════════
+
+  // ── VARC (Verbal Ability & Reading Comprehension) ──
+  { examType: 'CAT', subject: 'VARC', chapter: 'Reading Comprehension', sortOrder: 1 },
+  { examType: 'CAT', subject: 'VARC', chapter: 'Para Jumbles', sortOrder: 2 },
+  { examType: 'CAT', subject: 'VARC', chapter: 'Sentence Correction', sortOrder: 3 },
+  { examType: 'CAT', subject: 'VARC', chapter: 'Vocabulary and Fill in the Blanks', sortOrder: 4 },
+  { examType: 'CAT', subject: 'VARC', chapter: 'Summary Questions', sortOrder: 5 },
+  { examType: 'CAT', subject: 'VARC', chapter: 'Paragraph Completion', sortOrder: 6 },
+  { examType: 'CAT', subject: 'VARC', chapter: 'Critical Reasoning', sortOrder: 7 },
+  { examType: 'CAT', subject: 'VARC', chapter: 'Verbal Analogies', sortOrder: 8 },
+
+  // ── DILR (Data Interpretation & Logical Reasoning) ──
+  { examType: 'CAT', subject: 'DILR', chapter: 'Data Tables', sortOrder: 1 },
+  { examType: 'CAT', subject: 'DILR', chapter: 'Bar Graphs and Histograms', sortOrder: 2 },
+  { examType: 'CAT', subject: 'DILR', chapter: 'Line Charts', sortOrder: 3 },
+  { examType: 'CAT', subject: 'DILR', chapter: 'Pie Charts', sortOrder: 4 },
+  { examType: 'CAT', subject: 'DILR', chapter: 'Caselet Data Interpretation', sortOrder: 5 },
+  { examType: 'CAT', subject: 'DILR', chapter: 'Venn Diagrams', sortOrder: 6 },
+  { examType: 'CAT', subject: 'DILR', chapter: 'Puzzles and Grids', sortOrder: 7 },
+  { examType: 'CAT', subject: 'DILR', chapter: 'Seating Arrangement', sortOrder: 8 },
+  { examType: 'CAT', subject: 'DILR', chapter: 'Syllogisms and Logical Reasoning', sortOrder: 9 },
+
+  // ── QA (Quantitative Ability) ──
+  { examType: 'CAT', subject: 'Quantitative Ability', chapter: 'Number Systems', sortOrder: 1 },
+  { examType: 'CAT', subject: 'Quantitative Ability', chapter: 'Percentages and Profit Loss', sortOrder: 2 },
+  { examType: 'CAT', subject: 'Quantitative Ability', chapter: 'Time, Speed and Distance', sortOrder: 3 },
+  { examType: 'CAT', subject: 'Quantitative Ability', chapter: 'Time and Work', sortOrder: 4 },
+  { examType: 'CAT', subject: 'Quantitative Ability', chapter: 'Ratio, Proportion and Mixtures', sortOrder: 5 },
+  { examType: 'CAT', subject: 'Quantitative Ability', chapter: 'Simple and Compound Interest', sortOrder: 6 },
+  { examType: 'CAT', subject: 'Quantitative Ability', chapter: 'Algebra and Functions', sortOrder: 7 },
+  { examType: 'CAT', subject: 'Quantitative Ability', chapter: 'Geometry', sortOrder: 8 },
+  { examType: 'CAT', subject: 'Quantitative Ability', chapter: 'Mensuration', sortOrder: 9 },
+  { examType: 'CAT', subject: 'Quantitative Ability', chapter: 'Probability and Permutations', sortOrder: 10 },
+  { examType: 'CAT', subject: 'Quantitative Ability', chapter: 'Progressions and Series', sortOrder: 11 },
+
+  // ═══════════════════════════════════════════
+  // UPSC (Civil Services Examination)
+  // ═══════════════════════════════════════════
+
+  // ── History ──
+  { examType: 'UPSC', subject: 'History', chapter: 'Ancient India', sortOrder: 1 },
+  { examType: 'UPSC', subject: 'History', chapter: 'Medieval India', sortOrder: 2 },
+  { examType: 'UPSC', subject: 'History', chapter: 'Modern India: Freedom Struggle', sortOrder: 3 },
+  { examType: 'UPSC', subject: 'History', chapter: 'Post-Independence India', sortOrder: 4 },
+  { examType: 'UPSC', subject: 'History', chapter: 'World History', sortOrder: 5 },
+  { examType: 'UPSC', subject: 'History', chapter: 'Indian Art and Culture', sortOrder: 6 },
+  { examType: 'UPSC', subject: 'History', chapter: 'Indian Society', sortOrder: 7 },
+
+  // ── Geography ──
+  { examType: 'UPSC', subject: 'Geography', chapter: 'Physical Geography: World', sortOrder: 1 },
+  { examType: 'UPSC', subject: 'Geography', chapter: 'Physical Geography: India', sortOrder: 2 },
+  { examType: 'UPSC', subject: 'Geography', chapter: 'Economic Geography', sortOrder: 3 },
+  { examType: 'UPSC', subject: 'Geography', chapter: 'Climate and Monsoon', sortOrder: 4 },
+  { examType: 'UPSC', subject: 'Geography', chapter: 'Environment and Ecology', sortOrder: 5 },
+  { examType: 'UPSC', subject: 'Geography', chapter: 'Biodiversity and Conservation', sortOrder: 6 },
+
+  // ── Polity and Governance ──
+  { examType: 'UPSC', subject: 'Polity', chapter: 'Indian Constitution: Framework', sortOrder: 1 },
+  { examType: 'UPSC', subject: 'Polity', chapter: 'Union Executive and Legislature', sortOrder: 2 },
+  { examType: 'UPSC', subject: 'Polity', chapter: 'State Executive and Legislature', sortOrder: 3 },
+  { examType: 'UPSC', subject: 'Polity', chapter: 'Judiciary', sortOrder: 4 },
+  { examType: 'UPSC', subject: 'Polity', chapter: 'Local Government and Panchayats', sortOrder: 5 },
+  { examType: 'UPSC', subject: 'Polity', chapter: 'Constitutional Bodies', sortOrder: 6 },
+  { examType: 'UPSC', subject: 'Polity', chapter: 'Governance and Social Justice', sortOrder: 7 },
+
+  // ── Economy ──
+  { examType: 'UPSC', subject: 'Economy', chapter: 'Basic Concepts of Economics', sortOrder: 1 },
+  { examType: 'UPSC', subject: 'Economy', chapter: 'Indian Economy: Planning and Growth', sortOrder: 2 },
+  { examType: 'UPSC', subject: 'Economy', chapter: 'Budget and Fiscal Policy', sortOrder: 3 },
+  { examType: 'UPSC', subject: 'Economy', chapter: 'Banking and Monetary Policy', sortOrder: 4 },
+  { examType: 'UPSC', subject: 'Economy', chapter: 'External Sector and Trade', sortOrder: 5 },
+  { examType: 'UPSC', subject: 'Economy', chapter: 'Agriculture and Food Management', sortOrder: 6 },
+  { examType: 'UPSC', subject: 'Economy', chapter: 'Infrastructure and Energy', sortOrder: 7 },
+
+  // ── Science and Technology ──
+  { examType: 'UPSC', subject: 'Science and Tech', chapter: 'General Science', sortOrder: 1 },
+  { examType: 'UPSC', subject: 'Science and Tech', chapter: 'Biotechnology and Health', sortOrder: 2 },
+  { examType: 'UPSC', subject: 'Science and Tech', chapter: 'Space Technology', sortOrder: 3 },
+  { examType: 'UPSC', subject: 'Science and Tech', chapter: 'Defense Technology', sortOrder: 4 },
+  { examType: 'UPSC', subject: 'Science and Tech', chapter: 'Information Technology', sortOrder: 5 },
+
+  // ── Ethics and CSAT ──
+  { examType: 'UPSC', subject: 'Ethics and CSAT', chapter: 'Ethics and Human Values', sortOrder: 1 },
+  { examType: 'UPSC', subject: 'Ethics and CSAT', chapter: 'Attitude and Aptitude', sortOrder: 2 },
+  { examType: 'UPSC', subject: 'Ethics and CSAT', chapter: 'Case Studies on Ethics', sortOrder: 3 },
+  { examType: 'UPSC', subject: 'Ethics and CSAT', chapter: 'Comprehension', sortOrder: 4 },
+  { examType: 'UPSC', subject: 'Ethics and CSAT', chapter: 'Interpersonal Skills', sortOrder: 5 },
+  { examType: 'UPSC', subject: 'Ethics and CSAT', chapter: 'Decision Making', sortOrder: 6 },
+  { examType: 'UPSC', subject: 'Ethics and CSAT', chapter: 'Basic Numeracy', sortOrder: 7 },
+  { examType: 'UPSC', subject: 'Ethics and CSAT', chapter: 'Data Interpretation', sortOrder: 8 },
 ];
 
 export const EXAM_TYPES_FOR_SYLLABUS = [
@@ -312,4 +494,8 @@ export const EXAM_TYPES_FOR_SYLLABUS = [
   { key: 'NEET', label: 'NEET UG' },
   { key: 'CBSE_12', label: 'CBSE Class 12' },
   { key: 'MHT_CET', label: 'MHT CET' },
+  { key: 'CUET', label: 'CUET UG' },
+  { key: 'GATE', label: 'GATE' },
+  { key: 'CAT', label: 'CAT' },
+  { key: 'UPSC', label: 'UPSC CSE' },
 ] as const;

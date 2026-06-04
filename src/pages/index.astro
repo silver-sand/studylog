@@ -44,7 +44,7 @@ const hasEntriesToday = recentEntries.some(e => e.date === today);
         studyType: todayEntry.studyType,
         focusRating: todayEntry.focusRating,
         examType: todayEntry.examType,
-      } : null} />
+      } : null} defaultExamType={settings.examType} />
     </div>
 
     <!-- Daily Review -->

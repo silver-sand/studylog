@@ -8,35 +8,11 @@ export interface Props {
 
 const { chapters, subject } = Astro.props;
 
-function subjectColor(s: string): string {
-  const name = s.toLowerCase();
-  if (name.includes('physics')) return 'blue';
-  if (name.includes('chemistry')) return 'green';
-  if (name.includes('math')) return 'amber';
-  if (name.includes('biology')) return 'pink';
-  return 'gray';
-}
-
-const statusColors: Record<string, string> = {
-  not_started: '#64748b',
-  in_progress: '#f59e0b',
-  completed: '#22c55e',
-};
-
-const statusLabels: Record<string, string> = {
-  not_started: 'Not Started',
-  in_progress: 'In Progress',
-  completed: 'Completed',
-};
-
-const color = subjectColor(subject);
-const accentColor = {
-  blue: '#3b82f6',
-  green: '#22c55e',
-  amber: '#f59e0b',
-  pink: '#ec4899',
-  gray: '#64748b',
-}[color];
+const STATUSES = [
+  { value: 'not_started', label: 'Not Started', icon: '○', color: '#64748b' },
+  { value: 'in_progress', label: 'In Progress', icon: '◐', color: '#f59e0b' },
+  { value: 'completed', label: 'Done', icon: '●', color: '#22c55e' },
+];
 ---
 
 <div class="chapter-list">
@@ -44,36 +20,95 @@ const accentColor = {
     <div class="chapter-row" data-chapter-id={ch.id}>
       <div class="chapter-info">
         <span class="chapter-name">{ch.chapter}</span>
-        {ch.classLevel && (
-          <span class="class-badge">Class {ch.classLevel}</span>
-        )}
+        {ch.classLevel && <span class="class-badge">Class {ch.classLevel}</span>}
       </div>
-      <div class="status-group">
-        <button
-          class:list={{ 'status-btn': true, active: ch.status === 'not_started' }}
-          data-status="not_started"
-          style={ch.status === 'not_started' ? `border-color: ${statusColors.not_started}; color: ${statusColors.not_started}` : ''}
-        >
-          Not Started
-        </button>
-        <button
-          class:list={{ 'status-btn': true, active: ch.status === 'in_progress' }}
-          data-status="in_progress"
-          style={ch.status === 'in_progress' ? `border-color: ${statusColors.in_progress}; color: ${statusColors.in_progress}` : ''}
-        >
-          In Progress
-        </button>
-        <button
-          class:list={{ 'status-btn': true, active: ch.status === 'completed' }}
-          data-status="completed"
-          style={ch.status === 'completed' ? `border-color: ${statusColors.completed}; color: ${statusColors.completed}` : ''}
-        >
-          Done
-        </button>
+      <div class="slider-group" data-chapter={ch.id}>
+        {STATUSES.map((s, i) => {
+          const activeIdx = STATUSES.findIndex(st => st.value === ch.status);
+          const isActive = ch.status === s.value;
+          const isBefore = i < activeIdx;
+          const isAfter = i > activeIdx;
+          return (
+            <button
+              class:list={{
+                'slider-btn': true,
+                active: isActive,
+                before: isBefore,
+                after: isAfter,
+              }}
+              data-chapter-id={ch.id}
+              data-status={s.value}
+              style={`--accent: ${s.color}`}
+              title={s.label}
+            >
+              {s.label}
+            </button>
+          );
+        })}
       </div>
     </div>
   ))}
 </div>
+
+<script>
+  document.querySelectorAll('.slider-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const chapterId = btn.dataset.chapterId;
+      const status = btn.dataset.status;
+      if (!chapterId || !status) return;
+
+      const group = btn.closest('.slider-group');
+      if (!group) return;
+      const allBtns = group.querySelectorAll('.slider-btn');
+      allBtns.forEach(b => b.disabled = true);
+
+      try {
+        const res = await fetch('/api/syllabus', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: chapterId, status }),
+        });
+        if (!res.ok) throw new Error('Update failed');
+
+        const updated = await res.json();
+
+        // Determine active index for new status
+        const statusOrder = ['not_started', 'in_progress', 'completed'];
+        const activeIdx = statusOrder.indexOf(status);
+
+        allBtns.forEach((b, idx) => {
+          const s = b.dataset.status;
+          const isActive = s === status;
+          const isBefore = idx < activeIdx;
+          const isAfter = idx > activeIdx;
+          const accentColors = { not_started: '#64748b', in_progress: '#f59e0b', completed: '#22c55e' };
+
+          b.classList.toggle('active', isActive);
+          b.classList.toggle('before', isBefore);
+          b.classList.toggle('after', isAfter);
+          b.style.setProperty('--accent', accentColors[s] || '#64748b');
+        });
+
+        // Update row visual
+        const row = btn.closest('.chapter-row');
+        if (row) {
+          row.classList.remove('status-not_started', 'status-in_progress', 'status-completed');
+          row.classList.add('status-' + status);
+        }
+
+        // Trigger progress refresh
+        document.dispatchEvent(new CustomEvent('syllabus-updated', {
+          detail: { examType: updated.examType },
+        }));
+
+      } catch (err) {
+        alert('Failed: ' + (err instanceof Error ? err.message : 'Error'));
+      } finally {
+        allBtns.forEach(b => b.disabled = false);
+      }
+    });
+  });
+</script>
 
 <style>
   .chapter-list {
@@ -86,17 +121,27 @@ const accentColor = {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.75rem 1.25rem;
+    padding: 0.5rem 1rem;
     background: rgba(15, 23, 42, 0.5);
     border-bottom: 1px solid rgba(51, 65, 85, 0.3);
-    gap: 1rem;
-    flex-wrap: wrap;
+    gap: 0.75rem;
+    transition: background 0.15s, opacity 0.2s;
   }
   .chapter-row:last-child {
     border-bottom: none;
   }
   .chapter-row:hover {
     background: rgba(30, 41, 59, 0.5);
+  }
+  .chapter-row.status-completed {
+    opacity: 0.55;
+  }
+  .chapter-row.status-completed .chapter-name {
+    text-decoration: line-through;
+    color: #64748b;
+  }
+  .chapter-row.status-in_progress .chapter-name {
+    color: #fcd34d;
   }
   .chapter-info {
     display: flex;
@@ -106,43 +151,62 @@ const accentColor = {
     min-width: 0;
   }
   .chapter-name {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: #cbd5e1;
-    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .class-badge {
-    font-size: 0.65rem;
-    padding: 0.1rem 0.4rem;
+    font-size: 0.6rem;
+    padding: 0.1rem 0.35rem;
     border-radius: 0.25rem;
     background: rgba(100, 116, 139, 0.2);
     color: #94a3b8;
     font-family: 'JetBrains Mono', monospace;
     white-space: nowrap;
-  }
-  .status-group {
-    display: flex;
-    gap: 0.25rem;
     flex-shrink: 0;
   }
-  .status-btn {
-    font-size: 0.7rem;
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.375rem;
-    border: 1px solid rgba(100, 116, 139, 0.3);
-    background: transparent;
-    color: #64748b;
+  .slider-group {
+    display: flex;
+    border-radius: 0.4rem;
+    overflow: hidden;
+    border: 1px solid rgba(51, 65, 85, 0.4);
+    flex-shrink: 0;
+  }
+  .slider-btn {
+    font-size: 0.65rem;
+    padding: 0.3rem 0.5rem;
+    border: none;
+    background: rgba(15, 23, 42, 0.8);
+    color: #475569;
     cursor: pointer;
     font-family: 'Inter', sans-serif;
     transition: all 0.15s ease;
     white-space: nowrap;
+    border-right: 1px solid rgba(51, 65, 85, 0.3);
+    position: relative;
   }
-  .status-btn:hover {
-    border-color: rgba(100, 116, 139, 0.6);
+  .slider-btn:last-child {
+    border-right: none;
+  }
+  .slider-btn:hover:not(:disabled) {
     color: #94a3b8;
+    background: rgba(51, 65, 85, 0.3);
   }
-  .status-btn.active {
-    background: rgba(255, 255, 255, 0.05);
+  .slider-btn.active {
+    background: color-mix(in srgb, var(--accent) 20%, transparent);
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .slider-btn.before {
+    opacity: 0.4;
+  }
+  .slider-btn.after {
+    opacity: 0.6;
+  }
+  .slider-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
   }
 </style>

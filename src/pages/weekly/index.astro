@@ -33,13 +33,19 @@ const currentReview = db.getReviewByWeek(range.weekStart);
       </p>
 
       {currentReview ? (
-        <a
-          href={`/weekly/${range.weekStart}`}
-          class="btn-secondary"
-        >
-          View Review
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="arrow"><path d="m9 18 6-6-6-6"/></svg>
-        </a>
+        <div class="flex gap-2 items-center flex-wrap">
+          <a
+            href={`/weekly/${range.weekStart}`}
+            class="btn-secondary"
+          >
+            View Review
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="arrow"><path d="m9 18 6-6-6-6"/></svg>
+          </a>
+          <button id="regenerate-weekly-btn" class="btn-ghost-sm" data-week-start={range.weekStart}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+            Regenerate
+          </button>
+        </div>
       ) : (
         <button
           id="generate-review-btn"
@@ -61,31 +67,40 @@ const currentReview = db.getReviewByWeek(range.weekStart);
 </BaseLayout>
 
 <script>
-  const btn = document.getElementById('generate-review-btn');
+  const generateBtn = document.getElementById('generate-review-btn');
+  const regenerateBtn = document.getElementById('regenerate-weekly-btn');
   const errorDiv = document.getElementById('generate-error');
 
-  if (btn) {
-    btn.addEventListener('click', async () => {
-      btn.disabled = true;
-      btn.textContent = 'Generating...';
-      errorDiv.classList.add('hidden');
+  async function generateReview(weekStart) {
+    const btn = weekStart ? regenerateBtn : generateBtn;
+    if (!btn || !errorDiv) return;
+    btn.disabled = true;
+    btn.textContent = weekStart ? 'Regenerating...' : 'Generating...';
+    errorDiv.classList.add('hidden');
 
-      try {
-        const res = await fetch('/api/reviews/generate', { method: 'POST' });
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({ error: 'Generation failed' }));
-          throw new Error(err.error || `HTTP ${res.status}`);
-        }
-        const review = await res.json();
-        window.location.href = `/weekly/${review.weekStart}`;
-      } catch (err) {
-        errorDiv.textContent = err instanceof Error ? err.message : 'Something went wrong';
-        errorDiv.classList.remove('hidden');
-        btn.disabled = false;
-        btn.textContent = 'Generate Review';
+    try {
+      const body = weekStart ? JSON.stringify({ weekStart }) : '{}';
+      const res = await fetch('/api/reviews/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Generation failed' }));
+        throw new Error(err.error || `HTTP ${res.status}`);
       }
-    });
+      const review = await res.json();
+      window.location.href = `/weekly/${review.weekStart}`;
+    } catch (err) {
+      errorDiv.textContent = err instanceof Error ? err.message : 'Something went wrong';
+      errorDiv.classList.remove('hidden');
+      btn.disabled = false;
+      btn.textContent = weekStart ? 'Regenerate' : 'Generate Review';
+    }
   }
+
+  generateBtn?.addEventListener('click', () => generateReview(null));
+  regenerateBtn?.addEventListener('click', () => generateReview(regenerateBtn.dataset.weekStart));
 </script>
 
 <style>
@@ -160,6 +175,28 @@ const currentReview = db.getReviewByWeek(range.weekStart);
   }
   .arrow {
     margin-top: 1px;
+  }
+  .btn-ghost-sm {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: transparent;
+    color: #64748b;
+    font-size: 0.75rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 0.375rem;
+    border: 1px solid rgba(51, 65, 85, 0.4);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Inter', sans-serif;
+  }
+  .btn-ghost-sm:hover {
+    color: #94a3b8;
+    border-color: rgba(71, 85, 105, 0.6);
+  }
+  .btn-ghost-sm:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
   .section-title {
     font-size: 0.75rem;

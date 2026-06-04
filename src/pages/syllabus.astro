@@ -36,6 +36,17 @@ const exams: ExamData[] = EXAM_TYPES_FOR_SYLLABUS.map((exam) => {
 
 const defaultExam = exams[0];
 const defaultKey = defaultExam.key;
+
+// Filter to user's selected exam if they have one set
+const settings = db.getSettings();
+const examKeyMap: Record<string, string> = {
+  'JEE Main': 'JEE', 'JEE Advanced': 'JEE',
+  'NEET': 'NEET', 'CET': 'MHT_CET',
+  'Boards (PCM)': 'CBSE_12', 'Boards (PCB)': 'CBSE_12', 'Boards (Commerce)': 'CBSE_12',
+  'CUET': 'CUET', 'GATE': 'GATE', 'CAT': 'CAT', 'UPSC': 'UPSC',
+};
+const selectedKey = examKeyMap[settings.examType];
+const filteredExams = selectedKey ? exams.filter(e => e.key === selectedKey) : exams;
 ---
 
 <BaseLayout title="Syllabus Tracker">
@@ -48,7 +59,7 @@ const defaultKey = defaultExam.key;
 
     <!-- Exam Tabs -->
     <div class="exam-tabs" role="tablist">
-      {exams.map((exam) => (
+      {filteredExams.map((exam) => (
         <button
           class:list={{ 'exam-tab': true, active: exam.key === defaultKey }}
           data-exam={exam.key}
@@ -62,7 +73,7 @@ const defaultKey = defaultExam.key;
     </div>
 
     <!-- Per-Exam Content -->
-    {exams.map((exam) => (
+    {filteredExams.map((exam) => (
       <div
         class:list={{ 'exam-content': true, hidden: exam.key !== defaultKey }}
         data-exam-content={exam.key}
@@ -71,10 +82,10 @@ const defaultKey = defaultExam.key;
         <div class="overall-bar-wrap">
           <div class="overall-bar-label">
             <span>Overall Progress</span>
-            <span class="overall-bar-numbers">{exam.completedChapters}/{exam.totalChapters} chapters ({exam.overallPercent}%)</span>
+            <span class="overall-bar-numbers" id={`progress-text-${exam.key}`}>{exam.completedChapters}/{exam.totalChapters} chapters ({exam.overallPercent}%)</span>
           </div>
           <div class="overall-bar-bg">
-            <div class="overall-bar-fill" style={`width: ${exam.overallPercent}%`}></div>
+            <div class="overall-bar-fill" id={`progress-fill-${exam.key}`} style={`width: ${exam.overallPercent}%`}></div>
           </div>
         </div>
 
@@ -89,6 +100,7 @@ const defaultKey = defaultExam.key;
                 <div
                   class="syllabus-card-wrap"
                   data-subject={p.subject}
+                  data-exam={exam.key}
                   role="button"
                   tabindex="0"
                 >
@@ -97,6 +109,8 @@ const defaultKey = defaultExam.key;
                 <div
                   class="chapter-list-wrap hidden"
                   data-chapters={p.subject}
+                  data-exam-chapters={exam.key}
+                  data-subject-chapters={p.subject}
                 >
                   <ChapterList chapters={subjectChapters} subject={p.subject} />
                 </div>
@@ -128,21 +142,25 @@ const defaultKey = defaultExam.key;
     });
   });
 
-  // ── Card expand/collapse ──
+  // ── Card expand/collapse (scoped to current exam) ──
   document.querySelectorAll('.syllabus-card-wrap').forEach((wrap) => {
     const subject = wrap.dataset.subject;
-    const chapterList = document.querySelector(
-      `[data-chapters="${CSS.escape(subject)}"]`
-    );
+
+    function getChapterList() {
+      const examContent = wrap.closest('.exam-content');
+      if (!examContent) return null;
+      return examContent.querySelector(`[data-chapters="${CSS.escape(subject)}"]`);
+    }
 
     function toggle() {
+      const chapterList = getChapterList();
       if (!chapterList) return;
       const isHidden = chapterList.classList.toggle('hidden');
       wrap.classList.toggle('expanded', !isHidden);
     }
 
     wrap.addEventListener('click', (e) => {
-      if (e.target.closest('.chapter-row')) return;
+      if (e.target.closest('.chapter-row') || e.target.closest('.status-btn')) return;
       toggle();
     });
 
@@ -154,46 +172,65 @@ const defaultKey = defaultExam.key;
     });
   });
 
-  // ── Chapter status update ──
-  document.querySelectorAll('.status-btn').forEach((btn) => {
-    btn.addEventListener('click', async (e) => {
-      e.stopPropagation();
-      const row = btn.closest('.chapter-row');
-      if (!row) return;
-      const chapterId = row.dataset.chapterId;
-      const status = btn.dataset.status;
-      if (!chapterId || !status) return;
+  // ── Listen for chapter status updates from ChapterList ──
+  document.addEventListener('syllabus-updated', async (e) => {
+    const { examType } = e.detail;
+    if (!examType) return;
 
-      // Optimistic UI update
-      const siblings = row.querySelectorAll('.status-btn');
-      siblings.forEach((s) => s.classList.remove('active'));
-      const colors = { not_started: '#64748b', in_progress: '#f59e0b', completed: '#22c55e' };
-      btn.classList.add('active');
-      if (status in colors) {
-        btn.style.borderColor = colors[status as keyof typeof colors];
-        btn.style.color = colors[status as keyof typeof colors];
-      }
+    // Fetch fresh progress for this exam
+    try {
+      const res = await fetch(`/api/syllabus?exam=${encodeURIComponent(examType)}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data.progress) return;
 
-      try {
-        const res = await fetch('/api/syllabus', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: chapterId, status }),
-        });
+      const examContent = document.querySelector(`[data-exam-content="${examType}"]`);
+      if (!examContent) return;
 
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({ error: 'Update failed' }));
-          throw new Error(err.error);
+      const progressData = data.progress;
+      const cards = examContent.querySelectorAll('.syllabus-card-wrap');
+      cards.forEach(card => {
+        const subj = card.dataset.subject;
+        const p = progressData.find((pd) => pd.subject === subj);
+        if (!p) return;
+
+        const percentEl = card.querySelector('.percent-text');
+        if (percentEl) {
+          const colors = { blue: '#93c5fd', green: '#86efac', amber: '#fcd34d', pink: '#f9a8d4', gray: '#94a3b8' };
+          const sl = subj.toLowerCase();
+          const ck = sl.includes('physics') ? 'blue' : sl.includes('chemistry') ? 'green' : sl.includes('math') ? 'amber' : sl.includes('biology') ? 'pink' : 'gray';
+          percentEl.textContent = `${p.percent}%`;
+          percentEl.style.color = colors[ck];
         }
 
-        // Reload to refresh progress bars
-        setTimeout(() => window.location.reload(), 300);
-      } catch (err) {
-        // Revert optimistic update
-        siblings.forEach((s) => s.classList.remove('active'));
-        alert('Failed to update status: ' + err.message);
-      }
-    });
+        const fill = card.querySelector('.syllabus-bar-fill');
+        if (fill) fill.style.width = `${p.percent}%`;
+
+        const countEl = card.querySelector('.subject-count');
+        if (countEl) countEl.textContent = `${p.completed}/${p.total} chapters`;
+      });
+
+      // Update overall progress
+      const totalCompleted = progressData.reduce((s, p) => s + p.completed, 0);
+      const totalChapters = progressData.reduce((s, p) => s + p.total, 0);
+      const overallPercent = totalChapters > 0 ? Math.round((totalCompleted / totalChapters) * 100) : 0;
+
+      const progressText = document.getElementById(`progress-text-${examType}`);
+      if (progressText) progressText.textContent = `${totalCompleted}/${totalChapters} chapters (${overallPercent}%)`;
+
+      const progressFill = document.getElementById(`progress-fill-${examType}`);
+      if (progressFill) progressFill.style.width = `${overallPercent}%`;
+
+      // Update tab percentage
+      tabs.forEach(tab => {
+        if (tab.dataset.exam === examType) {
+          const countEl = tab.querySelector('.exam-tab-count');
+          if (countEl) countEl.textContent = `${overallPercent}%`;
+        }
+      });
+    } catch (err) {
+      // Silently fail — the individual button already updated
+    }
   });
 </script>
 

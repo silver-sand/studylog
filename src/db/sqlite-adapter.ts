@@ -474,13 +474,21 @@ export class SQLiteAdapter implements DatabaseInterface {
 
   seedSyllabusData(): void {
     const db = this.getDb();
-    const count = db.exec(`SELECT COUNT(*) as cnt FROM syllabus`);
-    if (count.length > 0) {
-      const row = count[0].values[0];
-      if (row && Number(row[0]) > 0) return; // already seeded
-    }
 
+    // Only seed exam types not yet in the DB
+    const seeded = new Set<string>();
+    try {
+      const rows = db.exec(`SELECT DISTINCT exam_type FROM syllabus`);
+      if (rows.length > 0 && rows[0].values) {
+        for (const row of rows[0].values) {
+          seeded.add(String(row[0]));
+        }
+      }
+    } catch { /* table may not exist yet */ }
+
+    let inserted = false;
     for (const item of EXAM_SYLLABI) {
+      if (seeded.has(item.examType)) continue;
       const id = generateId();
       try {
         db.run(
@@ -488,9 +496,10 @@ export class SQLiteAdapter implements DatabaseInterface {
            VALUES (?, ?, ?, ?, ?, ?)`,
           [id, item.examType, item.subject, item.chapter, item.classLevel || null, item.sortOrder]
         );
+        inserted = true;
       } catch { /* skip duplicates */ }
     }
-    this.save();
+    if (inserted) this.save();
   }
 
   getSyllabus(examType?: string, subject?: string): SyllabusChapter[] {
@@ -518,6 +527,20 @@ export class SQLiteAdapter implements DatabaseInterface {
     return items;
   }
 
+  getSyllabusByIds(ids: string[]): SyllabusChapter[] {
+    if (ids.length === 0) return [];
+    const db = this.getDb();
+    const placeholders = ids.map(() => '?').join(',');
+    const stmt = db.prepare(`SELECT * FROM syllabus WHERE id IN (${placeholders})`);
+    stmt.bind(ids);
+    const items: SyllabusChapter[] = [];
+    while (stmt.step()) {
+      items.push(toSyllabusChapter(stmt.getAsObject()));
+    }
+    stmt.free();
+    return items;
+  }
+
   updateSyllabusStatus(id: string, status: string): SyllabusChapter {
     const db = this.getDb();
     const completedAt = status === 'completed' ? new Date().toISOString() : null;
@@ -536,6 +559,25 @@ export class SQLiteAdapter implements DatabaseInterface {
     }
     stmt.free();
     throw new Error(`Syllabus entry ${id} not found`);
+  }
+
+  batchUpdateSyllabusStatus(updates: { id: string; status: string }[]): number {
+    if (updates.length === 0) return 0;
+    const db = this.getDb();
+    let count = 0;
+    const stmt = db.prepare(
+      `UPDATE syllabus SET status = ?, completed_at = ? WHERE id = ?`
+    );
+    for (const { id, status } of updates) {
+      if (!['not_started', 'in_progress', 'completed'].includes(status)) continue;
+      const completedAt = status === 'completed' ? new Date().toISOString() : null;
+      stmt.bind([status, completedAt, id]);
+      if (stmt.step()) count += db.getRowsModified();
+      stmt.reset();
+    }
+    stmt.free();
+    if (count > 0) this.save();
+    return count;
   }
 
   getSyllabusProgress(examType: string): SyllabusProgress[] {

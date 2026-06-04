@@ -26,7 +26,9 @@ export interface Database {
   // Syllabus
   seedSyllabusData(): void;
   getSyllabus(examType?: string, subject?: string): SyllabusChapter[];
+  getSyllabusByIds(ids: string[]): SyllabusChapter[];
   updateSyllabusStatus(id: string, status: string): SyllabusChapter;
+  batchUpdateSyllabusStatus(updates: { id: string; status: string }[]): number;
   getSyllabusProgress(examType: string): SyllabusProgress[];
 
   // Settings

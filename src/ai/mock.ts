@@ -125,7 +125,24 @@ export class MockAIService implements AIService {
     if (avgFocus > 0 && avgFocus < 3) weaknesses.push('Focus could be improved — try shorter intervals.');
     if (subjects.length === 0) weaknesses.push('No specific subjects logged.');
 
-    const content = `## Overview\n- Studied ${subjects.join(', ') || 'various topics'} for ${Math.round(totalHours * 10) / 10}h total.\n\n## Topics\n${subjects.map(s => `- ${s}`).join('\n') || '- General study'}\n\n## Tomorrow\n- ${weaknesses.length > 0 ? 'Focus on improving consistency.' : 'Keep up the great work!'}\n- Review today's material before starting new topics.`;
+    const content = `## Overview
+- Studied ${subjects.join(', ') || 'various topics'} for ${Math.round(totalHours * 10) / 10}h total across ${entries.length} session(s).
+- ${subjects.length >= 2 ? 'Good spread across multiple subjects.' : 'Focused primarily on one area.'}
+${avgFocus > 0 ? `- Focus level: ${avgFocus}/5 ${avgFocus >= 4 ? '— strong concentration today.' : avgFocus >= 3 ? '— decent, room to improve.' : '— try shorter blocks with breaks.'}` : ''}
+
+## Topics Covered
+${entries.flatMap(e => {
+  if (e.chapters && e.chapters.length > 0) {
+    return e.chapters.map(ch => `- ${e.subjects?.length ? `${e.subjects[0]}: ` : ''}${ch}${e.hoursStudied ? ` (${Math.round(e.hoursStudied / Math.max(e.subjects.length, 1) * 10) / 10}h)` : ''}`);
+  }
+  return e.subjects?.map(s => `- ${s}${e.hoursStudied ? ` (${Math.round(e.hoursStudied / Math.max(e.subjects.length, 1) * 10) / 10}h)` : ''}`) || [];
+}).join('\n') || '- General study'}
+
+${strengths.length > 0 ? `\n## Strengths\n${strengths.map(s => `- ${s}`).join('\n')}` : ''}
+${weaknesses.length > 0 ? `\n## Areas to Improve\n${weaknesses.map(w => `- ${w}`).join('\n')}` : ''}
+
+## Tomorrow
+${recommendations.map(r => `- ${r}`).join('\n')}`;
 
     return {
       content,
@@ -138,8 +155,22 @@ export class MockAIService implements AIService {
       strengths,
       weaknesses,
       recommendations: [
-        totalHours < 2 ? 'Try to study at least 2 hours per day.' : 'Maintain your current pace.',
-        'Review what you learned today before tomorrow\'s session.',
+        totalHours < 2
+          ? 'Try to study at least 2 hours per day — short sessions make it hard to build depth.'
+          : totalHours >= 4
+            ? 'Great study volume today. Keep this pace up!'
+            : 'Good session length. Try adding 30 more minutes tomorrow.',
+        subjects.length > 0 && entries.some(e => e.chapters?.length > 0)
+          ? `Review ${entries[0].chapters?.[0] || subjects[0]} briefly before tomorrow's session to lock it in.`
+          : 'Review what you learned today before starting fresh topics.',
+        avgFocus > 0 && avgFocus < 3
+          ? 'Try the Pomodoro technique: 25 min study, 5 min break to improve focus.'
+          : avgFocus >= 4
+            ? 'Your focus was sharp today — leverage that for tougher topics.'
+            : 'A short walk or stretch between sessions can help reset concentration.',
+        subjects.length >= 2
+          ? 'Alternate between subjects to keep engagement high.'
+          : 'Consider mixing in a second subject tomorrow for variety.',
       ],
     };
   }
@@ -177,19 +208,61 @@ export class MockAIService implements AIService {
     const sortedSubjects = Object.entries(topicCoverage)
       .sort(([, a], [, b]) => b - a);
 
+    // Collect all unique chapters studied
+    const studiedChapters: string[] = [...new Set(entries.flatMap(e => e.chapters || []))].filter(Boolean);
+
+    // Collect chapters grouped by subject
+    const chaptersBySubject: Record<string, Set<string>> = {};
+    for (const entry of entries) {
+      for (let i = 0; i < entry.subjects.length; i++) {
+        const subj = entry.subjects[i];
+        if (!chaptersBySubject[subj]) chaptersBySubject[subj] = new Set();
+        if (entry.chapters && entry.chapters.length > 0) {
+          // If multiple chapters, distribute roughly
+          const chPerSubj = Math.ceil(entry.chapters.length / entry.subjects.length);
+          const start = i * chPerSubj;
+          const end = Math.min(start + chPerSubj, entry.chapters.length);
+          for (let j = start; j < end; j++) {
+            chaptersBySubject[subj].add(entry.chapters[j]);
+          }
+        }
+      }
+    }
+
+    // Daily breakdown
+    const dailyBreakdown: { date: string; hours: number; subjects: string[] }[] = [];
+    const entriesByDate: Record<string, typeof entries> = {};
+    for (const entry of entries) {
+      if (!entriesByDate[entry.date]) entriesByDate[entry.date] = [];
+      entriesByDate[entry.date].push(entry);
+    }
+    for (const [date, dayEntries] of Object.entries(entriesByDate)) {
+      const dayHours = dayEntries.reduce((s, e) => s + (e.hoursStudied || 0), 0);
+      const daySubjects = [...new Set(dayEntries.flatMap(e => e.subjects))];
+      dailyBreakdown.push({ date: formatDisplayDate(date), hours: dayHours, subjects: daySubjects });
+    }
+
     // Generate insights
     const insights: string[] = [];
     if (entries[0]?.date) {
       const start = formatDisplayDate(entries[0].date);
       const end = formatDisplayDate(entries[entries.length - 1].date);
-      insights.push(`Studied ${entries.length} days this week (${start} - ${end}).`);
+      insights.push(`Studied ${studyDays.size} days this week (${start} - ${end}).`);
     }
     if (totalHours > 0) {
       insights.push(`Total study time: ~${Math.round(totalHours)} hours.`);
     }
     if (sortedSubjects.length > 0) {
       const top = sortedSubjects[0][0];
-      insights.push(`Most focused subject: ${top} (${Math.round(sortedSubjects[0][1])} hours).`);
+      const topHours = Math.round(sortedSubjects[0][1]);
+      insights.push(`Most focused subject: ${top} (${topHours} hours).`);
+      if (studiedChapters.length > 0) {
+        insights.push(`Covered ${studiedChapters.length} different chapters across all subjects.`);
+      }
+    }
+    const avgDailyHours = totalHours / Math.max(studyDays.size, 1);
+    if (avgDailyHours >= 3) {
+      insights.push(`Strong daily average of ${avgDailyHours.toFixed(1)} hours on study days.`);
     }
 
     // Strengths and weaknesses
@@ -198,8 +271,10 @@ export class MockAIService implements AIService {
 
     if (sortedSubjects.length > 0) {
       sortedSubjects.forEach(([subject, hours], i) => {
-        if (i === 0) {
-          strengths.push(`${subject}: ${Math.round(hours)} hours this week — strong focus.`);
+        if (i === 0 && hours >= 3) {
+          const chaptersList = chaptersBySubject[subject];
+          const chRef = chaptersList && chaptersList.size > 0 ? ` — topics: ${[...chaptersList].slice(0, 3).join(', ')}` : '';
+          strengths.push(`${subject}: ${Math.round(hours)} hours this week${chRef}.`);
         } else if (hours >= 3) {
           strengths.push(`${subject}: ${Math.round(hours)} hours of consistent work.`);
         } else {
@@ -209,19 +284,29 @@ export class MockAIService implements AIService {
     }
 
     if (entries.length < 7) {
-      weaknesses.push(`Only studied ${entries.length} out of 7 days. Aim for daily consistency.`);
+      weaknesses.push(`Only studied ${Math.round(avgDailyHours)}h avg on ${studyDays.size} days. Aim for daily consistency.`);
     }
 
     // Build markdown content
     const content = `# Weekly Review
 
 ## Overview
-You studied **${entries.length} days** this week with approximately **${Math.round(totalHours)} hours** of total study time.
+You studied **${studyDays.size} days** this week with approximately **${Math.round(totalHours)} hours** of total study time.
+${avgDailyHours >= 2 ? `\nAveraging **${avgDailyHours.toFixed(1)} hours** per study day — ${avgDailyHours >= 3 ? 'great momentum!' : 'room to build deeper sessions.'}` : ''}
+
+## Daily Breakdown
+| Day | Hours | Subjects |
+|-----|-------|----------|
+${dailyBreakdown.map(d => `| ${d.date} | ${Math.round(d.hours * 10) / 10}h | ${d.subjects.join(', ') || '—'} |`).join('\n')}
 
 ## Topic Coverage
-| Subject | Hours |
-|---------|-------|
-${sortedSubjects.map(([s, h]) => `| ${s} | ${Math.round(h)}h |`).join('\n')}
+| Subject | Hours | Chapters |
+|---------|-------|----------|
+${sortedSubjects.map(([s, h]) => {
+  const chs = chaptersBySubject[s];
+  const chStr = chs && chs.size > 0 ? [...chs].slice(0, 4).join(', ') : '—';
+  return `| ${s} | ${Math.round(h)}h | ${chStr} |`;
+}).join('\n')}
 
 ## Strengths
 ${strengths.map(s => `- ✅ ${s}`).join('\n') || '- None identified yet.'}
@@ -229,11 +314,11 @@ ${strengths.map(s => `- ✅ ${s}`).join('\n') || '- None identified yet.'}
 ## Areas for Improvement
 ${weaknesses.map(w => `- ⚠️ ${w}`).join('\n') || '- Keep up the good work!'}
 
-## Recommendations
-1. ${weaknesses.length > 0 ? `Focus more on ${weaknesses[0].split(':')[0]}` : 'Maintain your current momentum.'}
-2. Try to study at least 6 days per week for consistency.
-3. Review your weakest topics at the start of each session.
-4. Take short breaks every 90 minutes to maintain focus.
+## Action Items
+1. ${weaknesses.length > 0 ? `Prioritize ${weaknesses[0].split(':')[0]} — aim for at least 3h next week.` : 'Maintain your current momentum across all subjects.'}
+2. ${entries.length < 5 ? 'Try to study at least 5 days next week for better consistency.' : 'Great consistency! Now focus on increasing depth in each session.'}
+3. ${studiedChapters.length > 0 ? `Review ${studiedChapters.slice(0, 2).join(' and ')} — spaced repetition helps retention.` : 'Start noting specific chapters to get better topic tracking.'}
+4. Take short breaks every 90 minutes to maintain focus during long sessions.
 
 ---
 *Generated by StudyLog — based on ${entries.length} daily entries.*
@@ -252,10 +337,14 @@ ${weaknesses.map(w => `- ⚠️ ${w}`).join('\n') || '- Keep up the good work!'}
       weaknesses: weaknesses.map(w => w.replace(/^[⚠️]*\s*/, '')),
       recommendations: [
         weaknesses.length > 0
-          ? `Spend more time on ${weaknesses[0].split(':')[0] || 'weaker subjects'} next week.`
-          : 'Keep up the consistent study routine!',
-        'Try to maintain a daily study habit — consistency beats intensity.',
-        'Review your weakest chapters at the start of each session.',
+          ? `Spend more time on ${weaknesses[0].split(':')[0] || 'weaker subjects'} next week — target at least 3 hours.`
+          : 'Keep up the consistent study routine across all subjects!',
+        entries.length < 5
+          ? 'Try to study at least 5 days per week for better consistency.'
+          : 'Great consistency — now focus on increasing session depth.',
+        studiedChapters.length > 0
+          ? `Review ${studiedChapters.slice(0, 2).join(' and ')} using spaced repetition.`
+          : 'Start noting specific chapters to get more targeted recommendations.',
       ],
     };
   }
