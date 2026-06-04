@@ -2,8 +2,10 @@ import type { APIRoute } from 'astro';
 import { createEntry, listEntries } from '../../../services/entry-service';
 import { getDb } from '../../../db';
 import { formatDate } from '../../../utils/date';
+import { scopeDbToUser } from '../../../services/user-scope';
 
 export const POST: APIRoute = async ({ request }) => {
+  scopeDbToUser(request);
   try {
     const body = await request.json();
     const { content, hoursStudied, studyType, focusRating, examType } = body;
@@ -49,7 +51,7 @@ export const POST: APIRoute = async ({ request }) => {
     const entry = await createEntry({
       date: today,
       content: trimmed,
-      hoursStudied: hoursStudied ? Number(hoursStudied) : undefined,
+      hoursStudied: hoursStudied !== undefined ? Number(hoursStudied) : undefined,
       studyType: studyType || undefined,
       focusRating: focusRating !== undefined ? Number(focusRating) : undefined,
       examType: examType || undefined,
@@ -62,7 +64,8 @@ export const POST: APIRoute = async ({ request }) => {
   }
 };
 
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async ({ request, url }) => {
+  scopeDbToUser(request);
   try {
     const from = url.searchParams.get('from') || undefined;
     const to = url.searchParams.get('to') || undefined;

@@ -1,7 +1,9 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../../db';
+import { scopeDbToUser } from '../../../services/user-scope';
 
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async ({ url, request }) => {
+  scopeDbToUser(request);
   try {
     const db = getDb();
     const examType = url.searchParams.get('exam') || undefined;
@@ -37,11 +39,17 @@ export const GET: APIRoute = async ({ url }) => {
       if (!healthMap.has(wc.subject)) healthMap.set(wc.subject, []);
       healthMap.get(wc.subject)!.push(wc.health);
     }
-    // Non-weak subjects have no entries in healthMap — we need all chapters
+    // For subjects with no weak chapters, mark all healthy (avgHealth = 100)
     for (const ch of allChapters) {
       if (!healthMap.has(ch.subject)) {
-        // All chapters in this subject are healthy (> threshold)
-        // We'll mark avgHealth as 100 for now
+        subjectHealth[ch.subject].avgHealth = 100;
+      }
+    }
+    // For subjects with weak chapters, compute average from their health values
+    for (const [subject, healthValues] of healthMap) {
+      if (subjectHealth[subject]) {
+        const avg = healthValues.reduce((a, b) => a + b, 0) / healthValues.length;
+        subjectHealth[subject].avgHealth = Math.round(avg);
       }
     }
 

@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { AIService } from './interface';
-import type { EntryAnalysis, WeeklyReviewData, DailyReviewData, MentorContext } from '../types/ai';
+import type { EntryAnalysis, WeeklyReviewData, DailyReviewData, MentorContext, ChatMessage } from '../types/ai';
 import type { Entry } from '../types/entry';
 
 /**
@@ -9,8 +9,9 @@ import type { Entry } from '../types/entry';
  * Uses gemini-2.0-flash (60 req/min free, $0 cost).
  */
 export class GeminiAIService implements AIService {
+  readonly provider = 'Gemini';
+  readonly modelName: string;
   private genAI: GoogleGenerativeAI;
-  private modelName: string;
 
   constructor(apiKey: string, modelName: string = 'gemini-2.0-flash') {
     this.genAI = new GoogleGenerativeAI(apiKey);
@@ -394,7 +395,7 @@ Return ONLY valid JSON:
     return `# Weekly Review\n\nStudied ${entries.length} days, ${Math.round(totalHours)} hours total.`;
   }
 
-  async *generateMentorResponse(query: string, context: MentorContext): AsyncGenerator<string, void, unknown> {
+  async *generateMentorResponse(query: string, context: MentorContext, history?: ChatMessage[]): AsyncGenerator<string, void, unknown> {
     const systemPrompt = `You are an AI study mentor for a student preparing for ${context.examType || 'their exam'}.
 You have access to their study data. Be concise, specific, and actionable — no generic motivational filler.
 
@@ -415,7 +416,15 @@ YOUR ROLE:
 
 If the user asks about a specific topic, quiz them on it. If they describe what they studied, ask a follow-up that checks depth of understanding. If they sound stuck, give practical next-step advice.`;
 
-    const prompt = `${systemPrompt}\n\nStudent message: ${query}\n\nRespond as a helpful, knowledgeable mentor:`;
+    let prompt = `${systemPrompt}\n\n`;
+    if (history && history.length > 0) {
+      prompt += 'Previous conversation:\n';
+      for (const msg of history) {
+        prompt += `${msg.role === 'mentor' ? 'Mentor' : 'Student'}: ${msg.content}\n`;
+      }
+      prompt += '\n';
+    }
+    prompt += `Student message: ${query}\n\nRespond as a helpful, knowledgeable mentor:`;
 
     try {
       const model = this.genAI.getGenerativeModel({ model: this.modelName });

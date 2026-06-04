@@ -253,6 +253,12 @@ const STUDY_TYPES = [
     }
   }
 
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
   function renderSyllabus(chapters, progress) {
     // Group by subject
     const subjects = {};
@@ -263,54 +269,103 @@ const STUDY_TYPES = [
 
     const subjectColors = { Physics: '#3b82f6', Chemistry: '#22c55e', Mathematics: '#f59e0b', Maths: '#f59e0b', Biology: '#ec4899' };
 
-    let html = '';
+    syllabusChapters.innerHTML = '';
+
     for (const [subject, chs] of Object.entries(subjects)) {
       const color = subjectColors[subject] || '#64748b';
       const prog = progress ? progress.find(p => p.subject === subject) : null;
       const pct = prog ? prog.weightedPercent : 0;
 
-      html += `<div style="margin-bottom:0.75rem;">`;
-      // Subject header
-      html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:0.3rem 0.5rem;border-left:3px solid ${color};margin-bottom:0.25rem;" data-syl-subject="${subject}">`;
-      html += `<span style="font-size:0.8rem;font-weight:600;color:#e2e8f0;">${subject}</span>`;
-      html += `<span class="syl-pct" style="font-size:0.7rem;font-family:monospace;color:#64748b;">${pct}%</span>`;
-      html += `</div>`;
-      // Chapters
-      for (const ch of chs) {
-        const isMastered = ch.status === 'mastered';
-        const isNotStarted = ch.status === 'not_started';
-        const statusColors = {
-          not_started: '#64748b', studied: '#f59e0b', revision_1: '#3b82f6',
-          revision_2: '#8b5cf6', revision_3: '#ec4899', mastered: '#22c55e',
-        };
-        const statusStyles = {
-          not_started: { color: '#cbd5e1', deco: 'none' },
-          studied: { color: '#fcd34d', deco: 'none' },
-          revision_1: { color: '#93c5fd', deco: 'none' },
-          revision_2: { color: '#c4b5fd', deco: 'none' },
-          revision_3: { color: '#f9a8d4', deco: 'none' },
-          mastered: { color: '#64748b', deco: 'line-through' },
-        };
-        const st = statusStyles[ch.status] || { color: '#cbd5e1', deco: 'none' };
-        html += `<div data-syl-row="${ch.id}" style="display:flex;align-items:center;gap:0.5rem;padding:0.25rem 0.5rem 0.25rem 0.75rem;border-radius:0.25rem;" onmouseover="this.style.background='rgba(51,65,85,0.3)'" onmouseout="this.style.background='transparent'">`;
-        // Six status buttons as a slider group
-        html += `<div style="display:flex;border-radius:0.35rem;overflow:hidden;border:1px solid rgba(51,65,85,0.4);flex-shrink:0;">`;
-        const STATUS_LIST = ['not_started', 'studied', 'revision_1', 'revision_2', 'revision_3', 'mastered'];
-        for (const s of STATUS_LIST) {
-          html += buildStatusBtn(ch.id, s, ch.status === s);
-        }
-        html += `</div>`;
-        // Chapter name
-        html += `<span class="syl-ch-name" style="font-size:0.78rem;color:${st.color};flex:1;${st.deco !== 'none' ? 'text-decoration:' + st.deco + ';' : ''}">${ch.chapter}</span>`;
-        if (ch.classLevel) {
-          html += `<span style="font-size:0.6rem;padding:0.05rem 0.3rem;border-radius:0.2rem;background:rgba(100,116,139,0.2);color:#94a3b8;font-family:monospace;">Cls ${ch.classLevel}</span>`;
-        }
-        html += `</div>`;
-      }
-      html += `</div>`;
-    }
+      const subjectDiv = document.createElement('div');
+      subjectDiv.style.marginBottom = '0.75rem';
 
-    syllabusChapters.innerHTML = html;
+      // Subject header
+      const header = document.createElement('div');
+      header.style.display = 'flex';
+      header.style.alignItems = 'center';
+      header.style.justifyContent = 'space-between';
+      header.style.padding = '0.3rem 0.5rem';
+      header.style.borderLeft = `3px solid ${color}`;
+      header.style.marginBottom = '0.25rem';
+      header.dataset.sylSubject = subject;
+      const nameSpan = document.createElement('span');
+      nameSpan.style.fontSize = '0.8rem';
+      nameSpan.style.fontWeight = '600';
+      nameSpan.style.color = '#e2e8f0';
+      nameSpan.textContent = subject;
+      header.appendChild(nameSpan);
+      const pctSpan = document.createElement('span');
+      pctSpan.className = 'syl-pct';
+      pctSpan.style.fontSize = '0.7rem';
+      pctSpan.style.fontFamily = 'monospace';
+      pctSpan.style.color = '#64748b';
+      pctSpan.textContent = `${pct}%`;
+      header.appendChild(pctSpan);
+      subjectDiv.appendChild(header);
+
+      // Chapters
+      const STATUS_LIST = ['not_started', 'studied', 'revision_1', 'revision_2', 'revision_3', 'mastered'];
+      const STATUS_STYLES = {
+        not_started: { color: '#cbd5e1', deco: 'none' },
+        studied: { color: '#fcd34d', deco: 'none' },
+        revision_1: { color: '#93c5fd', deco: 'none' },
+        revision_2: { color: '#c4b5fd', deco: 'none' },
+        revision_3: { color: '#f9a8d4', deco: 'none' },
+        mastered: { color: '#64748b', deco: 'line-through' },
+      };
+
+      for (const ch of chs) {
+        const st = STATUS_STYLES[ch.status] || STATUS_STYLES.not_started;
+        const row = document.createElement('div');
+        row.dataset.sylRow = ch.id;
+        row.style.display = 'flex';
+        row.style.alignItems = 'center';
+        row.style.gap = '0.5rem';
+        row.style.padding = '0.25rem 0.5rem 0.25rem 0.75rem';
+        row.style.borderRadius = '0.25rem';
+        row.addEventListener('mouseenter', () => { row.style.background = 'rgba(51,65,85,0.3)'; });
+        row.addEventListener('mouseleave', () => { row.style.background = 'transparent'; });
+
+        // Six status buttons as a slider group
+        const btnGroup = document.createElement('div');
+        btnGroup.style.display = 'flex';
+        btnGroup.style.borderRadius = '0.35rem';
+        btnGroup.style.overflow = 'hidden';
+        btnGroup.style.border = '1px solid rgba(51,65,85,0.4)';
+        btnGroup.style.flexShrink = '0';
+        for (const s of STATUS_LIST) {
+          btnGroup.appendChild(buildStatusBtnDom(ch.id, s, ch.status === s));
+        }
+        row.appendChild(btnGroup);
+
+        // Chapter name
+        const chName = document.createElement('span');
+        chName.className = 'syl-ch-name';
+        chName.style.fontSize = '0.78rem';
+        chName.style.color = st.color;
+        chName.style.flex = '1';
+        if (st.deco !== 'none') chName.style.textDecoration = st.deco;
+        chName.textContent = ch.chapter;
+        row.appendChild(chName);
+
+        // Class level badge
+        if (ch.classLevel) {
+          const badge = document.createElement('span');
+          badge.style.fontSize = '0.6rem';
+          badge.style.padding = '0.05rem 0.3rem';
+          badge.style.borderRadius = '0.2rem';
+          badge.style.background = 'rgba(100,116,139,0.2)';
+          badge.style.color = '#94a3b8';
+          badge.style.fontFamily = 'monospace';
+          badge.textContent = `Cls ${ch.classLevel}`;
+          row.appendChild(badge);
+        }
+
+        subjectDiv.appendChild(row);
+      }
+
+      syllabusChapters.appendChild(subjectDiv);
+    }
 
     // Add click handlers to status buttons
     syllabusChapters.querySelectorAll('.syl-status-btn').forEach(btn => {
@@ -391,7 +446,7 @@ const STUDY_TYPES = [
     });
   }
 
-  function buildStatusBtn(chapterId, status, isActive) {
+  function buildStatusBtnDom(chapterId, status, isActive) {
     const colors = {
       not_started: '#64748b', studied: '#f59e0b', revision_1: '#3b82f6',
       revision_2: '#8b5cf6', revision_3: '#ec4899', mastered: '#22c55e',
@@ -406,8 +461,27 @@ const STUDY_TYPES = [
     };
     const c = colors[status] || '#64748b';
     const bg = isActive ? `${c}22` : 'rgba(15,23,42,0.8)';
-    const color = isActive ? c : '#475569';
-    return `<button class="syl-status-btn" data-chapter-id="${chapterId}" data-status="${status}" type="button" style="font-size:0.6rem;padding:0.2rem 0.35rem;min-width:1.6rem;border:none;border-right:1px solid rgba(51,65,85,0.3);background:${bg};color:${color};cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all 0.1s;${isActive ? 'font-weight:600;' : ''}" title="${titles[status]}">${labels[status]}</button>`;
+    const txtColor = isActive ? c : '#475569';
+
+    const btn = document.createElement('button');
+    btn.className = 'syl-status-btn';
+    btn.type = 'button';
+    btn.dataset.chapterId = String(chapterId);
+    btn.dataset.status = status;
+    btn.title = titles[status] || status;
+    btn.style.fontSize = '0.6rem';
+    btn.style.padding = '0.2rem 0.35rem';
+    btn.style.minWidth = '1.6rem';
+    btn.style.border = 'none';
+    btn.style.borderRight = '1px solid rgba(51,65,85,0.3)';
+    btn.style.background = bg;
+    btn.style.color = txtColor;
+    btn.style.cursor = 'pointer';
+    btn.style.fontFamily = "'JetBrains Mono', monospace";
+    btn.style.transition = 'all 0.1s';
+    if (isActive) btn.style.fontWeight = '600';
+    btn.textContent = labels[status] || status;
+    return btn;
   }
 
   // ── Form submit ──

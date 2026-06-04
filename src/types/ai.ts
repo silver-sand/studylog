@@ -35,11 +35,16 @@ export interface MentorContext {
   settings: string;
 }
 
+export interface ChatMessage {
+  role: 'user' | 'mentor';
+  content: string;
+}
+
 export interface AIService {
   analyzeEntry(content: string): Promise<EntryAnalysis>;
   generateWeeklyReview(entries: Pick<Entry, 'id' | 'date' | 'content' | 'subjects' | 'chapters' | 'hoursStudied'>[]): Promise<WeeklyReviewData>;
   generateDailyReview(entries: Pick<Entry, 'id' | 'date' | 'content' | 'subjects' | 'chapters' | 'hoursStudied' | 'studyType' | 'focusRating'>[]): Promise<DailyReviewData>;
-  generateMentorResponse(query: string, context: MentorContext): AsyncGenerator<string, void, unknown>;
+  generateMentorResponse(query: string, context: MentorContext, history?: ChatMessage[]): AsyncGenerator<string, void, unknown>;
 }
 
 export interface AIServiceConfig {

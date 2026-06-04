@@ -1,0 +1,31 @@
+import type { APIRoute } from 'astro';
+import { signup } from '../../../services/auth-service';
+
+export const POST: APIRoute = async ({ request }) => {
+  try {
+    const { name, email, password } = await request.json();
+
+    if (!name || typeof name !== 'string' || name.trim().length === 0) {
+      return new Response(JSON.stringify({ error: 'Name is required' }), { status: 400 });
+    }
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+      return new Response(JSON.stringify({ error: 'Valid email is required' }), { status: 400 });
+    }
+    if (!password || typeof password !== 'string' || password.length < 6) {
+      return new Response(JSON.stringify({ error: 'Password must be at least 6 characters' }), { status: 400 });
+    }
+
+    const result = await signup(name.trim(), email.trim().toLowerCase(), password);
+
+    return new Response(JSON.stringify({ user: result.user }), {
+      status: 201,
+      headers: {
+        'Content-Type': 'application/json',
+        'Set-Cookie': `session_token=${result.token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${7 * 24 * 60 * 60}`,
+      },
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Signup failed';
+    return new Response(JSON.stringify({ error: msg }), { status: 409 });
+  }
+};

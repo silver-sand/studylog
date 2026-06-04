@@ -2,7 +2,9 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getDb } from '../db';
 import { SUBJECTS_LIST, EXAM_TYPES_LIST } from '../utils/constants';
+import { scopeDbToUser } from '../services/user-scope';
 
+scopeDbToUser(Astro.request);
 const db = getDb();
 const settings = db.getSettings();
 ---

@@ -1,7 +1,9 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../../db';
+import { scopeDbToUser } from '../../../services/user-scope';
 
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async ({ url, request }) => {
+  scopeDbToUser(request);
   try {
     const db = getDb();
     const settings = db.getSettings();
@@ -32,7 +34,9 @@ export const GET: APIRoute = async ({ url }) => {
     const progressRate = overallPercent / daysSinceStart; // percent per day
     const remainingPercent = 100 - overallPercent;
     const daysNeededAtCurrentPace = progressRate > 0 ? Math.ceil(remainingPercent / progressRate) : Infinity;
-    const projectedDate = new Date(today.getTime() + daysNeededAtCurrentPace * 86400000);
+    const projectedDate = daysNeededAtCurrentPace !== Infinity
+      ? new Date(today.getTime() + daysNeededAtCurrentPace * 86400000)
+      : null;
 
     let examDate: Date | null = null;
     let daysUntilExam: number | null = null;
@@ -62,7 +66,7 @@ export const GET: APIRoute = async ({ url }) => {
       daysSinceStart,
       progressRate: Math.round(progressRate * 100) / 100,
       daysNeededAtCurrentPace,
-      projectedCompletion: projectedDate.toISOString().split('T')[0],
+      projectedCompletion: projectedDate ? projectedDate.toISOString().split('T')[0] : null,
       examDate: settings.examDate,
       daysUntilExam,
       status,

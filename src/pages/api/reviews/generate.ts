@@ -1,7 +1,9 @@
 import type { APIRoute } from 'astro';
 import { generateReview } from '../../../services/review-service';
+import { scopeDbToUser } from '../../../services/user-scope';
 
 export const POST: APIRoute = async ({ request }) => {
+  scopeDbToUser(request);
   try {
     const body = await request.json().catch(() => ({}));
     const weekStart = body?.weekStart || undefined;

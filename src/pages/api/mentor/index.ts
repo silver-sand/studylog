@@ -1,9 +1,11 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../../db';
 import { createAIServiceFromEnv } from '../../../ai';
-import type { MentorContext } from '../../../types/ai';
+import type { MentorContext, ChatMessage } from '../../../types/ai';
+import { scopeDbToUser } from '../../../services/user-scope';
 
 export const POST: APIRoute = async ({ request }) => {
+  scopeDbToUser(request);
   try {
     const { query, history } = await request.json();
 
@@ -55,29 +57,38 @@ export const POST: APIRoute = async ({ request }) => {
       settings: settingsStr,
     };
 
+    // Validate and sanitize history
+    const chatHistory: ChatMessage[] = Array.isArray(history)
+      ? history.filter((m: any) => m && typeof m === 'object' && typeof m.content === 'string')
+      : [];
+
     const ai = createAIServiceFromEnv();
+    const providerInfo = { provider: ai.provider, model: ai.modelName };
 
     // Return SSE stream
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          const prefix = history && Array.isArray(history) && history.length > 0
-            ? history.map((m: any) => `${m.role}: ${m.content}`).join('\n') + '\n'
-            : '';
+          // Send diagnostics first
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'meta', provider: providerInfo.provider, model: providerInfo.model })}\n\n`));
 
-          for await (const chunk of ai.generateMentorResponse(query, context)) {
+          const startTime = Date.now();
+          let chunkCount = 0;
+          for await (const chunk of ai.generateMentorResponse(query, context, chatHistory)) {
             if (chunk) {
+              chunkCount++;
               const data = JSON.stringify({ type: 'chunk', text: chunk });
               controller.enqueue(encoder.encode(`data: ${data}\n\n`));
             }
           }
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
+          const latency = Date.now() - startTime;
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done', latency, chunkCount })}\n\n`));
         } catch (err) {
           const errorMsg = err instanceof Error ? err.message : 'Unknown error';
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'error', text: errorMsg })}\n\n`));
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'error', text: errorMsg, provider: providerInfo.provider })}\n\n`));
         } finally {
-          controller.close();
+          try { controller.close(); } catch { /* already closed */ }
         }
       },
     });

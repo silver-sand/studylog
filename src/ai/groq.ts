@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import type { AIService } from './interface';
-import type { EntryAnalysis, WeeklyReviewData, DailyReviewData, MentorContext } from '../types/ai';
+import type { EntryAnalysis, WeeklyReviewData, DailyReviewData, MentorContext, ChatMessage } from '../types/ai';
 import type { Entry } from '../types/entry';
 
 const GROQ_BASE_URL = 'https://api.groq.com/openai/v1';
@@ -12,8 +12,9 @@ const GROQ_BASE_URL = 'https://api.groq.com/openai/v1';
  * No credit card needed, 30 req/min free tier.
  */
 export class GroqAIService implements AIService {
+  readonly provider = 'Groq';
+  readonly modelName: string;
   private client: OpenAI;
-  private modelName: string;
 
   constructor(apiKey: string, modelName: string = 'llama-3.3-70b-versatile') {
     this.client = new OpenAI({
@@ -239,7 +240,7 @@ Return ONLY valid JSON:
     }
   }
 
-  async *generateMentorResponse(query: string, context: MentorContext): AsyncGenerator<string, void, unknown> {
+  async *generateMentorResponse(query: string, context: MentorContext, history?: ChatMessage[]): AsyncGenerator<string, void, unknown> {
     const systemPrompt = `You are an AI study mentor for a student preparing for ${context.examType || 'their exam'}.
 You have access to their study data. Be concise, specific, and actionable — no generic motivational filler.
 
@@ -261,12 +262,19 @@ YOUR ROLE:
 If the user asks about a specific topic, quiz them on it. If they describe what they studied, ask a follow-up that checks depth of understanding. If they sound stuck, give practical next-step advice.`;
 
     try {
+      const messages: { role: string; content: string }[] = [
+        { role: 'system', content: systemPrompt },
+      ];
+      if (history && history.length > 0) {
+        for (const msg of history) {
+          messages.push({ role: msg.role === 'mentor' ? 'assistant' : 'user', content: msg.content });
+        }
+      }
+      messages.push({ role: 'user', content: query });
+
       const stream = await this.client.chat.completions.create({
         model: this.modelName,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: query },
-        ],
+        messages: messages as any,
         temperature: 0.7,
         stream: true,
       });

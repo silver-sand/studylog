@@ -1,7 +1,9 @@
 import type { APIRoute } from 'astro';
 import { getEntry, updateEntry, deleteEntry, reanalyzeEntry } from '../../../services/entry-service';
+import { scopeDbToUser } from '../../../services/user-scope';
 
-export const GET: APIRoute = async ({ params }) => {
+export const GET: APIRoute = async ({ params, request }) => {
+  scopeDbToUser(request);
   try {
     const { id } = params;
     if (!id) {
@@ -20,6 +22,7 @@ export const GET: APIRoute = async ({ params }) => {
 };
 
 export const PATCH: APIRoute = async ({ params, request }) => {
+  scopeDbToUser(request);
   try {
     const { id } = params;
     if (!id) {
@@ -60,7 +63,6 @@ export const PATCH: APIRoute = async ({ params, request }) => {
     }
 
     if (content && content !== existing.content) {
-      // Save new content + fields FIRST, then re-analyze
       updateEntry(id, {
         content: content.trim(),
         hoursStudied: hoursStudied !== undefined ? Number(hoursStudied) : existing.hoursStudied,
@@ -86,7 +88,8 @@ export const PATCH: APIRoute = async ({ params, request }) => {
   }
 };
 
-export const DELETE: APIRoute = async ({ params }) => {
+export const DELETE: APIRoute = async ({ params, request }) => {
+  scopeDbToUser(request);
   try {
     const { id } = params;
     if (!id) {

@@ -1,7 +1,9 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../db';
+import { scopeDbToUser } from '../../services/user-scope';
 
-export const GET: APIRoute = async () => {
+export const GET: APIRoute = async ({ request }) => {
+  scopeDbToUser(request);
   try {
     const settings = getDb().getSettings();
     return new Response(JSON.stringify(settings));
@@ -11,6 +13,7 @@ export const GET: APIRoute = async () => {
 };
 
 export const PUT: APIRoute = async ({ request }) => {
+  scopeDbToUser(request);
   try {
     const body = await request.json();
     const { targetHoursPerWeek, subjects, examType, examDate, theme } = body;

@@ -2,9 +2,12 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import SyllabusCard from '../components/SyllabusCard.astro';
 import ChapterList from '../components/ChapterList.astro';
+import TourTooltip from '../components/TourTooltip.astro';
 import { getDb } from '../db';
 import { EXAM_TYPES_FOR_SYLLABUS } from '../utils/syllabus-data';
+import { scopeDbToUser } from '../services/user-scope';
 
+scopeDbToUser(Astro.request);
 const db = getDb();
 db.seedSyllabusData();
 
@@ -122,6 +125,14 @@ const filteredExams = selectedKey ? exams.filter(e => e.key === selectedKey) : e
       </div>
     ))}
   </div>
+
+  <TourTooltip
+    tourId="syllabus-tabs"
+    title="📋 Syllabus Tracker"
+    description="Switch between exams to track progress. Click a subject card to expand chapters, then click the status buttons to update your progress."
+    selector=".exam-tabs"
+    position="bottom"
+  />
 </BaseLayout>
 
 <script>
@@ -135,8 +146,12 @@ const filteredExams = selectedKey ? exams.filter(e => e.key === selectedKey) : e
   tabs.forEach((tab) => {
     tab.addEventListener('click', () => {
       const exam = tab.dataset.exam;
-      tabs.forEach((t) => t.classList.remove('active'));
+      tabs.forEach((t) => {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+      });
       tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
       contents.forEach((content, key) => {
         content.classList.toggle('hidden', key !== exam);
       });

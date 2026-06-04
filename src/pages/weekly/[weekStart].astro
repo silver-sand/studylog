@@ -4,8 +4,10 @@ import ReviewCard from '../../components/ReviewCard.astro';
 import EmptyState from '../../components/EmptyState.astro';
 import { getDb } from '../../db';
 import { formatDisplayDate, getMonday, getSunday } from '../../utils/date';
+import { scopeDbToUser } from '../../services/user-scope';
 
 const { weekStart } = Astro.params;
+scopeDbToUser(Astro.request);
 const db = getDb();
 const review = weekStart ? db.getReviewByWeek(weekStart) : null;
 const validDate = weekStart && /^\d{4}-\d{2}-\d{2}$/.test(weekStart);
@@ -187,11 +189,13 @@ const hasNext = !!db.getReviewByWeek(nextWeekStart);
   const btn = document.getElementById('regenerate-weekly-btn');
   const errorDiv = document.getElementById('regenerate-error');
   const reviewContent = document.getElementById('review-content');
+  let originalBtnHtml = '';
 
   btn?.addEventListener('click', async () => {
     if (!btn || !errorDiv) return;
     btn.disabled = true;
-    btn.textContent = 'Regenerating...';
+    originalBtnHtml = btn.innerHTML;
+    btn.innerHTML = '<span class="loading-spinner"></span> Regenerating...';
     errorDiv.classList.add('hidden');
 
     try {
@@ -210,7 +214,7 @@ const hasNext = !!db.getReviewByWeek(nextWeekStart);
       errorDiv.textContent = err instanceof Error ? err.message : 'Something went wrong';
       errorDiv.classList.remove('hidden');
       btn.disabled = false;
-      btn.textContent = 'Regenerate';
+      btn.innerHTML = originalBtnHtml;
     }
   });
 </script>

@@ -1,11 +1,13 @@
 ---
 import Sidebar from '../components/Sidebar.astro';
+import { getSessionUser, getTokenFromCookie } from '../services/auth-service';
 
 export interface Props {
   title: string;
 }
 
 const { title } = Astro.props;
+const user = getSessionUser(getTokenFromCookie(Astro.request));
 ---
 
 <!DOCTYPE html>
@@ -23,7 +25,7 @@ const { title } = Astro.props;
   </head>
   <body class="bg-surface-950 text-slate-300 antialiased min-h-screen font-sans">
     <div class="flex min-h-screen">
-      <Sidebar currentPath={Astro.url.pathname} />
+      <Sidebar currentPath={Astro.url.pathname} user={user} />
       <main class="flex-1 p-6 md:p-8 lg:p-10 ml-0 md:ml-64 min-w-0 pb-20 md:pb-8">
         <slot />
       </main>

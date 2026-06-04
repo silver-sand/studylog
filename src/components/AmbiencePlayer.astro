@@ -1,0 +1,346 @@
+---
+---
+
+<div class="ambience-wrap" id="ambience-wrap">
+  <button class="ambience-toggle" id="ambience-toggle">
+    <span>🎵</span>
+    <span>Ambience</span>
+    <span class="ambience-indicator" id="ambience-indicator"></span>
+  </button>
+
+  <div class="ambience-panel hidden" id="ambience-panel">
+    <div class="ambience-grid">
+      <button class="ambience-btn" data-sound="white-noise" title="White noise">
+        <span class="ambience-btn-icon">🤍</span>
+        <span class="ambience-btn-label">White</span>
+      </button>
+      <button class="ambience-btn" data-sound="brown-noise" title="Brown noise">
+        <span class="ambience-btn-icon">🤎</span>
+        <span class="ambience-btn-label">Brown</span>
+      </button>
+      <button class="ambience-btn" data-sound="pink-noise" title="Pink noise">
+        <span class="ambience-btn-icon">🩷</span>
+        <span class="ambience-btn-label">Pink</span>
+      </button>
+      <button class="ambience-btn" data-sound="rain" title="Rain">
+        <span class="ambience-btn-icon">🌧️</span>
+        <span class="ambience-btn-label">Rain</span>
+      </button>
+    </div>
+
+    <div class="ambience-controls">
+      <div class="ambience-vol-row">
+        <span class="ambience-vol-icon">🔉</span>
+        <input
+          type="range"
+          id="ambience-volume"
+          class="ambience-slider"
+          min="0"
+          max="100"
+          value="40"
+        />
+        <span class="ambience-vol-icon">🔊</span>
+      </div>
+      <button class="ambience-stop-btn" id="ambience-stop">⏹ Stop All</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const toggle = document.getElementById('ambience-toggle');
+    const panel = document.getElementById('ambience-panel');
+    const indicator = document.getElementById('ambience-indicator');
+    const volumeSlider = document.getElementById('ambience-volume') as HTMLInputElement;
+    const stopBtn = document.getElementById('ambience-stop');
+
+    let audioCtx: AudioContext | null = null;
+    let activeSource: AudioNode | null = null;
+    let gainNode: GainNode | null = null;
+    let activeType: string | null = null;
+    let rainAudio: HTMLAudioElement | null = null;
+
+    function getAudioContext(): AudioContext {
+      if (!audioCtx) {
+        audioCtx = new AudioContext();
+      }
+      return audioCtx;
+    }
+
+    function generateNoise(type: 'white' | 'pink' | 'brown'): AudioNode {
+      const ctx = getAudioContext();
+      const bufferSize = ctx.sampleRate * 2;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+
+      if (type === 'white') {
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+      } else if (type === 'pink') {
+        // Voss-McCartney pink noise
+        let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+        for (let i = 0; i < bufferSize; i++) {
+          const white = Math.random() * 2 - 1;
+          b0 = 0.99886 * b0 + white * 0.0555179;
+          b1 = 0.99332 * b1 + white * 0.0750759;
+          b2 = 0.96900 * b2 + white * 0.1538520;
+          b3 = 0.86650 * b3 + white * 0.3104856;
+          b4 = 0.55000 * b4 + white * 0.5329522;
+          b5 = -0.7616 * b5 - white * 0.0168980;
+          data[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.005;
+          b6 = white * 0.115926;
+        }
+      } else {
+        // Brown noise: integrated white noise (low-pass)
+        let lastOut = 0;
+        for (let i = 0; i < bufferSize; i++) {
+          const white = Math.random() * 2 - 1;
+          data[i] = (lastOut + (0.02 * white)) / 1.02;
+          lastOut = data[i];
+          data[i] *= 3.5; // boost
+        }
+      }
+
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.loop = true;
+      return source;
+    }
+
+    function startNoise(type: 'white' | 'pink' | 'brown') {
+      stopAll();
+
+      const ctx = getAudioContext();
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+
+      gainNode = ctx.createGain();
+      gainNode.gain.value = (parseInt(volumeSlider.value) || 40) / 100;
+      gainNode.connect(ctx.destination);
+
+      const source = generateNoise(type) as AudioBufferSourceNode;
+      source.connect(gainNode);
+      source.start();
+
+      activeSource = source;
+      activeType = type;
+      updateIndicator(true);
+    }
+
+    function startRain() {
+      stopAll();
+
+      // URL-based rain sound
+      rainAudio = new Audio('https://www.soundjay.com/ambient/sounds/rain-01.mp3');
+      rainAudio.loop = true;
+      rainAudio.volume = (parseInt(volumeSlider.value) || 40) / 100;
+      rainAudio.play().catch(() => {
+        // Autoplay may be blocked; user interaction should allow it
+      });
+
+      activeType = 'rain';
+      updateIndicator(true);
+    }
+
+    function stopAll() {
+      if (activeSource) {
+        try { (activeSource as AudioBufferSourceNode).stop(); } catch {}
+        activeSource.disconnect();
+        activeSource = null;
+      }
+      if (rainAudio) {
+        rainAudio.pause();
+        rainAudio.currentTime = 0;
+        rainAudio = null;
+      }
+      if (gainNode) {
+        gainNode.disconnect();
+        gainNode = null;
+      }
+      activeType = null;
+      updateIndicator(false);
+    }
+
+    function updateIndicator(active: boolean) {
+      indicator.style.display = active ? 'inline' : 'none';
+    }
+
+    function updateVolume() {
+      const vol = (parseInt(volumeSlider.value) || 40) / 100;
+      if (rainAudio) {
+        rainAudio.volume = vol;
+      }
+      if (gainNode) {
+        gainNode.gain.value = vol;
+      }
+    }
+
+    // ── Event listeners ──
+    toggle.addEventListener('click', () => {
+      panel.classList.toggle('hidden');
+      toggle.classList.toggle('open');
+    });
+
+    panel.querySelectorAll('.ambience-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const sound = btn.dataset.sound;
+        if (sound === 'white-noise') startNoise('white');
+        else if (sound === 'pink-noise') startNoise('pink');
+        else if (sound === 'brown-noise') startNoise('brown');
+        else if (sound === 'rain') startRain();
+
+        // Highlight active button
+        panel.querySelectorAll('.ambience-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+
+    volumeSlider.addEventListener('input', updateVolume);
+
+    stopBtn.addEventListener('click', () => {
+      stopAll();
+      panel.querySelectorAll('.ambience-btn').forEach(b => b.classList.remove('active'));
+    });
+  })();
+</script>
+
+<style>
+  .ambience-wrap {
+    border-top: 1px solid rgba(51, 65, 85, 0.3);
+  }
+  .ambience-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.625rem 1rem;
+    background: transparent;
+    border: none;
+    color: #64748b;
+    font-size: 0.8rem;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .ambience-toggle:hover {
+    color: #94a3b8;
+    background: rgba(51, 65, 85, 0.2);
+  }
+  .ambience-toggle.open {
+    color: #94a3b8;
+  }
+  .ambience-indicator {
+    display: none;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: #22c55e;
+    margin-left: auto;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  .ambience-panel {
+    padding: 0.5rem 1rem 0.75rem;
+  }
+  .ambience-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+    margin-bottom: 0.6rem;
+  }
+  .ambience-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    padding: 0.5rem 0.25rem;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(51, 65, 85, 0.4);
+    border-radius: 0.5rem;
+    color: #94a3b8;
+    font-size: 0.7rem;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .ambience-btn:hover {
+    border-color: rgba(71, 85, 105, 0.7);
+    background: rgba(30, 41, 59, 0.6);
+  }
+  .ambience-btn.active {
+    border-color: rgba(34, 197, 94, 0.5);
+    background: rgba(34, 197, 94, 0.1);
+    color: #86efac;
+  }
+  .ambience-btn-icon {
+    font-size: 1.2rem;
+    line-height: 1;
+  }
+  .ambience-btn-label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .ambience-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .ambience-vol-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .ambience-vol-icon {
+    font-size: 0.7rem;
+    color: #475569;
+  }
+  .ambience-slider {
+    flex: 1;
+    height: 0.3rem;
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(51, 65, 85, 0.5);
+    border-radius: 999px;
+    outline: none;
+  }
+  .ambience-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+    background: #64748b;
+    cursor: pointer;
+  }
+  .ambience-slider::-moz-range-thumb {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+    background: #64748b;
+    cursor: pointer;
+    border: none;
+  }
+  .ambience-stop-btn {
+    width: 100%;
+    padding: 0.35rem 0.5rem;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 0.375rem;
+    color: #fca5a5;
+    font-size: 0.7rem;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .ambience-stop-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+  }
+  .hidden {
+    display: none !important;
+  }
+</style>

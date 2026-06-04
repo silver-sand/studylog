@@ -1,7 +1,9 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../../db';
+import { scopeDbToUser } from '../../../services/user-scope';
 
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async ({ url, request }) => {
+  scopeDbToUser(request);
   try {
     const db = getDb();
     const subject = url.searchParams.get('subject') || undefined;
@@ -18,6 +20,7 @@ export const GET: APIRoute = async ({ url }) => {
 };
 
 export const POST: APIRoute = async ({ request }) => {
+  scopeDbToUser(request);
   try {
     const body = await request.json();
     const { subject, testName, score, maxMarks, date, examType, notes } = body;

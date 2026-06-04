@@ -92,58 +92,64 @@ function daysAgo(dateStr: string | null): string {
     mastered: '#22c55e',
   };
 
-  document.querySelectorAll('.slider-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const chapterId = btn.dataset.chapterId;
-      const status = btn.dataset.status;
-      if (!chapterId || !status) return;
+  // Use event delegation on the chapter-list container to avoid duplicate handlers
+  const list = document.currentScript?.closest('.chapter-list') ||
+               document.querySelector('.chapter-list');
+  if (!list) throw new Error('ChapterList: no container found');
 
-      const group = btn.closest('.slider-group');
-      if (!group) return;
-      const allBtns = group.querySelectorAll('.slider-btn');
-      allBtns.forEach(b => (b as HTMLButtonElement).disabled = true);
+  list.addEventListener('click', async (e) => {
+    const btn = (e.target as HTMLElement).closest('.slider-btn');
+    if (!btn) return;
 
-      try {
-        const res = await fetch('/api/syllabus', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: chapterId, status }),
-        });
-        if (!res.ok) throw new Error('Update failed');
+    const chapterId = btn.dataset.chapterId;
+    const status = btn.dataset.status;
+    if (!chapterId || !status) return;
 
-        const updated = await res.json();
-        const activeIdx = CHAPTER_STATUSES.indexOf(status);
+    const group = btn.closest('.slider-group');
+    if (!group) return;
+    const allBtns = group.querySelectorAll('.slider-btn');
+    allBtns.forEach(b => (b as HTMLButtonElement).disabled = true);
 
-        allBtns.forEach((b, idx) => {
-          const s = b.dataset.status!;
-          const isActive = s === status;
-          const isBefore = idx < activeIdx;
-          const isAfter = idx > activeIdx;
+    try {
+      const res = await fetch('/api/syllabus', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: chapterId, status }),
+      });
+      if (!res.ok) throw new Error('Update failed');
 
-          b.classList.toggle('active', isActive);
-          b.classList.toggle('before', isBefore);
-          b.classList.toggle('after', isAfter);
-          b.style.setProperty('--accent', ACCENT_COLORS[s] || '#64748b');
-        });
+      const updated = await res.json();
+      const activeIdx = CHAPTER_STATUSES.indexOf(status);
 
-        // Update row visual
-        const row = btn.closest('.chapter-row');
-        if (row) {
-          CHAPTER_STATUSES.forEach(st => row.classList.remove('status-' + st));
-          row.classList.add('status-' + status);
-        }
+      allBtns.forEach((b, idx) => {
+        const s = b.dataset.status!;
+        const isActive = s === status;
+        const isBefore = idx < activeIdx;
+        const isAfter = idx > activeIdx;
 
-        // Trigger progress refresh
-        document.dispatchEvent(new CustomEvent('syllabus-updated', {
-          detail: { examType: updated.examType },
-        }));
+        b.classList.toggle('active', isActive);
+        b.classList.toggle('before', isBefore);
+        b.classList.toggle('after', isAfter);
+        b.style.setProperty('--accent', ACCENT_COLORS[s] || '#64748b');
+      });
 
-      } catch (err) {
-        alert('Failed: ' + (err instanceof Error ? err.message : 'Error'));
-      } finally {
-        allBtns.forEach(b => (b as HTMLButtonElement).disabled = false);
+      // Update row visual
+      const row = btn.closest('.chapter-row');
+      if (row) {
+        CHAPTER_STATUSES.forEach(st => row.classList.remove('status-' + st));
+        row.classList.add('status-' + status);
       }
-    });
+
+      // Trigger progress refresh
+      document.dispatchEvent(new CustomEvent('syllabus-updated', {
+        detail: { examType: updated.examType },
+      }));
+
+    } catch (err) {
+      alert('Failed: ' + (err instanceof Error ? err.message : 'Error'));
+    } finally {
+      allBtns.forEach(b => (b as HTMLButtonElement).disabled = false);
+    }
   });
 </script>
 

@@ -1,0 +1,434 @@
+---
+export interface Props {
+  subjects?: string[];
+}
+
+const { subjects = ['Physics', 'Chemistry', 'Mathematics', 'Biology'] } = Astro.props;
+---
+
+<div class="timer-card" id="study-timer">
+  <div class="timer-header">
+    <span class="timer-icon">⏱️</span>
+    <h3 class="timer-title">Study Timer</h3>
+  </div>
+
+  <!-- Timer display -->
+  <div class="timer-display" id="timer-display">00:00:00</div>
+
+  <!-- Subject selector (shown before starting) -->
+  <div class="timer-controls" id="timer-controls">
+    <div class="timer-field">
+      <label for="timer-subject" class="timer-label">Subject</label>
+      <select id="timer-subject" class="timer-select">
+        <option value="">— Select subject —</option>
+        {subjects.map(s => (
+          <option value={s}>{s}</option>
+        ))}
+      </select>
+    </div>
+
+    <div class="timer-field">
+      <label for="timer-topic" class="timer-label">Topic (optional)</label>
+      <input
+        type="text"
+        id="timer-topic"
+        class="timer-input"
+        placeholder="e.g. Kinematics"
+      />
+    </div>
+  </div>
+
+  <!-- Action buttons -->
+  <div class="timer-actions">
+    <button id="timer-start-btn" class="timer-btn timer-btn-start">▶ Start</button>
+    <button id="timer-pause-btn" class="timer-btn timer-btn-pause hidden">⏸ Pause</button>
+    <button id="timer-resume-btn" class="timer-btn timer-btn-resume hidden">▶ Resume</button>
+    <button id="timer-stop-btn" class="timer-btn timer-btn-stop hidden">⏹ Stop</button>
+  </div>
+
+  <!-- Session summary (shown after stop) -->
+  <div id="timer-summary" class="timer-summary hidden">
+    <div class="summary-divider"></div>
+    <p class="summary-title">Session Complete</p>
+    <div class="summary-details">
+      <span class="summary-stat">
+        Duration: <strong id="summary-duration">00:00:00</strong>
+      </span>
+      <span class="summary-stat" id="summary-subject-stat" style="display:none;">
+        Subject: <strong id="summary-subject">—</strong>
+      </span>
+      <span class="summary-stat" id="summary-topic-stat" style="display:none;">
+        Topic: <strong id="summary-topic">—</strong>
+      </span>
+    </div>
+    <div class="summary-actions">
+      <button id="save-entry-btn" class="timer-btn timer-btn-save">📝 Save as Entry</button>
+      <button id="discard-btn" class="timer-btn timer-btn-discard">✕ Discard</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const display = document.getElementById('timer-display');
+    const startBtn = document.getElementById('timer-start-btn');
+    const pauseBtn = document.getElementById('timer-pause-btn');
+    const resumeBtn = document.getElementById('timer-resume-btn');
+    const stopBtn = document.getElementById('timer-stop-btn');
+    const subjectSelect = document.getElementById('timer-subject');
+    const topicInput = document.getElementById('timer-topic');
+    const summary = document.getElementById('timer-summary');
+    const summaryDuration = document.getElementById('summary-duration');
+    const summarySubject = document.getElementById('summary-subject');
+    const summaryTopic = document.getElementById('summary-topic');
+    const summarySubjectStat = document.getElementById('summary-subject-stat');
+    const summaryTopicStat = document.getElementById('summary-topic-stat');
+    const saveBtn = document.getElementById('save-entry-btn');
+    const discardBtn = document.getElementById('discard-btn');
+
+    let startTime = 0;
+    let elapsed = 0;        // ms elapsed before current pause
+    let running = false;
+    let paused = false;
+    let intervalId: number | null = null;
+
+    function formatTime(ms: number): string {
+      const totalSec = Math.floor(ms / 1000);
+      const h = Math.floor(totalSec / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    function getCurrentElapsed(): number {
+      if (running && !paused) {
+        return elapsed + (Date.now() - startTime);
+      }
+      return elapsed;
+    }
+
+    function updateDisplay() {
+      display.textContent = formatTime(getCurrentElapsed());
+    }
+
+    function tick() {
+      updateDisplay();
+    }
+
+    function startTimer() {
+      const subject = subjectSelect.value;
+      if (!subject) {
+        subjectSelect.focus();
+        subjectSelect.style.borderColor = '#ef4444';
+        setTimeout(() => { subjectSelect.style.borderColor = ''; }, 2000);
+        return;
+      }
+
+      startTime = Date.now();
+      elapsed = 0;
+      running = true;
+      paused = false;
+
+      // Disable inputs
+      subjectSelect.disabled = true;
+      topicInput.disabled = true;
+
+      // Toggle buttons
+      startBtn.classList.add('hidden');
+      pauseBtn.classList.remove('hidden');
+      stopBtn.classList.remove('hidden');
+      summary.classList.add('hidden');
+
+      // Start ticker
+      intervalId = window.setInterval(tick, 200);
+    }
+
+    function pauseTimer() {
+      if (!running || paused) return;
+      elapsed += Date.now() - startTime;
+      paused = true;
+      if (intervalId) clearInterval(intervalId);
+      intervalId = null;
+
+      pauseBtn.classList.add('hidden');
+      resumeBtn.classList.remove('hidden');
+    }
+
+    function resumeTimer() {
+      if (!running || !paused) return;
+      startTime = Date.now();
+      paused = false;
+
+      resumeBtn.classList.add('hidden');
+      pauseBtn.classList.remove('hidden');
+
+      intervalId = window.setInterval(tick, 200);
+    }
+
+    function stopTimer() {
+      if (!running) return;
+
+      // Final elapsed
+      if (paused) {
+        // elapsed already captured in pause
+      } else {
+        elapsed += Date.now() - startTime;
+      }
+      running = false;
+      paused = false;
+      if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+
+      // Update display one last time
+      updateDisplay();
+
+      // Hide timer controls, show summary
+      startBtn.classList.add('hidden');
+      pauseBtn.classList.add('hidden');
+      resumeBtn.classList.add('hidden');
+      stopBtn.classList.add('hidden');
+
+      const subject = subjectSelect.value;
+      const topic = topicInput.value.trim();
+
+      summaryDuration.textContent = formatTime(elapsed);
+
+      if (subject) {
+        summarySubject.textContent = subject;
+        summarySubjectStat.style.display = '';
+      } else {
+        summarySubjectStat.style.display = 'none';
+      }
+
+      if (topic) {
+        summaryTopic.textContent = topic;
+        summaryTopicStat.style.display = '';
+      } else {
+        summaryTopicStat.style.display = 'none';
+      }
+
+      summary.classList.remove('hidden');
+    }
+
+    function resetTimer() {
+      // Re-enable inputs
+      subjectSelect.disabled = false;
+      topicInput.disabled = false;
+
+      // Show start button
+      startBtn.classList.remove('hidden');
+      pauseBtn.classList.add('hidden');
+      resumeBtn.classList.add('hidden');
+      stopBtn.classList.add('hidden');
+      summary.classList.add('hidden');
+
+      // Reset display
+      elapsed = 0;
+      display.textContent = '00:00:00';
+    }
+
+    function saveAsEntry() {
+      const hours = elapsed / (1000 * 60 * 60);
+      const subject = subjectSelect.value;
+      const topic = topicInput.value.trim();
+
+      // Store timer data in sessionStorage for the entry form to pick up
+      const timerData: Record<string, string> = {
+        hours: hours.toFixed(2),
+        subject: subject,
+      };
+      if (topic) timerData.topic = topic;
+
+      sessionStorage.setItem('studyTimerData', JSON.stringify(timerData));
+
+      // Navigate to home page where EntryForm lives
+      window.location.href = '/';
+    }
+
+    // ── Event listeners ──
+    if (startBtn) startBtn.addEventListener('click', startTimer);
+    if (pauseBtn) pauseBtn.addEventListener('click', pauseTimer);
+    if (resumeBtn) resumeBtn.addEventListener('click', resumeTimer);
+    if (stopBtn) stopBtn.addEventListener('click', stopTimer);
+    if (saveBtn) saveBtn.addEventListener('click', saveAsEntry);
+    if (discardBtn) discardBtn.addEventListener('click', resetTimer);
+  })();
+</script>
+
+<style>
+  .timer-card {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(51, 65, 85, 0.4);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+  .timer-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .timer-icon {
+    font-size: 1.3rem;
+  }
+  .timer-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    margin: 0;
+  }
+  .timer-display {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 3rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    letter-spacing: 0.05em;
+    padding: 0.5rem 0;
+  }
+  .timer-controls {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .timer-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  .timer-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #94a3b8;
+  }
+  .timer-select,
+  .timer-input {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(51, 65, 85, 0.6);
+    border-radius: 0.5rem;
+    color: #e2e8f0;
+    font-size: 0.85rem;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: border-color 0.15s;
+    box-sizing: border-box;
+  }
+  .timer-select:focus,
+  .timer-input:focus {
+    border-color: rgba(59, 130, 246, 0.5);
+  }
+  .timer-select:disabled,
+  .timer-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .timer-select option {
+    background: #1e293b;
+  }
+  .timer-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .timer-btn {
+    padding: 0.6rem 1.25rem;
+    border-radius: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Inter', sans-serif;
+  }
+  .timer-btn-start {
+    background: #16a34a;
+    color: white;
+  }
+  .timer-btn-start:hover {
+    background: #22c55e;
+  }
+  .timer-btn-pause {
+    background: #d97706;
+    color: white;
+  }
+  .timer-btn-pause:hover {
+    background: #f59e0b;
+  }
+  .timer-btn-resume {
+    background: #2563eb;
+    color: white;
+  }
+  .timer-btn-resume:hover {
+    background: #3b82f6;
+  }
+  .timer-btn-stop {
+    background: #dc2626;
+    color: white;
+  }
+  .timer-btn-stop:hover {
+    background: #ef4444;
+  }
+  .timer-btn-save {
+    background: #2563eb;
+    color: white;
+  }
+  .timer-btn-save:hover {
+    background: #3b82f6;
+  }
+  .timer-btn-discard {
+    background: rgba(51, 65, 85, 0.4);
+    color: #94a3b8;
+  }
+  .timer-btn-discard:hover {
+    background: rgba(71, 85, 105, 0.5);
+    color: #e2e8f0;
+  }
+  .timer-summary {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .summary-divider {
+    width: 100%;
+    height: 1px;
+    background: rgba(51, 65, 85, 0.4);
+  }
+  .summary-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    margin: 0;
+  }
+  .summary-details {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  .summary-stat {
+    font-size: 0.8rem;
+    color: #94a3b8;
+  }
+  .summary-stat strong {
+    color: #e2e8f0;
+    font-weight: 600;
+  }
+  .summary-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+  }
+  .hidden {
+    display: none !important;
+  }
+</style>

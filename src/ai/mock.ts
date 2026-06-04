@@ -1,5 +1,5 @@
 import type { AIService } from './interface';
-import type { EntryAnalysis, WeeklyReviewData, DailyReviewData, MentorContext } from '../types/ai';
+import type { EntryAnalysis, WeeklyReviewData, DailyReviewData, MentorContext, ChatMessage } from '../types/ai';
 import type { Entry } from '../types/entry';
 import { formatDisplayDate, getDaysBetween } from '../utils/date';
 
@@ -74,6 +74,9 @@ function generateSummary(content: string, subjects: string[], chapters: string[]
 }
 
 export class MockAIService implements AIService {
+  readonly provider = 'Mock';
+  readonly modelName = 'keyword-fallback';
+
   async analyzeEntry(content: string): Promise<EntryAnalysis> {
     // Simulate a tiny delay for realistic UX
     await new Promise(r => setTimeout(r, 150));
@@ -349,7 +352,7 @@ ${weaknesses.map(w => `- ⚠️ ${w}`).join('\n') || '- Keep up the good work!'}
     };
   }
 
-  async *generateMentorResponse(query: string, context: MentorContext): AsyncGenerator<string, void, unknown> {
+  async *generateMentorResponse(query: string, context: MentorContext, history?: ChatMessage[]): AsyncGenerator<string, void, unknown> {
     // Simulate streaming with delays
     const responses = [
       "I can see you've been studying **${context.examType}** syllabus. Let me think about that...\n\n",

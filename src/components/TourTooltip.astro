@@ -1,0 +1,176 @@
+---
+export interface Props {
+  tourId: string;
+  title: string;
+  description: string;
+  position?: 'top' | 'bottom' | 'left' | 'right';
+  selector?: string;
+}
+
+const { tourId, title, description, position = 'bottom', selector = '' } = Astro.props;
+---
+
+<div class="tour-tooltip hidden" data-tour-id={tourId} data-tour-selector={selector} data-tour-position={position}>
+  <div class="tour-arrow" data-position={position}></div>
+  <div class="tour-body">
+    <h4 class="tour-title">{title}</h4>
+    <p class="tour-desc">{description}</p>
+    <div class="tour-actions">
+      <button class="tour-dismiss" data-tour-dismiss={tourId}>Got it</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.tour-tooltip').forEach(el => {
+    const tourId = el.dataset.tourId;
+    const selector = el.dataset.tourSelector;
+    const position = el.dataset.tourPosition || 'bottom';
+
+    // Check if already seen
+    const seen = localStorage.getItem(`tour:${tourId}`);
+    if (seen) return;
+
+    // Find target element
+    const target = selector ? document.querySelector(selector) : null;
+
+    // Show after a short delay
+    setTimeout(() => {
+      el.classList.remove('hidden');
+
+      if (target) {
+        const targetRect = target.getBoundingClientRect();
+        const tooltipRect = el.getBoundingClientRect();
+
+        let top = 0, left = 0;
+        switch (position) {
+          case 'top':
+            top = targetRect.top - tooltipRect.height - 10;
+            left = targetRect.left + (targetRect.width - tooltipRect.width) / 2;
+            break;
+          case 'bottom':
+            top = targetRect.bottom + 10;
+            left = targetRect.left + (targetRect.width - tooltipRect.width) / 2;
+            break;
+          case 'left':
+            top = targetRect.top + (targetRect.height - tooltipRect.height) / 2;
+            left = targetRect.left - tooltipRect.width - 10;
+            break;
+          case 'right':
+            top = targetRect.top + (targetRect.height - tooltipRect.height) / 2;
+            left = targetRect.right + 10;
+            break;
+        }
+
+        // Keep within viewport
+        if (left < 10) left = 10;
+        if (top < 10) top = 10;
+        if (left + tooltipRect.width > window.innerWidth - 10) {
+          left = window.innerWidth - tooltipRect.width - 10;
+        }
+
+        el.style.position = 'fixed';
+        el.style.top = `${top}px`;
+        el.style.left = `${left}px`;
+        el.style.zIndex = '999';
+      } else {
+        el.style.position = 'fixed';
+        el.style.bottom = '1.5rem';
+        el.style.right = '1.5rem';
+        el.style.zIndex = '999';
+      }
+
+      // Overlay backdrop
+      if (target) {
+        target.style.position = 'relative';
+        target.style.zIndex = '1000';
+      }
+    }, 800);
+
+    // Dismiss button
+    el.querySelector('.tour-dismiss')?.addEventListener('click', () => {
+      localStorage.setItem(`tour:${tourId}`, '1');
+      el.classList.add('hidden');
+    });
+  });
+</script>
+
+<style>
+  .tour-tooltip {
+    position: fixed;
+    max-width: 320px;
+    background: #1e293b;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 0.75rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    animation: tour-fade-in 0.3s ease;
+  }
+  @keyframes tour-fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .tour-body {
+    padding: 0.9rem 1rem;
+  }
+  .tour-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin: 0 0 0.3rem;
+  }
+  .tour-desc {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    margin: 0 0 0.75rem;
+    line-height: 1.5;
+  }
+  .tour-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+  .tour-dismiss {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 0.35rem 0.85rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .tour-dismiss:hover {
+    background: #3b82f6;
+  }
+  .tour-arrow {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #1e293b;
+    border-left: 1px solid rgba(59, 130, 246, 0.3);
+    border-top: 1px solid rgba(59, 130, 246, 0.3);
+  }
+  .tour-arrow[data-position="top"] {
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%) rotate(225deg);
+  }
+  .tour-arrow[data-position="bottom"] {
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+  }
+  .tour-arrow[data-position="left"] {
+    right: -6px;
+    top: 50%;
+    transform: translateY(-50%) rotate(135deg);
+  }
+  .tour-arrow[data-position="right"] {
+    left: -6px;
+    top: 50%;
+    transform: translateY(-50%) rotate(-45deg);
+  }
+  .hidden {
+    display: none !important;
+  }
+</style>

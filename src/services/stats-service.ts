@@ -10,7 +10,10 @@ export function getDashboardStats() {
   const year = now.getFullYear();
   const weekStart = getMonday(now);
 
+  // Recent entries for display (limited)
   const entries = db.listEntries({ limit: 50 });
+  // Full dataset for aggregations (unlimited)
+  const allEntries = db.listEntries();
 
   // Today's entry
   const todayEntry = db.getEntryByDate(today);
@@ -25,9 +28,9 @@ export function getDashboardStats() {
   const settings = db.getSettings();
 
   // Compute aggregations
-  const subjectBreakdown = getSubjectBreakdown(entries);
+  const subjectBreakdown = getSubjectBreakdown(allEntries);
   const dailyTrend = getDailyTrend(14);
-  const typeDistribution = getStudyTypeDistribution(entries);
+  const typeDistribution = getStudyTypeDistribution(allEntries);
   const focusTrend = getFocusTrend(7);
   const weekComparison = getWeekComparison();
 

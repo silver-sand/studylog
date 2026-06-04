@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import MentorChat from '../components/MentorChat.astro';
+import TourTooltip from '../components/TourTooltip.astro';
 ---
 
 <BaseLayout title="AI Mentor">
@@ -12,6 +13,13 @@ import MentorChat from '../components/MentorChat.astro';
 
     <MentorChat />
   </div>
+
+  <TourTooltip
+    tourId="mentor-intro"
+    title="🧠 AI Mentor"
+    description="I have access to your study history and syllabus progress. Ask me anything — 'What should I study today?', 'Quiz me on Physics', or 'What are my weak areas?'"
+    position="bottom"
+  />
 </BaseLayout>
 
 <style>

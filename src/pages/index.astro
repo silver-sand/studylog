@@ -7,7 +7,9 @@ import { createAIServiceFromEnv } from '../ai';
 import { getDb } from '../db';
 import { formatDate } from '../utils/date';
 import { getDailyReviewByDate } from '../services/daily-review-service';
+import { scopeDbToUser } from '../services/user-scope';
 
+scopeDbToUser(Astro.request);
 const db = getDb();
 const today = formatDate(new Date());
 const todayEntry = db.getEntryByDate(today);
@@ -112,6 +114,34 @@ const hasEntriesToday = recentEntries.some(e => e.date === today);
 
   generateBtn?.addEventListener('click', loadDailyReview);
   refreshBtn?.addEventListener('click', loadDailyReview);
+
+  // ── Pick up timer data from sessionStorage ──
+  (function() {
+    try {
+      const raw = sessionStorage.getItem('studyTimerData');
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      sessionStorage.removeItem('studyTimerData');
+
+      if (data.hours) {
+        const hoursField = document.getElementById('hours') as HTMLInputElement;
+        if (hoursField) hoursField.value = data.hours;
+      }
+      if (data.subject) {
+        // Pre-fill the content textarea with the subject
+        const ta = document.getElementById('entry-content') as HTMLTextAreaElement;
+        if (ta && !ta.value) {
+          const topic = data.topic ? ` - ${data.topic}` : '';
+          ta.value = `Studied ${data.subject}${topic}`;
+          // Trigger char count update
+          const evt = new Event('input');
+          ta.dispatchEvent(evt);
+        }
+      }
+    } catch (e) {
+      // Ignore parse errors
+    }
+  })();
 
   // Auto-dismiss entry form success — refresh daily review when entries change
   const form = document.querySelector('form');

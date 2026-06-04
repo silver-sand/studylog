@@ -3,7 +3,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import ReviewList from '../../components/ReviewList.astro';
 import { getDb } from '../../db';
 import { getMonday, getSunday, formatDisplayDate } from '../../utils/date';
+import { scopeDbToUser } from '../../services/user-scope';
 
+scopeDbToUser(Astro.request);
 const db = getDb();
 const reviews = db.listReviews();
 const range = {
@@ -70,12 +72,14 @@ const currentReview = db.getReviewByWeek(range.weekStart);
   const generateBtn = document.getElementById('generate-review-btn');
   const regenerateBtn = document.getElementById('regenerate-weekly-btn');
   const errorDiv = document.getElementById('generate-error');
+  let originalBtnHtml = '';
 
   async function generateReview(weekStart) {
     const btn = weekStart ? regenerateBtn : generateBtn;
     if (!btn || !errorDiv) return;
     btn.disabled = true;
-    btn.textContent = weekStart ? 'Regenerating...' : 'Generating...';
+    originalBtnHtml = btn.innerHTML;
+    btn.innerHTML = '<span class="loading-spinner"></span> ' + (weekStart ? 'Regenerating...' : 'Generating...');
     errorDiv.classList.add('hidden');
 
     try {
@@ -95,7 +99,7 @@ const currentReview = db.getReviewByWeek(range.weekStart);
       errorDiv.textContent = err instanceof Error ? err.message : 'Something went wrong';
       errorDiv.classList.remove('hidden');
       btn.disabled = false;
-      btn.textContent = weekStart ? 'Regenerate' : 'Generate Review';
+      btn.innerHTML = originalBtnHtml;
     }
   }
 

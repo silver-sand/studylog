@@ -1,6 +1,7 @@
 export const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS entries (
   id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL DEFAULT '1' REFERENCES users(id),
   date TEXT NOT NULL,
   content TEXT NOT NULL,
   subjects TEXT NOT NULL DEFAULT '[]',
@@ -16,9 +17,11 @@ CREATE TABLE IF NOT EXISTS entries (
 );
 
 CREATE INDEX IF NOT EXISTS idx_entries_date ON entries(date);
+CREATE INDEX IF NOT EXISTS idx_entries_user ON entries(user_id);
 
 CREATE TABLE IF NOT EXISTS weekly_reviews (
   id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL DEFAULT '1' REFERENCES users(id),
   week_start TEXT NOT NULL,
   week_end TEXT NOT NULL,
   content TEXT NOT NULL DEFAULT '',
@@ -32,10 +35,12 @@ CREATE TABLE IF NOT EXISTS weekly_reviews (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_weekly_week_start ON weekly_reviews(week_start);
+CREATE INDEX IF NOT EXISTS idx_weekly_user ON weekly_reviews(user_id);
 
 CREATE TABLE IF NOT EXISTS daily_reviews (
   id TEXT PRIMARY KEY,
-  date TEXT NOT NULL UNIQUE,
+  user_id TEXT NOT NULL DEFAULT '1' REFERENCES users(id),
+  date TEXT NOT NULL,
   content TEXT NOT NULL DEFAULT '',
   insights TEXT NOT NULL DEFAULT '[]',
   total_hours REAL NOT NULL DEFAULT 0,
@@ -47,10 +52,12 @@ CREATE TABLE IF NOT EXISTS daily_reviews (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_daily_date ON daily_reviews(date);
+CREATE INDEX IF NOT EXISTS idx_daily_date ON daily_reviews(date);
+CREATE INDEX IF NOT EXISTS idx_daily_user ON daily_reviews(user_id);
 
 CREATE TABLE IF NOT EXISTS settings (
   id INTEGER PRIMARY KEY DEFAULT 1,
+  user_id TEXT NOT NULL DEFAULT '1' REFERENCES users(id),
   target_hours_per_week REAL NOT NULL DEFAULT 35,
   subjects TEXT NOT NULL DEFAULT '["Physics","Chemistry","Mathematics"]',
   exam_type TEXT NOT NULL DEFAULT 'JEE',
@@ -60,10 +67,11 @@ CREATE TABLE IF NOT EXISTS settings (
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
-INSERT OR IGNORE INTO settings (id) VALUES (1);
+CREATE INDEX IF NOT EXISTS idx_settings_user ON settings(user_id);
 
 CREATE TABLE IF NOT EXISTS syllabus (
   id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL DEFAULT '1' REFERENCES users(id),
   exam_type TEXT NOT NULL,
   subject TEXT NOT NULL,
   chapter TEXT NOT NULL,
@@ -75,11 +83,12 @@ CREATE TABLE IF NOT EXISTS syllabus (
   revision_count INTEGER NOT NULL DEFAULT 0
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_syllabus_unique ON syllabus(exam_type, subject, chapter);
-CREATE INDEX IF NOT EXISTS idx_syllabus_exam ON syllabus(exam_type, subject);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_syllabus_unique ON syllabus(user_id, exam_type, subject, chapter);
+CREATE INDEX IF NOT EXISTS idx_syllabus_exam ON syllabus(user_id, exam_type, subject);
 
 CREATE TABLE IF NOT EXISTS mock_tests (
   id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL DEFAULT '1' REFERENCES users(id),
   exam_type TEXT NOT NULL DEFAULT '',
   subject TEXT NOT NULL,
   test_name TEXT NOT NULL,
@@ -93,4 +102,26 @@ CREATE TABLE IF NOT EXISTS mock_tests (
 
 CREATE INDEX IF NOT EXISTS idx_mock_tests_date ON mock_tests(date);
 CREATE INDEX IF NOT EXISTS idx_mock_tests_subject ON mock_tests(subject);
+CREATE INDEX IF NOT EXISTS idx_mock_tests_user ON mock_tests(user_id);
+
+CREATE TABLE IF NOT EXISTS users (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  stream TEXT,
+  goal TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS sessions (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id),
+  token TEXT NOT NULL UNIQUE,
+  expires_at TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
+CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
 `;

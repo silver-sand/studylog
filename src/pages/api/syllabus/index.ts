@@ -1,7 +1,9 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../../db';
+import { scopeDbToUser } from '../../../services/user-scope';
 
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async ({ url, request }) => {
+  scopeDbToUser(request);
   try {
     const db = getDb();
     const examType = url.searchParams.get('exam') || undefined;
@@ -31,6 +33,7 @@ export const GET: APIRoute = async ({ url }) => {
 };
 
 export const PUT: APIRoute = async ({ request }) => {
+  scopeDbToUser(request);
   try {
     const body = await request.json();
     const { id, status } = body;
@@ -53,6 +56,7 @@ export const PUT: APIRoute = async ({ request }) => {
 };
 
 export const PATCH: APIRoute = async ({ request }) => {
+  scopeDbToUser(request);
   try {
     const body = await request.json();
     const { updates } = body;
