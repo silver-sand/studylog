@@ -24,6 +24,7 @@ const exams: ExamData[] = EXAM_TYPES_FOR_SYLLABUS.map((exam) => {
   const totalChapters = progress.reduce((s, p) => s + p.total, 0);
   const weightedSum = progress.reduce((s, p) => s + p.weightedPercent * p.total, 0);
   const overallPercent = totalChapters > 0 ? Math.round(weightedSum / totalChapters) : 0;
+  const completedChapters = progress.reduce((s, p) => s + p.completed, 0);
   return {
     ...exam,
     progress,
