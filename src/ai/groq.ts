@@ -15,7 +15,7 @@ export class GroqAIService implements AIService {
   private client: OpenAI;
   private modelName: string;
 
-  constructor(apiKey: string, modelName: string = 'llama3-70b-8192') {
+  constructor(apiKey: string, modelName: string = 'llama-3.3-70b-versatile') {
     this.client = new OpenAI({
       apiKey,
       baseURL: GROQ_BASE_URL,
