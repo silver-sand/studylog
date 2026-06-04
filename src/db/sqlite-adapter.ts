@@ -6,9 +6,11 @@ import { generateId } from '../utils/uuid';
 import { formatDate, getSunday } from '../utils/date';
 import type { Database as DatabaseInterface } from './interface';
 import type { Entry, CreateEntryData, EntryFilters } from '../types/entry';
-import type { WeeklyReview, CreateReviewData, DailyReview, CreateDailyReviewData, SyllabusChapter, SyllabusProgress } from '../types/review';
+import type { WeeklyReview, CreateReviewData, DailyReview, CreateDailyReviewData, SyllabusChapter, SyllabusProgress, ChapterStatus } from '../types/review';
+import { STATUS_ORDER, STATUS_WEIGHTS, statusWeight, isMastered } from '../types/review';
 import { EXAM_SYLLABI } from '../utils/syllabus-data';
 import type { Settings, UpdateSettingsData } from '../types/settings';
+import type { MockTest, CreateMockTestData, MockTestAnalytics } from '../types/mock-test';
 
 function parseJSON<T>(val: string | null | Uint8Array | undefined, fallback: T): T {
   if (!val) return fallback;
@@ -65,6 +67,15 @@ function toDailyReview(row: Record<string, any>): DailyReview {
   };
 }
 
+const VALID_STATUSES = new Set(['not_started', 'studied', 'revision_1', 'revision_2', 'revision_3', 'mastered']);
+
+function migrateStatus(status: string): string {
+  if (VALID_STATUSES.has(status)) return status;
+  if (status === 'in_progress') return 'studied';
+  if (status === 'completed') return 'mastered';
+  return 'not_started';
+}
+
 function toSyllabusChapter(row: Record<string, any>): SyllabusChapter {
   return {
     id: row.id,
@@ -73,8 +84,10 @@ function toSyllabusChapter(row: Record<string, any>): SyllabusChapter {
     chapter: row.chapter,
     classLevel: row.class_level || null,
     sortOrder: row.sort_order,
-    status: row.status || 'not_started',
+    status: migrateStatus(row.status || 'not_started') as ChapterStatus,
     completedAt: row.completed_at || null,
+    lastRevisedAt: row.last_revised_at || null,
+    revisionCount: row.revision_count ?? 0,
   };
 }
 
@@ -84,6 +97,7 @@ function toSettings(row: Record<string, any>): Settings {
     targetHoursPerWeek: row.target_hours_per_week,
     subjects: parseJSON(row.subjects, ['Physics', 'Chemistry', 'Mathematics']),
     examType: row.exam_type || 'JEE',
+    examDate: row.exam_date || null,
     theme: row.theme,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -141,11 +155,25 @@ export class SQLiteAdapter implements DatabaseInterface {
         class_level TEXT,
         sort_order INTEGER NOT NULL DEFAULT 0,
         status TEXT NOT NULL DEFAULT 'not_started',
-        completed_at TEXT
+        completed_at TEXT,
+        last_revised_at TEXT,
+        revision_count INTEGER NOT NULL DEFAULT 0
       )`);
       this.db.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_syllabus_unique ON syllabus(exam_type, subject, chapter)`);
       this.db.run(`CREATE INDEX IF NOT EXISTS idx_syllabus_exam ON syllabus(exam_type, subject)`);
     } catch { /* table already exists */ }
+
+    // Migrate old statuses + add new columns
+    const migrations2 = [
+      `ALTER TABLE syllabus ADD COLUMN last_revised_at TEXT`,
+      `ALTER TABLE syllabus ADD COLUMN revision_count INTEGER NOT NULL DEFAULT 0`,
+      `ALTER TABLE settings ADD COLUMN exam_date TEXT`,
+      `UPDATE syllabus SET status = 'studied' WHERE status = 'in_progress'`,
+      `UPDATE syllabus SET status = 'mastered' WHERE status = 'completed'`,
+    ];
+    for (const sql of migrations2) {
+      try { this.db.run(sql); } catch { /* column already exists or no-op */ }
+    }
 
     // Create daily_reviews table for existing DBs
     try {
@@ -543,10 +571,26 @@ export class SQLiteAdapter implements DatabaseInterface {
 
   updateSyllabusStatus(id: string, status: string): SyllabusChapter {
     const db = this.getDb();
-    const completedAt = status === 'completed' ? new Date().toISOString() : null;
+
+    // Get current chapter to detect transitions
+    const current = this.getSyllabusByIds([id])[0];
+    const oldWeight = current ? statusWeight(current.status) : 0;
+    const newWeight = statusWeight(status);
+    const isForward = newWeight > oldWeight;
+
+    const now = new Date().toISOString();
+    const completedAt = status === 'mastered' ? now : null;
+    const lastRevisedAt = isForward && newWeight >= statusWeight('studied') ? now : null;
+
+    // Increment revision count when entering a revision state
+    let revisionCount = current ? current.revisionCount : 0;
+    if (isForward && (status === 'revision_1' || status === 'revision_2' || status === 'revision_3')) {
+      revisionCount += 1;
+    }
+
     db.run(
-      `UPDATE syllabus SET status = ?, completed_at = ? WHERE id = ?`,
-      [status, completedAt, id]
+      `UPDATE syllabus SET status = ?, completed_at = ?, last_revised_at = ?, revision_count = ? WHERE id = ?`,
+      [status, completedAt, lastRevisedAt, revisionCount, id]
     );
     this.save();
 
@@ -563,47 +607,103 @@ export class SQLiteAdapter implements DatabaseInterface {
 
   batchUpdateSyllabusStatus(updates: { id: string; status: string }[]): number {
     if (updates.length === 0) return 0;
-    const db = this.getDb();
     let count = 0;
-    const stmt = db.prepare(
-      `UPDATE syllabus SET status = ?, completed_at = ? WHERE id = ?`
-    );
     for (const { id, status } of updates) {
-      if (!['not_started', 'in_progress', 'completed'].includes(status)) continue;
-      const completedAt = status === 'completed' ? new Date().toISOString() : null;
-      stmt.bind([status, completedAt, id]);
-      if (stmt.step()) count += db.getRowsModified();
-      stmt.reset();
+      try {
+        this.updateSyllabusStatus(id, status);
+        count++;
+      } catch { /* skip failed */ }
     }
-    stmt.free();
-    if (count > 0) this.save();
     return count;
   }
 
   getSyllabusProgress(examType: string): SyllabusProgress[] {
     const db = this.getDb();
     const stmt = db.prepare(
-      `SELECT subject,
-              COUNT(*) as total,
-              SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed
+      `SELECT subject, status, COUNT(*) as count
        FROM syllabus
        WHERE exam_type = ?
-       GROUP BY subject
+       GROUP BY subject, status
        ORDER BY subject`
     );
     stmt.bind([examType]);
-    const results: SyllabusProgress[] = [];
+
+    // Aggregate by subject manually to compute weighted progress
+    const subjectMap = new Map<string, { total: number; sumWeight: number; mastered: number; revised: number }>();
     while (stmt.step()) {
-      const row = stmt.getAsObject() as { subject: string; total: number; completed: number };
-      results.push({
-        subject: row.subject,
-        total: row.total,
-        completed: row.completed,
-        percent: row.total > 0 ? Math.round((row.completed / row.total) * 100) : 0,
-      });
+      const row = stmt.getAsObject() as { subject: string; status: string; count: number };
+      if (!subjectMap.has(row.subject)) {
+        subjectMap.set(row.subject, { total: 0, sumWeight: 0, mastered: 0, revised: 0 });
+      }
+      const entry = subjectMap.get(row.subject)!;
+      entry.total += row.count;
+      entry.sumWeight += statusWeight(row.status) * row.count;
+      if (row.status === 'mastered') entry.mastered += row.count;
+      if (row.status === 'revision_1' || row.status === 'revision_2' || row.status === 'revision_3') entry.revised += row.count;
     }
     stmt.free();
+
+    const results: SyllabusProgress[] = [];
+    for (const [subject, data] of subjectMap) {
+      results.push({
+        subject,
+        total: data.total,
+        completed: data.mastered,
+        percent: data.total > 0 ? Math.round((data.mastered / data.total) * 100) : 0,
+        weightedPercent: data.total > 0 ? Math.round((data.sumWeight / data.total) * 100) : 0,
+        mastered: data.mastered,
+        revised: data.revised,
+      });
+    }
+    results.sort((a, b) => a.subject.localeCompare(b.subject));
     return results;
+  }
+
+  getWeakChapters(examType: string, threshold = 50): (SyllabusChapter & { health: number })[] {
+    const db = this.getDb();
+    const stmt = db.prepare(
+      `SELECT * FROM syllabus WHERE exam_type = ? ORDER BY subject, sort_order`
+    );
+    stmt.bind([examType]);
+
+    const weak: (SyllabusChapter & { health: number })[] = [];
+    const now = Date.now();
+
+    while (stmt.step()) {
+      const row = stmt.getAsObject() as Record<string, any>;
+      const ch = toSyllabusChapter(row);
+      let health: number;
+
+      if (ch.status === 'mastered') {
+        health = 100;
+      } else if (ch.status === 'not_started') {
+        health = 0;
+      } else {
+        // Base from status weight
+        health = Math.round(statusWeight(ch.status) * 100);
+
+        // Days-since-revision penalty
+        if (ch.lastRevisedAt) {
+          const daysSince = Math.floor((now - new Date(ch.lastRevisedAt).getTime()) / 86400000);
+          if (daysSince > 7) {
+            health -= Math.min((daysSince - 7) * 2, 40);
+          }
+        } else {
+          // Never revised — penalize
+          health -= 20;
+        }
+
+        health = Math.max(0, Math.min(100, health));
+      }
+
+      if (health < threshold) {
+        weak.push({ ...ch, health });
+      }
+    }
+
+    stmt.free();
+    weak.sort((a, b) => a.health - b.health);
+    return weak;
   }
 
   // ── Settings ──
@@ -632,11 +732,12 @@ export class SQLiteAdapter implements DatabaseInterface {
     const current = this.getSettings();
     const db = this.getDb();
     db.run(
-      `UPDATE settings SET target_hours_per_week=?, subjects=?, exam_type=?, theme=?, updated_at=datetime('now') WHERE id=1`,
+      `UPDATE settings SET target_hours_per_week=?, subjects=?, exam_type=?, exam_date=?, theme=?, updated_at=datetime('now') WHERE id=1`,
       [
         data.targetHoursPerWeek ?? current.targetHoursPerWeek,
         JSON.stringify(data.subjects ?? current.subjects),
         data.examType ?? current.examType,
+        data.examDate !== undefined ? data.examDate : current.examDate,
         data.theme ?? current.theme,
       ]
     );
@@ -717,6 +818,129 @@ export class SQLiteAdapter implements DatabaseInterface {
     const row = stmt.getAsObject() as { total: number };
     stmt.free();
     return row.total;
+  }
+
+  // ── Mock Tests ──
+
+  createMockTest(data: CreateMockTestData): MockTest {
+    const db = this.getDb();
+    const id = generateId();
+    const percentage = data.maxMarks > 0 ? Math.round((data.score / data.maxMarks) * 10000) / 100 : 0;
+    db.run(
+      `INSERT INTO mock_tests (id, exam_type, subject, test_name, score, max_marks, percentage, date, notes)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id, data.examType || '', data.subject, data.testName,
+        data.score, data.maxMarks, percentage, data.date,
+        data.notes || '',
+      ]
+    );
+    this.save();
+    return this.toMockTest({ id, exam_type: data.examType || '', subject: data.subject, test_name: data.testName, score: data.score, max_marks: data.maxMarks, percentage, date: data.date, notes: data.notes || '', created_at: new Date().toISOString() });
+  }
+
+  getMockTests(filters?: { subject?: string; limit?: number }): MockTest[] {
+    const db = this.getDb();
+    let sql = `SELECT * FROM mock_tests`;
+    const params: any[] = [];
+    const conditions: string[] = [];
+
+    if (filters?.subject) {
+      conditions.push(`subject = ?`);
+      params.push(filters.subject);
+    }
+
+    if (conditions.length > 0) {
+      sql += ` WHERE ${conditions.join(' AND ')}`;
+    }
+
+    sql += ` ORDER BY date DESC`;
+
+    if (filters?.limit) {
+      sql += ` LIMIT ?`;
+      params.push(filters.limit);
+    }
+
+    const stmt = db.prepare(sql);
+    stmt.bind(params);
+    const results: MockTest[] = [];
+    while (stmt.step()) {
+      results.push(this.toMockTest(stmt.getAsObject()));
+    }
+    stmt.free();
+    return results;
+  }
+
+  getMockTestAnalytics(): MockTestAnalytics {
+    const all = this.getMockTests({ limit: 100 });
+
+    if (all.length === 0) {
+      return {
+        totalTests: 0,
+        averagePercentage: 0,
+        bestScore: null,
+        worstScore: null,
+        trend: 'insufficient_data',
+        recentTests: [],
+        subjectBreakdown: [],
+      };
+    }
+
+    const avgPct = Math.round(all.reduce((s, t) => s + t.percentage, 0) / all.length * 100) / 100;
+
+    const best = all.reduce((b, t) => t.percentage > b.percentage ? t : b, all[0]);
+    const worst = all.reduce((w, t) => t.percentage < w.percentage ? t : w, all[0]);
+
+    // Trend: compare first half vs second half
+    let trend: MockTestAnalytics['trend'] = 'stable';
+    if (all.length >= 4) {
+      const mid = Math.floor(all.length / 2);
+      const firstHalf = all.slice(0, mid);
+      const secondHalf = all.slice(mid);
+      const firstAvg = firstHalf.reduce((s, t) => s + t.percentage, 0) / firstHalf.length;
+      const secondAvg = secondHalf.reduce((s, t) => s + t.percentage, 0) / secondHalf.length;
+      if (secondAvg > firstAvg + 3) trend = 'improving';
+      else if (secondAvg < firstAvg - 3) trend = 'declining';
+    }
+
+    // Subject breakdown
+    const subjectMap = new Map<string, { total: number; sum: number }>();
+    for (const t of all) {
+      if (!subjectMap.has(t.subject)) subjectMap.set(t.subject, { total: 0, sum: 0 });
+      const entry = subjectMap.get(t.subject)!;
+      entry.total++;
+      entry.sum += t.percentage;
+    }
+    const subjectBreakdown = [...subjectMap.entries()].map(([subject, data]) => ({
+      subject,
+      tests: data.total,
+      avgPercentage: Math.round(data.sum / data.total * 100) / 100,
+    }));
+
+    return {
+      totalTests: all.length,
+      averagePercentage: avgPct,
+      bestScore: { testName: best.testName, percentage: best.percentage, subject: best.subject, date: best.date },
+      worstScore: { testName: worst.testName, percentage: worst.percentage, subject: worst.subject, date: worst.date },
+      trend,
+      recentTests: all.slice(0, 10),
+      subjectBreakdown,
+    };
+  }
+
+  private toMockTest(row: Record<string, any>): MockTest {
+    return {
+      id: row.id,
+      examType: row.exam_type || '',
+      subject: row.subject,
+      testName: row.test_name,
+      score: row.score,
+      maxMarks: row.max_marks,
+      percentage: row.percentage,
+      date: row.date,
+      notes: row.notes || '',
+      createdAt: row.created_at,
+    };
   }
 
   // Wait for initialization

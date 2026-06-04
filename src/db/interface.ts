@@ -1,6 +1,7 @@
 import type { Entry, CreateEntryData, EntryFilters } from '../types/entry';
 import type { WeeklyReview, CreateReviewData, DailyReview, CreateDailyReviewData, SyllabusChapter, SyllabusProgress } from '../types/review';
 import type { Settings, UpdateSettingsData } from '../types/settings';
+import type { MockTest, CreateMockTestData, MockTestAnalytics } from '../types/mock-test';
 
 export interface Database {
   // Entries
@@ -30,10 +31,16 @@ export interface Database {
   updateSyllabusStatus(id: string, status: string): SyllabusChapter;
   batchUpdateSyllabusStatus(updates: { id: string; status: string }[]): number;
   getSyllabusProgress(examType: string): SyllabusProgress[];
+  getWeakChapters(examType: string, threshold?: number): (SyllabusChapter & { health: number })[];
 
   // Settings
   getSettings(): Settings;
   updateSettings(data: UpdateSettingsData): Settings;
+
+  // Mock Tests
+  createMockTest(data: CreateMockTestData): MockTest;
+  getMockTests(filters?: { subject?: string; limit?: number }): MockTest[];
+  getMockTestAnalytics(): MockTestAnalytics;
 
   // Stats
   getEntryCount(): number;

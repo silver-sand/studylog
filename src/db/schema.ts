@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS settings (
   target_hours_per_week REAL NOT NULL DEFAULT 35,
   subjects TEXT NOT NULL DEFAULT '["Physics","Chemistry","Mathematics"]',
   exam_type TEXT NOT NULL DEFAULT 'JEE',
+  exam_date TEXT,
   theme TEXT NOT NULL DEFAULT 'dark',
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -69,9 +70,27 @@ CREATE TABLE IF NOT EXISTS syllabus (
   class_level TEXT,
   sort_order INTEGER NOT NULL DEFAULT 0,
   status TEXT NOT NULL DEFAULT 'not_started',
-  completed_at TEXT
+  completed_at TEXT,
+  last_revised_at TEXT,
+  revision_count INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_syllabus_unique ON syllabus(exam_type, subject, chapter);
 CREATE INDEX IF NOT EXISTS idx_syllabus_exam ON syllabus(exam_type, subject);
+
+CREATE TABLE IF NOT EXISTS mock_tests (
+  id TEXT PRIMARY KEY,
+  exam_type TEXT NOT NULL DEFAULT '',
+  subject TEXT NOT NULL,
+  test_name TEXT NOT NULL,
+  score REAL NOT NULL DEFAULT 0,
+  max_marks REAL NOT NULL DEFAULT 0,
+  percentage REAL NOT NULL DEFAULT 0,
+  date TEXT NOT NULL,
+  notes TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_mock_tests_date ON mock_tests(date);
+CREATE INDEX IF NOT EXISTS idx_mock_tests_subject ON mock_tests(subject);
 `;

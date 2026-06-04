@@ -44,14 +44,14 @@ const c = colorMap[color];
       </div>
     </div>
     <div class="percent-wrap">
-      <span class="percent-text" style={`color: ${c.text}`}>{progress.percent}%</span>
+      <span class="percent-text" style={`color: ${c.text}`}>{progress.weightedPercent}%</span>
     </div>
   </div>
 
   <div class="syllabus-bar-bg">
     <div
       class="syllabus-bar-fill"
-      style={`width: ${progress.percent}%; background: ${c.bar}; box-shadow: 0 0 8px ${c.glow}`}
+      style={`width: ${progress.weightedPercent}%; background: ${c.bar}; box-shadow: 0 0 8px ${c.glow}`}
     />
   </div>
 </div>

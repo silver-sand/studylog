@@ -1,0 +1,186 @@
+---
+---
+
+<div class="pace-card" id="pace-card">
+  <div class="card-header">
+    <div class="card-title-row">
+      <span class="card-icon">📈</span>
+      <h3 class="card-title">Exam Pace</h3>
+    </div>
+    <span class="card-badge" id="pace-status-badge">Loading...</span>
+  </div>
+  <div class="card-body" id="pace-body">
+    <p class="loading-text">Calculating pace...</p>
+  </div>
+</div>
+
+<script>
+  async function loadPace() {
+    const body = document.getElementById('pace-body');
+    const badge = document.getElementById('pace-status-badge');
+    if (!body || !badge) return;
+
+    try {
+      const res = await fetch('/api/exam-pace');
+      if (!res.ok) throw new Error('Failed');
+      const data = await res.json();
+
+      if (data.status === 'no_exam_date') {
+        badge.textContent = 'Set exam date';
+        body.innerHTML = `
+          <div class="pace-row">
+            <span class="pace-label">Progress</span>
+            <div class="pace-bar-bg">
+              <div class="pace-bar-fill" style="width:${data.overallPercent}%"></div>
+            </div>
+            <span class="pace-value">${data.overallPercent}%</span>
+          </div>
+          <div class="pace-row">
+            <span class="pace-label">Days studied</span>
+            <span class="pace-value">${data.daysSinceStart}d</span>
+          </div>
+          <div class="pace-row">
+            <span class="pace-label">Chapters/day</span>
+            <span class="pace-value">${data.chaptersPerDay}</span>
+          </div>
+          <div class="pace-hint">Set your exam date in Settings for pace prediction.</div>
+        `;
+        return;
+      }
+
+      const statusColors = {
+        on_track: { text: '#86efac', bg: 'rgba(34,197,94,0.15)', label: '✅ On Track' },
+        behind: { text: '#fcd34d', bg: 'rgba(245,158,11,0.15)', label: '⚠️ Behind' },
+        critical: { text: '#f87171', bg: 'rgba(239,68,68,0.15)', label: '🔴 Critical' },
+      };
+      const sc = statusColors[data.status] || { text: '#94a3b8', bg: 'transparent', label: 'Unknown' };
+      badge.textContent = sc.label;
+      badge.style.color = sc.text;
+      badge.style.background = sc.bg;
+
+      body.innerHTML = `
+        <div class="pace-row">
+          <span class="pace-label">Progress</span>
+          <div class="pace-bar-bg">
+            <div class="pace-bar-fill" style="width:${data.overallPercent}%"></div>
+          </div>
+          <span class="pace-value">${data.overallPercent}%</span>
+        </div>
+        <div class="pace-row">
+          <span class="pace-label">Days studied</span>
+          <span class="pace-value">${data.daysSinceStart}d</span>
+        </div>
+        <div class="pace-row">
+          <span class="pace-label">Current pace</span>
+          <span class="pace-value">${data.progressRate}%/day</span>
+        </div>
+        <div class="pace-row">
+          <span class="pace-label">Days until exam</span>
+          <span class="pace-value">${data.daysUntilExam}d</span>
+        </div>
+        <div class="pace-row">
+          <span class="pace-label">Days needed at this pace</span>
+          <span class="pace-value">${data.daysNeededAtCurrentPace === Infinity ? '—' : data.daysNeededAtCurrentPace + 'd'}</span>
+        </div>
+        <div class="pace-row">
+          <span class="pace-label">Projected completion</span>
+          <span class="pace-value">${data.projectedCompletion}</span>
+        </div>
+      `;
+    } catch (err) {
+      body.innerHTML = `<p class="error-text">Could not load pace data</p>`;
+      badge.textContent = 'Error';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadPace);
+  if (document.readyState !== 'loading') loadPace();
+  document.addEventListener('syllabus-updated', () => setTimeout(loadPace, 500));
+</script>
+
+<style>
+  .pace-card {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(51, 65, 85, 0.4);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+  .card-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .card-icon {
+    font-size: 1rem;
+  }
+  .card-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    margin: 0;
+  }
+  .card-badge {
+    font-size: 0.65rem;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+  .loading-text {
+    font-size: 0.8rem;
+    color: #64748b;
+  }
+  .error-text {
+    font-size: 0.8rem;
+    color: #f87171;
+  }
+  .pace-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.78rem;
+  }
+  .pace-label {
+    color: #64748b;
+    min-width: 7rem;
+    flex-shrink: 0;
+  }
+  .pace-value {
+    color: #cbd5e1;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    text-align: right;
+    min-width: 4rem;
+  }
+  .pace-bar-bg {
+    flex: 1;
+    height: 0.35rem;
+    background: rgba(51, 65, 85, 0.5);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .pace-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    transition: width 0.5s ease;
+  }
+  .pace-hint {
+    font-size: 0.7rem;
+    color: #475569;
+    font-style: italic;
+    text-align: center;
+    padding-top: 0.5rem;
+  }
+</style>

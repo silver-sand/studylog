@@ -267,7 +267,7 @@ const STUDY_TYPES = [
     for (const [subject, chs] of Object.entries(subjects)) {
       const color = subjectColors[subject] || '#64748b';
       const prog = progress ? progress.find(p => p.subject === subject) : null;
-      const pct = prog ? prog.percent : 0;
+      const pct = prog ? prog.weightedPercent : 0;
 
       html += `<div style="margin-bottom:0.75rem;">`;
       // Subject header
@@ -277,17 +277,31 @@ const STUDY_TYPES = [
       html += `</div>`;
       // Chapters
       for (const ch of chs) {
-        const isDone = ch.status === 'completed';
-        const isProgress = ch.status === 'in_progress';
+        const isMastered = ch.status === 'mastered';
+        const isNotStarted = ch.status === 'not_started';
+        const statusColors = {
+          not_started: '#64748b', studied: '#f59e0b', revision_1: '#3b82f6',
+          revision_2: '#8b5cf6', revision_3: '#ec4899', mastered: '#22c55e',
+        };
+        const statusStyles = {
+          not_started: { color: '#cbd5e1', deco: 'none' },
+          studied: { color: '#fcd34d', deco: 'none' },
+          revision_1: { color: '#93c5fd', deco: 'none' },
+          revision_2: { color: '#c4b5fd', deco: 'none' },
+          revision_3: { color: '#f9a8d4', deco: 'none' },
+          mastered: { color: '#64748b', deco: 'line-through' },
+        };
+        const st = statusStyles[ch.status] || { color: '#cbd5e1', deco: 'none' };
         html += `<div data-syl-row="${ch.id}" style="display:flex;align-items:center;gap:0.5rem;padding:0.25rem 0.5rem 0.25rem 0.75rem;border-radius:0.25rem;" onmouseover="this.style.background='rgba(51,65,85,0.3)'" onmouseout="this.style.background='transparent'">`;
-        // Three status buttons as a slider group
+        // Six status buttons as a slider group
         html += `<div style="display:flex;border-radius:0.35rem;overflow:hidden;border:1px solid rgba(51,65,85,0.4);flex-shrink:0;">`;
-        html += buildStatusBtn(ch.id, 'not_started', '○', ch.status === 'not_started');
-        html += buildStatusBtn(ch.id, 'in_progress', '◐', ch.status === 'in_progress');
-        html += buildStatusBtn(ch.id, 'completed', '●', ch.status === 'completed');
+        const STATUS_LIST = ['not_started', 'studied', 'revision_1', 'revision_2', 'revision_3', 'mastered'];
+        for (const s of STATUS_LIST) {
+          html += buildStatusBtn(ch.id, s, ch.status === s);
+        }
         html += `</div>`;
         // Chapter name
-        html += `<span class="syl-ch-name" style="font-size:0.78rem;color:${isDone ? '#64748b' : isProgress ? '#fcd34d' : '#cbd5e1'};flex:1;${isDone ? 'text-decoration:line-through;' : ''}">${ch.chapter}</span>`;
+        html += `<span class="syl-ch-name" style="font-size:0.78rem;color:${st.color};flex:1;${st.deco !== 'none' ? 'text-decoration:' + st.deco + ';' : ''}">${ch.chapter}</span>`;
         if (ch.classLevel) {
           html += `<span style="font-size:0.6rem;padding:0.05rem 0.3rem;border-radius:0.2rem;background:rgba(100,116,139,0.2);color:#94a3b8;font-family:monospace;">Cls ${ch.classLevel}</span>`;
         }
@@ -319,20 +333,32 @@ const STUDY_TYPES = [
           if (!res.ok) throw new Error('Update failed');
 
           // Update button visuals
-          const activeColors = { not_started: '#64748b', in_progress: '#f59e0b', completed: '#22c55e' };
+          const ACTIVE_COLORS = {
+            not_started: '#64748b', studied: '#f59e0b', revision_1: '#3b82f6',
+            revision_2: '#8b5cf6', revision_3: '#ec4899', mastered: '#22c55e',
+          };
           rowBtns.forEach(b => {
             const s = b.dataset.status;
             const isActive = s === status;
-            b.style.background = isActive ? `${activeColors[s]}22` : 'rgba(15,23,42,0.8)';
-            b.style.color = isActive ? activeColors[s] : '#475569';
-            b.style.fontWeight = isActive ? '500' : '400';
+            b.style.background = isActive ? `${ACTIVE_COLORS[s]}22` : 'rgba(15,23,42,0.8)';
+            b.style.color = isActive ? ACTIVE_COLORS[s] : '#475569';
+            b.style.fontWeight = isActive ? '600' : '400';
           });
 
           // Update chapter name style
           const nameSpan = row.querySelector('.syl-ch-name');
           if (nameSpan) {
-            nameSpan.style.color = status === 'completed' ? '#64748b' : status === 'in_progress' ? '#fcd34d' : '#cbd5e1';
-            nameSpan.style.textDecoration = status === 'completed' ? 'line-through' : 'none';
+            const STYLE_MAP = {
+              not_started: { color: '#cbd5e1', deco: 'none' },
+              studied: { color: '#fcd34d', deco: 'none' },
+              revision_1: { color: '#93c5fd', deco: 'none' },
+              revision_2: { color: '#c4b5fd', deco: 'none' },
+              revision_3: { color: '#f9a8d4', deco: 'none' },
+              mastered: { color: '#64748b', deco: 'line-through' },
+            };
+            const s = STYLE_MAP[status] || STYLE_MAP.not_started;
+            nameSpan.style.color = s.color;
+            nameSpan.style.textDecoration = s.deco;
           }
 
           // Reload to refresh percentages
@@ -350,7 +376,7 @@ const STUDY_TYPES = [
                 headers.forEach(h => {
                   if (h.dataset.sylSubject === p.subject) {
                     const pctEl = h.querySelector('.syl-pct');
-                    if (pctEl) pctEl.textContent = `${p.percent}%`;
+                    if (pctEl) pctEl.textContent = `${p.weightedPercent}%`;
                   }
                 });
               });
@@ -365,12 +391,23 @@ const STUDY_TYPES = [
     });
   }
 
-  function buildStatusBtn(chapterId, status, icon, isActive) {
-    const activeColors = { not_started: '#64748b', in_progress: '#f59e0b', completed: '#22c55e' };
-    const labels = { not_started: 'Not Started', in_progress: 'In Progress', completed: 'Done' };
-    const bg = isActive ? `${activeColors[status]}22` : 'rgba(15,23,42,0.8)';
-    const color = isActive ? activeColors[status] : '#475569';
-    return `<button class="syl-status-btn" data-chapter-id="${chapterId}" data-status="${status}" type="button" style="font-size:0.65rem;padding:0.25rem 0.45rem;border:none;border-right:1px solid rgba(51,65,85,0.3);background:${bg};color:${color};cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.1s;white-space:nowrap;${isActive ? 'font-weight:500;' : ''}" title="${labels[status]}">${labels[status]}</button>`;
+  function buildStatusBtn(chapterId, status, isActive) {
+    const colors = {
+      not_started: '#64748b', studied: '#f59e0b', revision_1: '#3b82f6',
+      revision_2: '#8b5cf6', revision_3: '#ec4899', mastered: '#22c55e',
+    };
+    const labels = {
+      not_started: 'NS', studied: 'S', revision_1: 'R1',
+      revision_2: 'R2', revision_3: 'R3', mastered: 'M',
+    };
+    const titles = {
+      not_started: 'Not Started', studied: 'Studied', revision_1: 'Revision 1',
+      revision_2: 'Revision 2', revision_3: 'Revision 3', mastered: 'Mastered',
+    };
+    const c = colors[status] || '#64748b';
+    const bg = isActive ? `${c}22` : 'rgba(15,23,42,0.8)';
+    const color = isActive ? c : '#475569';
+    return `<button class="syl-status-btn" data-chapter-id="${chapterId}" data-status="${status}" type="button" style="font-size:0.6rem;padding:0.2rem 0.35rem;min-width:1.6rem;border:none;border-right:1px solid rgba(51,65,85,0.3);background:${bg};color:${color};cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all 0.1s;${isActive ? 'font-weight:600;' : ''}" title="${titles[status]}">${labels[status]}</button>`;
   }
 
   // ── Form submit ──

@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { AIService } from './interface';
-import type { EntryAnalysis, WeeklyReviewData, DailyReviewData } from '../types/ai';
+import type { EntryAnalysis, WeeklyReviewData, DailyReviewData, MentorContext } from '../types/ai';
 import type { Entry } from '../types/entry';
 
 /**
@@ -392,5 +392,44 @@ Return ONLY valid JSON:
   ): string {
     const totalHours = entries.reduce((sum, e) => sum + (e.hoursStudied || 0), 0);
     return `# Weekly Review\n\nStudied ${entries.length} days, ${Math.round(totalHours)} hours total.`;
+  }
+
+  async *generateMentorResponse(query: string, context: MentorContext): AsyncGenerator<string, void, unknown> {
+    const systemPrompt = `You are an AI study mentor for a student preparing for ${context.examType || 'their exam'}.
+You have access to their study data. Be concise, specific, and actionable — no generic motivational filler.
+
+STUDY CONTEXT:
+- Exam: ${context.examType}
+- Syllabus progress: ${context.syllabusProgress}
+- Weak chapters: ${context.weakChapters}
+- Recent entries: ${context.recentEntries}
+- Settings: ${context.settings}
+
+YOUR ROLE:
+1. Analyze what they've studied and identify gaps
+2. Ask targeted questions to check their understanding
+3. Give specific advice based on their actual progress
+4. When they answer, engage with their response — correct misunderstandings gently
+5. Suggest what to study next based on syllabus gaps
+6. Keep responses under 4 paragraphs — be direct
+
+If the user asks about a specific topic, quiz them on it. If they describe what they studied, ask a follow-up that checks depth of understanding. If they sound stuck, give practical next-step advice.`;
+
+    const prompt = `${systemPrompt}\n\nStudent message: ${query}\n\nRespond as a helpful, knowledgeable mentor:`;
+
+    try {
+      const model = this.genAI.getGenerativeModel({ model: this.modelName });
+      const result = await model.generateContentStream(prompt);
+
+      for await (const chunk of result.stream) {
+        const text = chunk.text();
+        if (text) {
+          yield text;
+        }
+      }
+    } catch (e) {
+      console.warn('Gemini generateMentorResponse failed:', e);
+      yield "I'm having trouble connecting right now. Please try again in a moment.";
+    }
   }
 }

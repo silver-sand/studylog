@@ -8,9 +8,22 @@ import StudyTrendChart from '../components/StudyTrendChart.astro';
 import StudyTypeBreakdown from '../components/StudyTypeBreakdown.astro';
 import FocusTrend from '../components/FocusTrend.astro';
 import WeekComparison from '../components/WeekComparison.astro';
+import WeakChapters from '../components/WeakChapters.astro';
+import DailyActionCard from '../components/DailyActionCard.astro';
+import ExamPaceWidget from '../components/ExamPaceWidget.astro';
+import MockTestWidget from '../components/MockTestWidget.astro';
 import { getDashboardStats } from '../services/stats-service';
+import { getDb } from '../db';
 
 const stats = getDashboardStats();
+const settings = getDb().getSettings();
+const examKeyMap: Record<string, string> = {
+  'JEE Main': 'JEE', 'JEE Advanced': 'JEE',
+  'NEET': 'NEET', 'CET': 'MHT_CET',
+  'Boards (PCM)': 'CBSE_12', 'Boards (PCB)': 'CBSE_12', 'Boards (Commerce)': 'CBSE_12',
+  'CUET': 'CUET', 'GATE': 'GATE', 'CAT': 'CAT', 'UPSC': 'UPSC',
+};
+const examKey = examKeyMap[settings.examType] || 'JEE';
 ---
 
 <BaseLayout title="Dashboard">
@@ -46,16 +59,14 @@ const stats = getDashboardStats();
         value={`${stats.entriesThisMonth}`}
         subtext="entries logged"
       />
-      <StatsCard
-        label="Total"
-        value={`${stats.totalEntries}`}
-        subtext="entries all time"
-      />
-      <StatsCard
-        label="Hours"
-        value={`${stats.totalHoursThisWeek.toFixed(1)}`}
-        subtext={`of ${stats.targetHoursPerWeek}h target`}
-      />
+      <MockTestWidget />
+      <ExamPaceWidget />
+    </div>
+
+    <!-- Two-column chart row -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+      <DailyActionCard examType={examKey} />
+      <WeakChapters examType={examKey} />
     </div>
 
     <!-- Two-column chart row -->
@@ -74,6 +85,7 @@ const stats = getDashboardStats();
     <div class="mb-6">
       <FocusTrend data={stats.focusTrend} />
     </div>
+
   </div>
 </BaseLayout>
 

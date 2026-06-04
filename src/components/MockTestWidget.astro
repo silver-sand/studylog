@@ -1,0 +1,226 @@
+---
+---
+
+<div class="mocktest-card" id="mocktest-card">
+  <div class="card-header">
+    <div class="card-title-row">
+      <span class="card-icon">📊</span>
+      <h3 class="card-title">Mock Tests</h3>
+    </div>
+    <span class="card-badge" id="mt-badge">Loading...</span>
+  </div>
+  <div class="card-body" id="mt-body">
+    <p class="loading-text">Loading mock test data...</p>
+  </div>
+</div>
+
+<script>
+  async function loadMockTests() {
+    const body = document.getElementById('mt-body');
+    const badge = document.getElementById('mt-badge');
+    if (!body || !badge) return;
+
+    try {
+      const res = await fetch('/api/mock-tests');
+      if (!res.ok) throw new Error('Failed');
+      const data = await res.json();
+      const a = data.analytics;
+
+      badge.textContent = `${a.totalTests} tests`;
+
+      if (a.totalTests === 0) {
+        body.innerHTML = `
+          <p class="empty-text">No mock tests recorded yet.</p>
+          <p class="empty-hint">Track your test scores here to see performance trends.</p>
+          <button class="add-btn" id="add-mock-test-btn">+ Add Test</button>
+        `;
+        document.getElementById('add-mock-test-btn')?.addEventListener('click', () => {
+          // Simple prompt-based add
+          const subject = prompt('Subject (e.g. Physics, Chemistry, Mathematics):');
+          if (!subject) return;
+          const testName = prompt('Test name (e.g. Weekly Test 1):');
+          if (!testName) return;
+          const score = parseFloat(prompt('Score:') || '0');
+          const maxMarks = parseFloat(prompt('Max marks:') || '0');
+          const date = new Date().toISOString().split('T')[0];
+          if (score && maxMarks) {
+            fetch('/api/mock-tests', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ subject, testName, score, maxMarks, date }),
+            }).then(r => {
+              if (r.ok) loadMockTests();
+              else alert('Failed to save');
+            });
+          }
+        });
+        return;
+      }
+
+      const trendIcon = a.trend === 'improving' ? '📈' : a.trend === 'declining' ? '📉' : a.trend === 'stable' ? '➡️' : '❓';
+
+      body.innerHTML = `
+        <div class="stat-row">
+          <span class="stat-label">Average</span>
+          <span class="stat-value">${a.averagePercentage}%</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Best</span>
+          <span class="stat-value">${a.bestScore?.percentage || 0}% (${a.bestScore?.subject || '-'})</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Trend</span>
+          <span class="stat-value">${trendIcon} ${a.trend.replace('_', ' ')}</span>
+        </div>
+        ${a.subjectBreakdown.length > 0 ? `
+          <div class="subject-breakdown">
+            ${a.subjectBreakdown.map(s => `
+              <div class="subj-row">
+                <span class="subj-name">${s.subject}</span>
+                <div class="mt-bar-bg">
+                  <div class="mt-bar-fill" style="width:${s.avgPercentage}%"></div>
+                </div>
+                <span class="subj-pct">${s.avgPercentage}%</span>
+                <span class="subj-count">(${s.tests})</span>
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
+        <div style="margin-top:0.5rem;">
+          <button class="add-btn" id="add-mt-btn">+ Add Test</button>
+        </div>
+      `;
+
+      document.getElementById('add-mt-btn')?.addEventListener('click', () => {
+        const subject = prompt('Subject:');
+        if (!subject) return;
+        const testName = prompt('Test name:');
+        if (!testName) return;
+        const score = parseFloat(prompt('Score:') || '0');
+        const maxMarks = parseFloat(prompt('Max marks:') || '0');
+        const date = new Date().toISOString().split('T')[0];
+        if (score && maxMarks) {
+          fetch('/api/mock-tests', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subject, testName, score, maxMarks, date }),
+          }).then(r => {
+            if (r.ok) loadMockTests();
+            else alert('Failed to save');
+          });
+        }
+      });
+
+    } catch (err) {
+      body.innerHTML = `<p class="error-text">Could not load mock test data</p>`;
+      badge.textContent = 'Error';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadMockTests);
+  if (document.readyState !== 'loading') loadMockTests();
+</script>
+
+<style>
+  .mocktest-card {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(51, 65, 85, 0.4);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+  .card-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .card-icon { font-size: 1rem; }
+  .card-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    margin: 0;
+  }
+  .card-badge {
+    font-size: 0.7rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: #93c5fd;
+    background: rgba(59, 130, 246, 0.1);
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+  }
+  .card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .loading-text, .empty-text {
+    font-size: 0.8rem;
+    color: #64748b;
+    text-align: center;
+  }
+  .empty-hint {
+    font-size: 0.7rem;
+    color: #475569;
+    text-align: center;
+  }
+  .error-text { font-size: 0.8rem; color: #f87171; }
+  .stat-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.3rem 0;
+    border-bottom: 1px solid rgba(51, 65, 85, 0.15);
+    font-size: 0.78rem;
+  }
+  .stat-label { color: #64748b; }
+  .stat-value { color: #cbd5e1; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
+  .subject-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin-top: 0.3rem;
+  }
+  .subj-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.72rem;
+  }
+  .subj-name { color: #94a3b8; min-width: 4rem; }
+  .mt-bar-bg {
+    flex: 1;
+    height: 0.3rem;
+    background: rgba(51, 65, 85, 0.5);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .mt-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    transition: width 0.4s ease;
+  }
+  .subj-pct { color: #cbd5e1; font-family: 'JetBrains Mono', monospace; min-width: 2.5rem; text-align: right; }
+  .subj-count { color: #475569; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; }
+  .add-btn {
+    width: 100%;
+    padding: 0.4rem;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px dashed rgba(59, 130, 246, 0.3);
+    border-radius: 0.5rem;
+    color: #93c5fd;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .add-btn:hover {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.5);
+  }
+</style>

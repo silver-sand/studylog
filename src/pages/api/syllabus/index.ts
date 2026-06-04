@@ -39,7 +39,7 @@ export const PUT: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: 'id and status required' }), { status: 400 });
     }
 
-    if (!['not_started', 'in_progress', 'completed'].includes(status)) {
+    if (!['not_started', 'studied', 'revision_1', 'revision_2', 'revision_3', 'mastered'].includes(status)) {
       return new Response(JSON.stringify({ error: 'Invalid status' }), { status: 400 });
     }
 

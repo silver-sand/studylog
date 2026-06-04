@@ -1,5 +1,5 @@
 import type { AIService } from './interface';
-import type { EntryAnalysis, WeeklyReviewData, DailyReviewData } from '../types/ai';
+import type { EntryAnalysis, WeeklyReviewData, DailyReviewData, MentorContext } from '../types/ai';
 import type { Entry } from '../types/entry';
 import { formatDisplayDate, getDaysBetween } from '../utils/date';
 
@@ -347,5 +347,23 @@ ${weaknesses.map(w => `- ⚠️ ${w}`).join('\n') || '- Keep up the good work!'}
           : 'Start noting specific chapters to get more targeted recommendations.',
       ],
     };
+  }
+
+  async *generateMentorResponse(query: string, context: MentorContext): AsyncGenerator<string, void, unknown> {
+    // Simulate streaming with delays
+    const responses = [
+      "I can see you've been studying **${context.examType}** syllabus. Let me think about that...\n\n",
+      "Based on your recent entries, here's what I notice:\n\n",
+      `- You've covered ${context.syllabusProgress || 'some ground'} in your syllabus.\n`,
+      `- Your weak areas need attention: ${context.weakChapters || 'none flagged'}.\n\n`,
+      "Here's a question to check your understanding:\n\n",
+      "> Can you explain the key concept you studied most recently? Try to break it down in your own words.\n\n",
+      "This will help me gauge your clarity and give you more targeted advice. What do you think?",
+    ];
+
+    for (const part of responses) {
+      yield part;
+      await new Promise(r => setTimeout(r, 80));
+    }
   }
 }

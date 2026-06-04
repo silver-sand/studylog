@@ -22,8 +22,8 @@ const exams: ExamData[] = EXAM_TYPES_FOR_SYLLABUS.map((exam) => {
   const progress = db.getSyllabusProgress(exam.key);
   const chapters = db.getSyllabus(exam.key);
   const totalChapters = progress.reduce((s, p) => s + p.total, 0);
-  const completedChapters = progress.reduce((s, p) => s + p.completed, 0);
-  const overallPercent = totalChapters > 0 ? Math.round((completedChapters / totalChapters) * 100) : 0;
+  const weightedSum = progress.reduce((s, p) => s + p.weightedPercent * p.total, 0);
+  const overallPercent = totalChapters > 0 ? Math.round(weightedSum / totalChapters) : 0;
   return {
     ...exam,
     progress,
@@ -199,24 +199,24 @@ const filteredExams = selectedKey ? exams.filter(e => e.key === selectedKey) : e
           const colors = { blue: '#93c5fd', green: '#86efac', amber: '#fcd34d', pink: '#f9a8d4', gray: '#94a3b8' };
           const sl = subj.toLowerCase();
           const ck = sl.includes('physics') ? 'blue' : sl.includes('chemistry') ? 'green' : sl.includes('math') ? 'amber' : sl.includes('biology') ? 'pink' : 'gray';
-          percentEl.textContent = `${p.percent}%`;
+          percentEl.textContent = `${p.weightedPercent}%`;
           percentEl.style.color = colors[ck];
         }
 
         const fill = card.querySelector('.syllabus-bar-fill');
-        if (fill) fill.style.width = `${p.percent}%`;
+        if (fill) fill.style.width = `${p.weightedPercent}%`;
 
         const countEl = card.querySelector('.subject-count');
         if (countEl) countEl.textContent = `${p.completed}/${p.total} chapters`;
       });
 
-      // Update overall progress
-      const totalCompleted = progressData.reduce((s, p) => s + p.completed, 0);
+      // Update overall progress (weighted)
       const totalChapters = progressData.reduce((s, p) => s + p.total, 0);
-      const overallPercent = totalChapters > 0 ? Math.round((totalCompleted / totalChapters) * 100) : 0;
+      const weightedSum = progressData.reduce((s, p) => s + p.weightedPercent * p.total, 0);
+      const overallPercent = totalChapters > 0 ? Math.round(weightedSum / totalChapters) : 0;
 
       const progressText = document.getElementById(`progress-text-${examType}`);
-      if (progressText) progressText.textContent = `${totalCompleted}/${totalChapters} chapters (${overallPercent}%)`;
+      if (progressText) progressText.textContent = `${overallPercent}% complete (${totalChapters} chapters)`;
 
       const progressFill = document.getElementById(`progress-fill-${examType}`);
       if (progressFill) progressFill.style.width = `${overallPercent}%`;

@@ -76,6 +76,24 @@ const settings = db.getSettings();
         </div>
       </div>
 
+      <!-- Exam Date -->
+      <div class="card">
+        <h2 class="card-title">Exam Date</h2>
+        <p class="card-desc">When is your exam? Used for pace prediction.</p>
+        <div class="flex items-center gap-3 mt-3">
+          <input
+            type="date"
+            id="exam-date"
+            name="examDate"
+            value={settings.examDate || ''}
+            class="form-input font-mono"
+          />
+          {settings.examDate && (
+            <span class="text-sm text-slate-500" id="exam-date-label"></span>
+          )}
+        </div>
+      </div>
+
       <!-- Actions -->
       <div class="flex items-center gap-3">
         <button type="submit" id="save-btn" class="btn-primary">
@@ -139,6 +157,8 @@ const settings = db.getSettings();
     const examChip = document.querySelector('#exam-grid .chip[data-selected="1"]');
     const examType = examChip ? examChip.dataset.exam : 'JEE';
 
+    const examDate = document.getElementById('exam-date').value || null;
+
     if (subjects.length === 0) {
       errorDiv.textContent = 'Select at least one subject.';
       errorDiv.classList.remove('hidden');
@@ -152,7 +172,7 @@ const settings = db.getSettings();
       const res = await fetch('/api/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetHoursPerWeek: targetHours, subjects, examType }),
+        body: JSON.stringify({ targetHoursPerWeek: targetHours, subjects, examType, examDate }),
       });
 
       if (!res.ok) throw new Error('Failed to save');

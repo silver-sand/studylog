@@ -13,7 +13,7 @@ export const GET: APIRoute = async () => {
 export const PUT: APIRoute = async ({ request }) => {
   try {
     const body = await request.json();
-    const { targetHoursPerWeek, subjects, examType, theme } = body;
+    const { targetHoursPerWeek, subjects, examType, examDate, theme } = body;
 
     if (targetHoursPerWeek !== undefined) {
       const h = Number(targetHoursPerWeek);
@@ -36,6 +36,7 @@ export const PUT: APIRoute = async ({ request }) => {
       targetHoursPerWeek: targetHoursPerWeek !== undefined ? Number(targetHoursPerWeek) : undefined,
       subjects: subjects !== undefined ? subjects : undefined,
       examType: examType !== undefined ? examType : undefined,
+      examDate: examDate !== undefined ? examDate : undefined,
       theme: theme !== undefined ? theme : undefined,
     });
 

@@ -1,0 +1,195 @@
+---
+export interface Props {
+  examType: string;
+}
+
+const { examType } = Astro.props;
+---
+
+<div class="weak-chapters-card" id="weak-chapters-card">
+  <div class="card-header">
+    <div class="card-title-row">
+      <span class="card-icon">⚠️</span>
+      <h3 class="card-title">Weak Chapters</h3>
+    </div>
+    <span class="card-badge" id="weak-count-badge">...</span>
+  </div>
+  <div class="card-body" id="weak-chapters-body">
+    <p class="loading-text">Loading...</p>
+  </div>
+</div>
+
+<script>
+  async function loadWeakChapters() {
+    const card = document.getElementById('weak-chapters-card');
+    const body = document.getElementById('weak-chapters-body');
+    const badge = document.getElementById('weak-count-badge');
+    if (!body || !badge) return;
+
+    // Get exam type from data attribute or settings
+    const examInput = document.querySelector<HTMLSelectElement>('[name="examType"], #exam-type, select[name="exam_type"]');
+    const examType = examInput?.value ||
+      document.querySelector<HTMLSelectElement>('#exam-select')?.value ||
+      'JEE';
+
+    const examMap: Record<string, string> = {
+      'JEE': 'JEE', 'JEE Main': 'JEE', 'JEE Advanced': 'JEE',
+      'NEET': 'NEET', 'CET': 'MHT_CET',
+      'Boards (PCM)': 'CBSE_12', 'Boards (PCB)': 'CBSE_12', 'Boards (Commerce)': 'CBSE_12',
+      'CUET': 'CUET', 'GATE': 'GATE', 'CAT': 'CAT', 'UPSC': 'UPSC',
+    };
+    const examKey = examMap[examType] || examType;
+
+    try {
+      const res = await fetch(`/api/chapter-health?exam=${encodeURIComponent(examKey)}`);
+      if (!res.ok) throw new Error('Failed to load');
+      const data = await res.json();
+
+      badge.textContent = `${data.weakCount} weak`;
+
+      if (!data.weakChapters || data.weakChapters.length === 0) {
+        body.innerHTML = `<p class="all-good">🎉 All chapters are healthy!</p>`;
+        return;
+      }
+
+      const list = data.weakChapters.map((ch: any) => {
+        const color = ch.health < 20 ? '#ef4444' : ch.health < 40 ? '#f59e0b' : '#3b82f6';
+        const statusLabel = ({
+          not_started: 'NS', studied: 'S', revision_1: 'R1',
+          revision_2: 'R2', revision_3: 'R3', mastered: 'M',
+        } as Record<string, string>)[ch.status] || ch.status;
+        return `
+          <div class="weak-row">
+            <span class="weak-subject">${ch.subject}</span>
+            <span class="weak-name">${ch.chapter}</span>
+            <span class="weak-status" style="color:${color}">${statusLabel}</span>
+            <div class="health-bar-bg">
+              <div class="health-bar-fill" style="width:${ch.health}%;background:${color}"></div>
+            </div>
+            <span class="weak-score" style="color:${color}">${ch.health}</span>
+          </div>
+        `;
+      }).join('');
+
+      body.innerHTML = list;
+    } catch (err) {
+      body.innerHTML = `<p class="error-text">Could not load chapter health</p>`;
+    }
+  }
+
+  // Load on page load
+  document.addEventListener('DOMContentLoaded', loadWeakChapters);
+  // Also load if DOM is already ready
+  if (document.readyState !== 'loading') loadWeakChapters();
+
+  // Reload on syllabus updates
+  document.addEventListener('syllabus-updated', () => {
+    setTimeout(loadWeakChapters, 500);
+  });
+</script>
+
+<style>
+  .weak-chapters-card {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(51, 65, 85, 0.4);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+  .card-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .card-icon {
+    font-size: 1rem;
+  }
+  .card-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    margin: 0;
+  }
+  .card-badge {
+    font-size: 0.7rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.1);
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+  }
+  .card-body {
+    max-height: 320px;
+    overflow-y: auto;
+  }
+  .loading-text {
+    font-size: 0.8rem;
+    color: #64748b;
+  }
+  .all-good {
+    font-size: 0.85rem;
+    color: #86efac;
+    text-align: center;
+    padding: 1rem 0;
+  }
+  .error-text {
+    font-size: 0.8rem;
+    color: #f87171;
+  }
+  .weak-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0;
+    border-bottom: 1px solid rgba(51, 65, 85, 0.2);
+    font-size: 0.75rem;
+  }
+  .weak-row:last-child {
+    border-bottom: none;
+  }
+  .weak-subject {
+    font-size: 0.6rem;
+    color: #64748b;
+    font-family: 'JetBrains Mono', monospace;
+    min-width: 3rem;
+  }
+  .weak-name {
+    flex: 1;
+    color: #94a3b8;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .weak-status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    font-weight: 600;
+    min-width: 1.5rem;
+    text-align: center;
+  }
+  .health-bar-bg {
+    width: 3rem;
+    height: 0.3rem;
+    background: rgba(51, 65, 85, 0.5);
+    border-radius: 999px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .health-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.4s ease;
+  }
+  .weak-score {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 600;
+    min-width: 1.5rem;
+    text-align: right;
+  }
+</style>

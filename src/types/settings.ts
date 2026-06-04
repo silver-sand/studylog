@@ -3,6 +3,7 @@ export interface Settings {
   targetHoursPerWeek: number;
   subjects: string[];
   examType: string;
+  examDate: string | null;
   theme: 'dark' | 'light';
   createdAt: string;
   updatedAt: string;
@@ -12,6 +13,7 @@ export interface UpdateSettingsData {
   targetHoursPerWeek?: number;
   subjects?: string[];
   examType?: string;
+  examDate?: string | null;
   theme?: 'dark' | 'light';
 }
 

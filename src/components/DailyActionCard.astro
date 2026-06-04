@@ -1,0 +1,229 @@
+---
+export interface Props {
+  examType: string;
+}
+
+const { examType } = Astro.props;
+---
+
+<div class="action-card" id="daily-action-card">
+  <div class="card-header">
+    <div class="card-title-row">
+      <span class="card-icon">🎯</span>
+      <h3 class="card-title">Today's Priority</h3>
+    </div>
+    <span class="card-date" id="action-date"></span>
+  </div>
+  <div class="card-body" id="action-body">
+    <p class="loading-text">Loading recommendations...</p>
+  </div>
+</div>
+
+<script>
+  function daysAgo(dateStr) {
+    if (!dateStr) return null;
+    const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
+    return diff;
+  }
+
+  async function loadActions() {
+    const body = document.getElementById('action-body');
+    const dateEl = document.getElementById('action-date');
+    if (!body || !dateEl) return;
+
+    // Get exam type from settings
+    const examInput = document.querySelector('[name="examType"], #exam-type, select[name="exam_type"]');
+    const examType = examInput?.value || 'JEE';
+    const examMap = {
+      'JEE': 'JEE', 'JEE Main': 'JEE', 'JEE Advanced': 'JEE',
+      'NEET': 'NEET', 'CET': 'MHT_CET',
+      'Boards (PCM)': 'CBSE_12', 'Boards (PCB)': 'CBSE_12', 'Boards (Commerce)': 'CBSE_12',
+      'CUET': 'CUET', 'GATE': 'GATE', 'CAT': 'CAT', 'UPSC': 'UPSC',
+    };
+    const examKey = examMap[examType] || examType;
+
+    dateEl.textContent = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+    try {
+      // Fetch weak chapters
+      const [healthRes, syllabusRes] = await Promise.all([
+        fetch(`/api/chapter-health?exam=${encodeURIComponent(examKey)}`),
+        fetch(`/api/syllabus?exam=${encodeURIComponent(examKey)}`),
+      ]);
+
+      if (!healthRes.ok || !syllabusRes.ok) throw new Error('Failed to load');
+
+      const health = await healthRes.json();
+      const syllabus = await syllabusRes.json();
+
+      const weakChapters = health.weakChapters || [];
+      const allChapters = syllabus.chapters || [];
+
+      // Generate action items
+      const actions = [];
+
+      // 1. Critical: chapters with health < 20 (red)
+      for (const ch of weakChapters.filter(c => c.health < 20).slice(0, 3)) {
+        const days = daysAgo(ch.lastRevisedAt);
+        const reason = ch.status === 'not_started'
+          ? 'Not started yet'
+          : days !== null ? `Last revised ${days}d ago` : 'Needs revision';
+        actions.push({ ...ch, priority: 'critical', reason, icon: '🔴' });
+      }
+
+      // 2. Warning: chapters with health 20-50
+      for (const ch of weakChapters.filter(c => c.health >= 20 && c.health < 50).slice(0, 3)) {
+        const days = daysAgo(ch.lastRevisedAt);
+        const reason = days !== null ? `Last revised ${days}d ago` : 'Could use a review';
+        actions.push({ ...ch, priority: 'warning', reason, icon: '🟡' });
+      }
+
+      // 3. If not enough weak chapters, suggest not_started ones
+      if (actions.length < 3) {
+        const notStarted = allChapters
+          .filter(ch => ch.status === 'not_started')
+          .slice(0, 3 - actions.length);
+        for (const ch of notStarted) {
+          if (!actions.find(a => a.id === ch.id)) {
+            actions.push({ ...ch, priority: 'info', reason: 'Not started', icon: '⚪', health: 0 });
+          }
+        }
+      }
+
+      // Limit to 5 max
+      const top = actions.slice(0, 5);
+
+      if (top.length === 0) {
+        body.innerHTML = `<p class="all-good">✅ Everything looks good! No urgent actions needed.</p>`;
+        return;
+      }
+
+      const colors = { critical: '#ef4444', warning: '#f59e0b', info: '#3b82f6' };
+
+      body.innerHTML = top.map((item, i) => {
+        const color = colors[item.priority] || '#64748b';
+        return `
+          <div class="action-row" style="border-left-color:${color}">
+            <span class="action-rank">${i + 1}</span>
+            <div class="action-info">
+              <span class="action-subject">${item.subject}</span>
+              <span class="action-name">${item.chapter}</span>
+              <span class="action-reason">${item.reason}</span>
+            </div>
+            <span class="action-badge" style="background:${color}15;color:${color}">${item.icon}</span>
+          </div>
+        `;
+      }).join('');
+
+    } catch (err) {
+      body.innerHTML = `<p class="error-text">Could not load recommendations</p>`;
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadActions);
+  if (document.readyState !== 'loading') loadActions();
+  document.addEventListener('syllabus-updated', () => setTimeout(loadActions, 500));
+</script>
+
+<style>
+  .action-card {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(51, 65, 85, 0.4);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+  .card-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .card-icon {
+    font-size: 1.1rem;
+  }
+  .card-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    margin: 0;
+  }
+  .card-date {
+    font-size: 0.7rem;
+    color: #64748b;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .loading-text {
+    font-size: 0.8rem;
+    color: #64748b;
+  }
+  .all-good {
+    font-size: 0.85rem;
+    color: #86efac;
+    text-align: center;
+    padding: 1rem 0;
+  }
+  .error-text {
+    font-size: 0.8rem;
+    color: #f87171;
+  }
+  .action-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.6rem;
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: 0.5rem;
+    border-left: 3px solid;
+    transition: background 0.15s;
+  }
+  .action-row:hover {
+    background: rgba(30, 41, 59, 0.5);
+  }
+  .action-rank {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #475569;
+    font-family: 'JetBrains Mono', monospace;
+    min-width: 1.2rem;
+    text-align: center;
+  }
+  .action-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .action-subject {
+    font-size: 0.6rem;
+    color: #64748b;
+    font-family: 'JetBrains Mono', monospace;
+    display: block;
+  }
+  .action-name {
+    font-size: 0.8rem;
+    color: #cbd5e1;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .action-reason {
+    font-size: 0.65rem;
+    color: #64748b;
+    display: block;
+  }
+  .action-badge {
+    font-size: 0.85rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.3rem;
+    flex-shrink: 0;
+  }
+</style>

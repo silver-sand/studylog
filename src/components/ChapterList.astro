@@ -1,5 +1,6 @@
 ---
 import type { SyllabusChapter } from '../types/review';
+import { STATUS_ORDER, STATUS_LABELS } from '../types/review';
 
 export interface Props {
   chapters: SyllabusChapter[];
@@ -8,24 +9,52 @@ export interface Props {
 
 const { chapters, subject } = Astro.props;
 
-const STATUSES = [
-  { value: 'not_started', label: 'Not Started', icon: '○', color: '#64748b' },
-  { value: 'in_progress', label: 'In Progress', icon: '◐', color: '#f59e0b' },
-  { value: 'completed', label: 'Done', icon: '●', color: '#22c55e' },
-];
+const STATUSES = STATUS_ORDER.map(s => ({
+  value: s,
+  label: STATUS_LABELS[s],
+  color: s === 'not_started' ? '#64748b' :
+         s === 'studied' ? '#f59e0b' :
+         s === 'revision_1' ? '#3b82f6' :
+         s === 'revision_2' ? '#8b5cf6' :
+         s === 'revision_3' ? '#ec4899' :
+         '#22c55e',
+  short: s === 'not_started' ? 'NS' :
+         s === 'studied' ? 'S' :
+         s === 'revision_1' ? 'R1' :
+         s === 'revision_2' ? 'R2' :
+         s === 'revision_3' ? 'R3' :
+         'M',
+}));
+
+function daysAgo(dateStr: string | null): string {
+  if (!dateStr) return '';
+  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
+  if (diff === 0) return 'today';
+  if (diff === 1) return '1d ago';
+  return `${diff}d ago`;
+}
 ---
 
 <div class="chapter-list">
-  {chapters.map((ch) => (
+  {chapters.map((ch) => {
+    const activeIdx = STATUS_ORDER.indexOf(ch.status);
+    return (
     <div class="chapter-row" data-chapter-id={ch.id}>
       <div class="chapter-info">
         <span class="chapter-name">{ch.chapter}</span>
         {ch.classLevel && <span class="class-badge">Class {ch.classLevel}</span>}
+        {ch.lastRevisedAt && ch.status !== 'not_started' && (
+          <span class="revision-badge" title={`Last revised ${daysAgo(ch.lastRevisedAt)}`}>
+            {daysAgo(ch.lastRevisedAt)}
+          </span>
+        )}
+        {ch.revisionCount > 0 && (
+          <span class="rev-count-badge">{ch.revisionCount}r</span>
+        )}
       </div>
       <div class="slider-group" data-chapter={ch.id}>
         {STATUSES.map((s, i) => {
-          const activeIdx = STATUSES.findIndex(st => st.value === ch.status);
-          const isActive = ch.status === s.value;
+          const isActive = i === activeIdx;
           const isBefore = i < activeIdx;
           const isAfter = i > activeIdx;
           return (
@@ -41,16 +70,28 @@ const STATUSES = [
               style={`--accent: ${s.color}`}
               title={s.label}
             >
-              {s.label}
+              {s.short}
             </button>
           );
         })}
       </div>
     </div>
-  ))}
+    );
+  })}
 </div>
 
 <script>
+  const CHAPTER_STATUSES = ['not_started', 'studied', 'revision_1', 'revision_2', 'revision_3', 'mastered'];
+
+  const ACCENT_COLORS: Record<string, string> = {
+    not_started: '#64748b',
+    studied: '#f59e0b',
+    revision_1: '#3b82f6',
+    revision_2: '#8b5cf6',
+    revision_3: '#ec4899',
+    mastered: '#22c55e',
+  };
+
   document.querySelectorAll('.slider-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       const chapterId = btn.dataset.chapterId;
@@ -60,7 +101,7 @@ const STATUSES = [
       const group = btn.closest('.slider-group');
       if (!group) return;
       const allBtns = group.querySelectorAll('.slider-btn');
-      allBtns.forEach(b => b.disabled = true);
+      allBtns.forEach(b => (b as HTMLButtonElement).disabled = true);
 
       try {
         const res = await fetch('/api/syllabus', {
@@ -71,28 +112,24 @@ const STATUSES = [
         if (!res.ok) throw new Error('Update failed');
 
         const updated = await res.json();
-
-        // Determine active index for new status
-        const statusOrder = ['not_started', 'in_progress', 'completed'];
-        const activeIdx = statusOrder.indexOf(status);
+        const activeIdx = CHAPTER_STATUSES.indexOf(status);
 
         allBtns.forEach((b, idx) => {
-          const s = b.dataset.status;
+          const s = b.dataset.status!;
           const isActive = s === status;
           const isBefore = idx < activeIdx;
           const isAfter = idx > activeIdx;
-          const accentColors = { not_started: '#64748b', in_progress: '#f59e0b', completed: '#22c55e' };
 
           b.classList.toggle('active', isActive);
           b.classList.toggle('before', isBefore);
           b.classList.toggle('after', isAfter);
-          b.style.setProperty('--accent', accentColors[s] || '#64748b');
+          b.style.setProperty('--accent', ACCENT_COLORS[s] || '#64748b');
         });
 
         // Update row visual
         const row = btn.closest('.chapter-row');
         if (row) {
-          row.classList.remove('status-not_started', 'status-in_progress', 'status-completed');
+          CHAPTER_STATUSES.forEach(st => row.classList.remove('status-' + st));
           row.classList.add('status-' + status);
         }
 
@@ -104,7 +141,7 @@ const STATUSES = [
       } catch (err) {
         alert('Failed: ' + (err instanceof Error ? err.message : 'Error'));
       } finally {
-        allBtns.forEach(b => b.disabled = false);
+        allBtns.forEach(b => (b as HTMLButtonElement).disabled = false);
       }
     });
   });
@@ -121,10 +158,10 @@ const STATUSES = [
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.5rem 1rem;
+    padding: 0.45rem 0.75rem;
     background: rgba(15, 23, 42, 0.5);
     border-bottom: 1px solid rgba(51, 65, 85, 0.3);
-    gap: 0.75rem;
+    gap: 0.5rem;
     transition: background 0.15s, opacity 0.2s;
   }
   .chapter-row:last-child {
@@ -133,33 +170,42 @@ const STATUSES = [
   .chapter-row:hover {
     background: rgba(30, 41, 59, 0.5);
   }
-  .chapter-row.status-completed {
+  .chapter-row.status-mastered {
     opacity: 0.55;
   }
-  .chapter-row.status-completed .chapter-name {
+  .chapter-row.status-mastered .chapter-name {
     text-decoration: line-through;
     color: #64748b;
   }
-  .chapter-row.status-in_progress .chapter-name {
+  .chapter-row.status-studied .chapter-name {
     color: #fcd34d;
+  }
+  .chapter-row.status-revision_1 .chapter-name {
+    color: #93c5fd;
+  }
+  .chapter-row.status-revision_2 .chapter-name {
+    color: #c4b5fd;
+  }
+  .chapter-row.status-revision_3 .chapter-name {
+    color: #f9a8d4;
   }
   .chapter-info {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.35rem;
     flex: 1;
     min-width: 0;
   }
   .chapter-name {
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     color: #cbd5e1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
   .class-badge {
-    font-size: 0.6rem;
-    padding: 0.1rem 0.35rem;
+    font-size: 0.55rem;
+    padding: 0.08rem 0.3rem;
     border-radius: 0.25rem;
     background: rgba(100, 116, 139, 0.2);
     color: #94a3b8;
@@ -167,23 +213,43 @@ const STATUSES = [
     white-space: nowrap;
     flex-shrink: 0;
   }
+  .revision-badge {
+    font-size: 0.55rem;
+    padding: 0.08rem 0.3rem;
+    border-radius: 0.25rem;
+    background: rgba(59, 130, 246, 0.15);
+    color: #93c5fd;
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .rev-count-badge {
+    font-size: 0.55rem;
+    padding: 0.08rem 0.3rem;
+    border-radius: 0.25rem;
+    background: rgba(139, 92, 246, 0.15);
+    color: #c4b5fd;
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
   .slider-group {
     display: flex;
-    border-radius: 0.4rem;
+    border-radius: 0.35rem;
     overflow: hidden;
     border: 1px solid rgba(51, 65, 85, 0.4);
     flex-shrink: 0;
   }
   .slider-btn {
-    font-size: 0.65rem;
-    padding: 0.3rem 0.5rem;
+    font-size: 0.6rem;
+    padding: 0.2rem 0.35rem;
+    min-width: 1.6rem;
     border: none;
     background: rgba(15, 23, 42, 0.8);
     color: #475569;
     cursor: pointer;
-    font-family: 'Inter', sans-serif;
+    font-family: 'JetBrains Mono', monospace;
     transition: all 0.15s ease;
-    white-space: nowrap;
     border-right: 1px solid rgba(51, 65, 85, 0.3);
     position: relative;
   }
@@ -197,13 +263,13 @@ const STATUSES = [
   .slider-btn.active {
     background: color-mix(in srgb, var(--accent) 20%, transparent);
     color: var(--accent);
-    font-weight: 500;
+    font-weight: 600;
   }
   .slider-btn.before {
-    opacity: 0.4;
+    opacity: 0.35;
   }
   .slider-btn.after {
-    opacity: 0.6;
+    opacity: 0.5;
   }
   .slider-btn:disabled {
     opacity: 0.3;
