@@ -5,10 +5,10 @@ import TourTooltip from '../components/TourTooltip.astro';
 ---
 
 <BaseLayout title="AI Mentor">
-  <div class="max-w-3xl mx-auto">
-    <div class="mb-6">
-      <h1 class="page-title">AI Mentor</h1>
-      <p class="page-sub">Your AI study partner — ask questions, get quizzed, or just talk through what you're learning.</p>
+  <div class="ds-page">
+    <div class="ds-page-header ds-page-header--compact">
+      <h1 class="ds-heading-page" style="margin-bottom:0.25rem;">AI Mentor</h1>
+      <p class="ds-body-sm" style="margin:0;">Your AI study partner — ask questions, get quizzed, or just talk through what you're learning.</p>
     </div>
 
     <MentorChat />
@@ -16,22 +16,8 @@ import TourTooltip from '../components/TourTooltip.astro';
 
   <TourTooltip
     tourId="mentor-intro"
-    title="🧠 AI Mentor"
+    title="AI Mentor"
     description="I have access to your study history and syllabus progress. Ask me anything — 'What should I study today?', 'Quiz me on Physics', or 'What are my weak areas?'"
     position="bottom"
   />
 </BaseLayout>
-
-<style>
-  .page-title {
-    font-size: 1.375rem;
-    font-weight: 700;
-    color: #f1f5f9;
-    letter-spacing: -0.01em;
-    margin-bottom: 0.25rem;
-  }
-  .page-sub {
-    font-size: 0.875rem;
-    color: #64748b;
-  }
-</style>

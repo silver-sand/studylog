@@ -1,6 +1,7 @@
 ---
 import AuthPopup from '../components/AuthPopup.astro';
 import { getSessionUser, getTokenFromCookie } from '../services/auth-service';
+import '../styles/design-system.css';
 
 const user = getSessionUser(getTokenFromCookie(Astro.request));
 const isGuest = user?.userType === 'guest';
@@ -20,25 +21,25 @@ const isAuthenticated = !!user && !isGuest;
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 </head>
-<body class="bg-[#020617] text-slate-300 antialiased font-sans min-h-screen overflow-x-hidden">
+<body style="background:var(--ds-bg-base);color:var(--ds-text-secondary);font-family:var(--ds-font-sans);-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden;">
   <!-- ── Navigation ── -->
-  <header class="fixed top-0 left-0 right-0 z-50 bg-[#020617]/80 backdrop-blur-md border-b border-slate-800/40">
-    <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-      <a href="/" class="flex items-center gap-2.5">
-        <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-          <span class="text-white text-xs font-bold">SL</span>
+  <header class="ds-landing-header">
+    <div style="max-width:72rem;margin:0 auto;padding:0 var(--ds-space-6);height:4rem;display:flex;align-items:center;justify-content:space-between;">
+      <a href="/" style="display:flex;align-items:center;gap:var(--ds-space-2-5);text-decoration:none;">
+        <div style="width:2rem;height:2rem;border-radius:var(--ds-radius-lg);background:var(--ds-accent-600);display:flex;align-items:center;justify-content:center;">
+          <span style="color:white;font-size:var(--ds-text-xs);font-weight:var(--ds-weight-bold);">SL</span>
         </div>
-        <span class="text-lg font-semibold text-white tracking-tight">StudyLog</span>
+        <span style="font-size:var(--ds-text-lg);font-weight:var(--ds-weight-semibold);color:white;letter-spacing:var(--ds-tracking-tight);">StudyLog</span>
       </a>
-      <nav class="flex items-center gap-4">
-        <a href="#features" class="text-sm text-slate-400 hover:text-slate-200 transition-colors hidden sm:block">Features</a>
-        <a href="#how-it-works" class="text-sm text-slate-400 hover:text-slate-200 transition-colors hidden sm:block">How It Works</a>
+      <nav style="display:flex;align-items:center;gap:var(--ds-space-4);">
+        <a href="#features" style="font-size:var(--ds-text-sm);color:var(--ds-text-tertiary);text-decoration:none;transition:color var(--ds-transition-base);display:none;">Features</a>
+        <a href="#how-it-works" style="font-size:var(--ds-text-sm);color:var(--ds-text-tertiary);text-decoration:none;transition:color var(--ds-transition-base);display:none;">How It Works</a>
         {isAuthenticated ? (
-          <a href="/daily" class="text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg transition-colors">Dashboard</a>
+          <a href="/daily" class="ds-btn ds-btn-primary ds-btn-sm">Dashboard</a>
         ) : (
           <>
-            <button onclick="window.openAuthPopup('login')" class="text-sm text-slate-400 hover:text-slate-200 transition-colors">Log In</button>
-            <button onclick="window.openAuthPopup('signup')" class="text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg transition-colors">Get Started Free</button>
+            <button onclick="window.openAuthPopup('login')" class="ds-btn ds-btn-ghost ds-btn-sm">Log In</button>
+            <button onclick="window.openAuthPopup('signup')" class="ds-btn ds-btn-primary ds-btn-sm">Get Started Free</button>
           </>
         )}
       </nav>
@@ -46,151 +47,149 @@ const isAuthenticated = !!user && !isGuest;
   </header>
 
   <!-- ── Hero ── -->
-  <section class="min-h-screen flex items-center justify-center pt-20 pb-16 px-6">
-    <div class="max-w-3xl mx-auto text-center">
-      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-medium mb-8">
-        <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+  <section class="ds-landing-hero">
+    <div style="max-width:48rem;margin:0 auto;text-align:center;">
+      <div style="display:inline-flex;align-items:center;gap:var(--ds-space-1-5);padding:var(--ds-space-1) var(--ds-space-3);border-radius:var(--ds-radius-full);background:var(--ds-accent-bg);border:1px solid var(--ds-accent-border);color:var(--ds-accent-400);font-size:var(--ds-text-xs);font-weight:var(--ds-weight-medium);margin-bottom:var(--ds-space-8);">
+        <span style="width:0.5rem;height:0.5rem;border-radius:50%;background:var(--ds-accent-400);"></span>
         AI-Powered Study Analytics
       </div>
-      <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight tracking-tight mb-6">
+      <h1 style="font-size:var(--ds-text-4xl);font-weight:var(--ds-weight-extrabold);color:white;line-height:var(--ds-leading-tight);letter-spacing:var(--ds-tracking-tight);margin:0 0 var(--ds-space-6);">
         Your study journey,<br />
-        <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-violet-400">intelligently tracked</span>
+        <span style="background:linear-gradient(to right,var(--ds-accent-400),#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">intelligently tracked</span>
       </h1>
-      <p class="text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+      <p style="font-size:var(--ds-text-lg);color:var(--ds-text-tertiary);max-width:36rem;margin:0 auto var(--ds-space-10);line-height:var(--ds-leading-relaxed);">
         Micro-log your daily study sessions, get AI-powered weekly reviews, track syllabus progress across multiple exams, and stay on pace — all in one place.
       </p>
-      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--ds-space-4);">
         {isAuthenticated ? (
-          <a href="/daily" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-8 py-3.5 rounded-xl transition-all text-base">
+          <a href="/daily" class="ds-btn ds-btn-primary ds-btn-lg" style="gap:var(--ds-space-2);">
             Go to Dashboard
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </a>
         ) : (
           <>
-            <a href="/daily" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-8 py-3.5 rounded-xl transition-all text-base">
+            <a href="/daily" class="ds-btn ds-btn-primary ds-btn-lg" style="gap:var(--ds-space-2);">
               Start Tracking Free
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </a>
-            <button onclick="window.openAuthPopup('signup')" class="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium px-8 py-3.5 rounded-xl border border-slate-700/50 transition-all text-base">
-              Create Account
-            </button>
+            <button onclick="window.openAuthPopup('signup')" class="ds-btn ds-btn-outline ds-btn-lg">Create Account</button>
           </>
         )}
       </div>
-      <p class="text-xs text-slate-600 mt-6">No credit card. Start instantly.</p>
+      <p style="font-size:var(--ds-text-xs);color:var(--ds-text-muted);margin-top:var(--ds-space-6);">No credit card. Start instantly.</p>
     </div>
   </section>
 
   <!-- ── Features ── -->
-  <section id="features" class="py-20 px-6 border-t border-slate-800/40">
-    <div class="max-w-5xl mx-auto">
-      <div class="text-center mb-14">
-        <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4 tracking-tight">Everything you need to stay on track</h2>
-        <p class="text-slate-400 max-w-xl mx-auto">Designed for competitive exam prep. Built for consistency, not complexity.</p>
+  <section id="features" class="ds-landing-section">
+    <div style="max-width:64rem;margin:0 auto;">
+      <div style="text-align:center;margin-bottom:var(--ds-space-14);">
+        <h2 style="font-size:var(--ds-text-3xl);font-weight:var(--ds-weight-bold);color:white;margin:0 0 var(--ds-space-4);letter-spacing:var(--ds-tracking-tight);">Everything you need to stay on track</h2>
+        <p style="color:var(--ds-text-tertiary);max-width:24rem;margin:0 auto;">Designed for competitive exam prep. Built for consistency, not complexity.</p>
       </div>
-      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(18rem,1fr));gap:var(--ds-space-6);">
         <!-- Feature 1 -->
-        <div class="bg-slate-900/60 border border-slate-800/40 rounded-xl p-6 hover:border-slate-700/60 transition-all">
-          <div class="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-4">
+        <div class="ds-feature-card">
+          <div class="ds-feature-icon" style="background:var(--ds-accent-bg);border:1px solid var(--ds-accent-border);">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
           </div>
-          <h3 class="text-lg font-semibold text-white mb-2">Micro Daily Log</h3>
-          <p class="text-sm text-slate-400 leading-relaxed">Log what you studied in seconds. Track hours, subjects, chapters, and focus level. No complex journaling required.</p>
+          <h3 style="font-size:var(--ds-text-lg);font-weight:var(--ds-weight-semibold);color:white;margin:0 0 var(--ds-space-2);">Micro Daily Log</h3>
+          <p style="font-size:var(--ds-text-sm);color:var(--ds-text-tertiary);line-height:var(--ds-leading-relaxed);margin:0;">Log what you studied in seconds. Track hours, subjects, chapters, and focus level. No complex journaling required.</p>
         </div>
 
         <!-- Feature 2 -->
-        <div class="bg-slate-900/60 border border-slate-800/40 rounded-xl p-6 hover:border-slate-700/60 transition-all">
-          <div class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-4">
+        <div class="ds-feature-card">
+          <div class="ds-feature-icon" style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.25);">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
           </div>
-          <h3 class="text-lg font-semibold text-white mb-2">AI Weekly Reviews</h3>
-          <p class="text-sm text-slate-400 leading-relaxed">Get insightful AI-generated weekly reviews. Spot patterns, track consistency, and discover what's working.</p>
+          <h3 style="font-size:var(--ds-text-lg);font-weight:var(--ds-weight-semibold);color:white;margin:0 0 var(--ds-space-2);">AI Weekly Reviews</h3>
+          <p style="font-size:var(--ds-text-sm);color:var(--ds-text-tertiary);line-height:var(--ds-leading-relaxed);margin:0;">Get insightful AI-generated weekly reviews. Spot patterns, track consistency, and discover what's working.</p>
         </div>
 
         <!-- Feature 3 -->
-        <div class="bg-slate-900/60 border border-slate-800/40 rounded-xl p-6 hover:border-slate-700/60 transition-all">
-          <div class="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-4">
+        <div class="ds-feature-card">
+          <div class="ds-feature-icon" style="background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.25);">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect width="6" height="4" x="9" y="3" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
           </div>
-          <h3 class="text-lg font-semibold text-white mb-2">Syllabus Progress</h3>
-          <p class="text-sm text-slate-400 leading-relaxed">Track your syllabus chapter by chapter. See completion percentages, revision status, and weak areas per subject.</p>
+          <h3 style="font-size:var(--ds-text-lg);font-weight:var(--ds-weight-semibold);color:white;margin:0 0 var(--ds-space-2);">Syllabus Progress</h3>
+          <p style="font-size:var(--ds-text-sm);color:var(--ds-text-tertiary);line-height:var(--ds-leading-relaxed);margin:0;">Track your syllabus chapter by chapter. See completion percentages, revision status, and weak areas per subject.</p>
         </div>
 
         <!-- Feature 4 -->
-        <div class="bg-slate-900/60 border border-slate-800/40 rounded-xl p-6 hover:border-slate-700/60 transition-all">
-          <div class="w-10 h-10 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center mb-4">
+        <div class="ds-feature-card">
+          <div class="ds-feature-icon" style="background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.25);">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
           </div>
-          <h3 class="text-lg font-semibold text-white mb-2">Multi-Exam Support</h3>
-          <p class="text-sm text-slate-400 leading-relaxed">Prepare for JEE, NEET, CBSE, CUET, CAT, UPSC, and more. Switch between exams without losing data.</p>
+          <h3 style="font-size:var(--ds-text-lg);font-weight:var(--ds-weight-semibold);color:white;margin:0 0 var(--ds-space-2);">Multi-Exam Support</h3>
+          <p style="font-size:var(--ds-text-sm);color:var(--ds-text-tertiary);line-height:var(--ds-leading-relaxed);margin:0;">Prepare for JEE, NEET, CBSE, CUET, CAT, UPSC, and more. Switch between exams without losing data.</p>
         </div>
 
         <!-- Feature 5 -->
-        <div class="bg-slate-900/60 border border-slate-800/40 rounded-xl p-6 hover:border-slate-700/60 transition-all">
-          <div class="w-10 h-10 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mb-4">
+        <div class="ds-feature-card">
+          <div class="ds-feature-icon" style="background:rgba(251,113,133,0.1);border:1px solid rgba(251,113,133,0.25);">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fb7185" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           </div>
-          <h3 class="text-lg font-semibold text-white mb-2">Pace Prediction</h3>
-          <p class="text-sm text-slate-400 leading-relaxed">Know if you're on track. See projected completion dates and get early warnings when you're falling behind.</p>
+          <h3 style="font-size:var(--ds-text-lg);font-weight:var(--ds-weight-semibold);color:white;margin:0 0 var(--ds-space-2);">Pace Prediction</h3>
+          <p style="font-size:var(--ds-text-sm);color:var(--ds-text-tertiary);line-height:var(--ds-leading-relaxed);margin:0;">Know if you're on track. See projected completion dates and get early warnings when you're falling behind.</p>
         </div>
 
         <!-- Feature 6 -->
-        <div class="bg-slate-900/60 border border-slate-800/40 rounded-xl p-6 hover:border-slate-700/60 transition-all">
-          <div class="w-10 h-10 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mb-4">
+        <div class="ds-feature-card">
+          <div class="ds-feature-icon" style="background:rgba(34,211,238,0.1);border:1px solid rgba(34,211,238,0.25);">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><path d="M16 14H8a4 4 0 0 0-4 4v2h16v-2a4 4 0 0 0-4-4z"/></svg>
           </div>
-          <h3 class="text-lg font-semibold text-white mb-2">AI Mentor</h3>
-          <p class="text-sm text-slate-400 leading-relaxed">Ask your personal AI mentor anything. Get study advice, concept explanations, and syllabus guidance in real-time.</p>
+          <h3 style="font-size:var(--ds-text-lg);font-weight:var(--ds-weight-semibold);color:white;margin:0 0 var(--ds-space-2);">AI Mentor</h3>
+          <p style="font-size:var(--ds-text-sm);color:var(--ds-text-tertiary);line-height:var(--ds-leading-relaxed);margin:0;">Ask your personal AI mentor anything. Get study advice, concept explanations, and syllabus guidance in real-time.</p>
         </div>
       </div>
     </div>
   </section>
 
   <!-- ── How It Works ── -->
-  <section id="how-it-works" class="py-20 px-6 border-t border-slate-800/40">
-    <div class="max-w-4xl mx-auto">
-      <div class="text-center mb-14">
-        <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4 tracking-tight">How it works</h2>
-        <p class="text-slate-400 max-w-xl mx-auto">Three simple steps to transform your study tracking.</p>
+  <section id="how-it-works" class="ds-landing-section">
+    <div style="max-width:56rem;margin:0 auto;">
+      <div style="text-align:center;margin-bottom:var(--ds-space-14);">
+        <h2 style="font-size:var(--ds-text-3xl);font-weight:var(--ds-weight-bold);color:white;margin:0 0 var(--ds-space-4);letter-spacing:var(--ds-tracking-tight);">How it works</h2>
+        <p style="color:var(--ds-text-tertiary);max-width:24rem;margin:0 auto;">Three simple steps to transform your study tracking.</p>
       </div>
-      <div class="grid sm:grid-cols-3 gap-8">
-        <div class="text-center">
-          <div class="w-14 h-14 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center mx-auto mb-4">
-            <span class="text-2xl font-bold text-blue-400">1</span>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--ds-space-8);">
+        <div style="text-align:center;">
+          <div style="width:3.5rem;height:3.5rem;border-radius:50%;background:rgba(37,99,235,0.2);border:1px solid rgba(59,130,246,0.3);display:flex;align-items:center;justify-content:center;margin:0 auto var(--ds-space-4);">
+            <span style="font-size:var(--ds-text-2xl);font-weight:var(--ds-weight-bold);color:var(--ds-accent-400);">1</span>
           </div>
-          <h3 class="text-lg font-semibold text-white mb-2">Log Daily</h3>
-          <p class="text-sm text-slate-400 leading-relaxed">Spend 30 seconds logging what you studied, for how long, and your focus level.</p>
+          <h3 style="font-size:var(--ds-text-lg);font-weight:var(--ds-weight-semibold);color:white;margin:0 0 var(--ds-space-2);">Log Daily</h3>
+          <p style="font-size:var(--ds-text-sm);color:var(--ds-text-tertiary);line-height:var(--ds-leading-relaxed);margin:0;">Spend 30 seconds logging what you studied, for how long, and your focus level.</p>
         </div>
-        <div class="text-center">
-          <div class="w-14 h-14 rounded-full bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center mx-auto mb-4">
-            <span class="text-2xl font-bold text-emerald-400">2</span>
+        <div style="text-align:center;">
+          <div style="width:3.5rem;height:3.5rem;border-radius:50%;background:rgba(34,197,94,0.2);border:1px solid rgba(34,197,94,0.3);display:flex;align-items:center;justify-content:center;margin:0 auto var(--ds-space-4);">
+            <span style="font-size:var(--ds-text-2xl);font-weight:var(--ds-weight-bold);color:var(--ds-success-text);">2</span>
           </div>
-          <h3 class="text-lg font-semibold text-white mb-2">Get Insights</h3>
-          <p class="text-sm text-slate-400 leading-relaxed">AI analyzes your entries and generates weekly reviews with strengths, weaknesses, and recommendations.</p>
+          <h3 style="font-size:var(--ds-text-lg);font-weight:var(--ds-weight-semibold);color:white;margin:0 0 var(--ds-space-2);">Get Insights</h3>
+          <p style="font-size:var(--ds-text-sm);color:var(--ds-text-tertiary);line-height:var(--ds-leading-relaxed);margin:0;">AI analyzes your entries and generates weekly reviews with strengths, weaknesses, and recommendations.</p>
         </div>
-        <div class="text-center">
-          <div class="w-14 h-14 rounded-full bg-violet-600/20 border border-violet-500/30 flex items-center justify-center mx-auto mb-4">
-            <span class="text-2xl font-bold text-violet-400">3</span>
+        <div style="text-align:center;">
+          <div style="width:3.5rem;height:3.5rem;border-radius:50%;background:rgba(139,92,246,0.2);border:1px solid rgba(139,92,246,0.3);display:flex;align-items:center;justify-content:center;margin:0 auto var(--ds-space-4);">
+            <span style="font-size:var(--ds-text-2xl);font-weight:var(--ds-weight-bold);color:#a78bfa;">3</span>
           </div>
-          <h3 class="text-lg font-semibold text-white mb-2">Stay on Track</h3>
-          <p class="text-sm text-slate-400 leading-relaxed">Monitor syllabus progress, pace predictions, and chapter health. Adjust your plan before it's too late.</p>
+          <h3 style="font-size:var(--ds-text-lg);font-weight:var(--ds-weight-semibold);color:white;margin:0 0 var(--ds-space-2);">Stay on Track</h3>
+          <p style="font-size:var(--ds-text-sm);color:var(--ds-text-tertiary);line-height:var(--ds-leading-relaxed);margin:0;">Monitor syllabus progress, pace predictions, and chapter health. Adjust your plan before it's too late.</p>
         </div>
       </div>
     </div>
   </section>
 
   <!-- ── CTA ── -->
-  <section class="py-20 px-6 border-t border-slate-800/40">
-    <div class="max-w-2xl mx-auto text-center">
-      <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4 tracking-tight">Ready to study smarter?</h2>
-      <p class="text-lg text-slate-400 mb-8">Start tracking your study sessions today. No account required to begin.</p>
+  <section class="ds-landing-section">
+    <div style="max-width:32rem;margin:0 auto;text-align:center;">
+      <h2 style="font-size:var(--ds-text-3xl);font-weight:var(--ds-weight-bold);color:white;margin:0 0 var(--ds-space-4);letter-spacing:var(--ds-tracking-tight);">Ready to study smarter?</h2>
+      <p style="font-size:var(--ds-text-lg);color:var(--ds-text-tertiary);margin:0 0 var(--ds-space-8);">Start tracking your study sessions today. No account required to begin.</p>
       {isAuthenticated ? (
-        <a href="/daily" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-8 py-3.5 rounded-xl transition-all text-base">
+        <a href="/daily" class="ds-btn ds-btn-primary ds-btn-lg" style="gap:var(--ds-space-2);">
           Go to Dashboard
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </a>
       ) : (
-        <a href="/daily" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-8 py-3.5 rounded-xl transition-all text-base">
+        <a href="/daily" class="ds-btn ds-btn-primary ds-btn-lg" style="gap:var(--ds-space-2);">
           Start Tracking Free
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </a>
@@ -199,12 +198,12 @@ const isAuthenticated = !!user && !isGuest;
   </section>
 
   <!-- ── Footer ── -->
-  <footer class="py-8 px-6 border-t border-slate-800/40">
-    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-      <div class="flex items-center gap-2 text-sm text-slate-600">
+  <footer style="padding:var(--ds-space-8) var(--ds-space-6);border-top:1px solid var(--ds-border-subtle);">
+    <div style="max-width:64rem;margin:0 auto;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:var(--ds-space-4);">
+      <div style="display:flex;align-items:center;gap:var(--ds-space-2);font-size:var(--ds-text-sm);color:var(--ds-text-muted);">
         <span>© 2026 StudyLog</span>
       </div>
-      <div class="flex items-center gap-6 text-xs text-slate-600">
+      <div style="display:flex;align-items:center;gap:var(--ds-space-6);font-size:var(--ds-text-xs);color:var(--ds-text-muted);">
         <span>Built for students who mean business.</span>
       </div>
     </div>
@@ -214,10 +213,9 @@ const isAuthenticated = !!user && !isGuest;
 
   <style>
     html { scroll-behavior: smooth; }
-    ::selection { background: rgba(59, 130, 246, 0.25); color: #f1f5f9; }
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    @media (min-width: 640px) {
+      a[href="#features"], a[href="#how-it-works"] { display: block !important; }
+    }
   </style>
 </body>
 </html>

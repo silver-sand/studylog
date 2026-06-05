@@ -1,49 +1,47 @@
-<div class="auth-popup-overlay hidden" id="auth-popup">
-  <div class="auth-popup-modal">
-    <!-- Close button -->
-    <button class="auth-popup-close" id="auth-popup-close" title="Close">✕</button>
+<div class="ds-overlay hidden" id="auth-popup">
+  <div class="ds-modal ds-modal-sm" style="position:relative;">
 
     <!-- Tabs -->
-    <div class="auth-popup-tabs">
-      <button class="auth-popup-tab active" data-tab="login" id="tab-login">Log In</button>
-      <button class="auth-popup-tab" data-tab="signup" id="tab-signup">Sign Up</button>
+    <div class="ds-tabs" style="margin-bottom:var(--ds-space-5);">
+      <button class="ds-tab active" data-tab="login" id="tab-login">Log In</button>
+      <button class="ds-tab" data-tab="signup" id="tab-signup">Sign Up</button>
     </div>
 
-    <div class="auth-popup-header">
-      <h2 class="auth-popup-title" id="auth-popup-title">Welcome back</h2>
-      <p class="auth-popup-sub" id="auth-popup-sub">Log in to continue your study journey</p>
+    <div style="text-align:center;margin-bottom:var(--ds-space-5);">
+      <h2 class="ds-heading-section" id="auth-popup-title" style="margin:0 0 0.25rem;">Welcome back</h2>
+      <p class="ds-caption" id="auth-popup-sub" style="margin:0;">Log in to continue your study journey</p>
     </div>
 
     <!-- Login form -->
-    <form class="auth-popup-form" id="login-form">
-      <div class="auth-popup-field">
-        <label for="popup-email" class="auth-popup-label">Email</label>
-        <input type="email" id="popup-email" class="auth-popup-input" placeholder="you@example.com" required autocomplete="email" />
+    <form id="login-form" style="display:flex;flex-direction:column;gap:var(--ds-space-3-5);">
+      <div style="display:flex;flex-direction:column;gap:var(--ds-space-1);">
+        <label for="popup-email" class="ds-label-form">Email</label>
+        <input type="email" id="popup-email" class="ds-input" placeholder="you@example.com" required autocomplete="email" />
       </div>
-      <div class="auth-popup-field">
-        <label for="popup-password" class="auth-popup-label">Password</label>
-        <input type="password" id="popup-password" class="auth-popup-input" placeholder="At least 6 characters" required minlength="6" autocomplete="current-password" />
+      <div style="display:flex;flex-direction:column;gap:var(--ds-space-1);">
+        <label for="popup-password" class="ds-label-form">Password</label>
+        <input type="password" id="popup-password" class="ds-input" placeholder="At least 6 characters" required minlength="6" autocomplete="current-password" />
       </div>
-      <div class="auth-popup-error hidden" id="popup-error"></div>
-      <button type="submit" class="auth-popup-btn" id="popup-submit-btn">Log in</button>
+      <div class="ds-error-text hidden" id="popup-error" style="padding:var(--ds-space-1-5) var(--ds-space-3);background:var(--ds-danger-bg);border:1px solid var(--ds-danger-border);border-radius:var(--ds-radius-md);"></div>
+      <button type="submit" class="ds-btn ds-btn-primary" id="popup-submit-btn" style="width:100%;">Log in</button>
     </form>
 
     <!-- Signup form -->
-    <form class="auth-popup-form hidden" id="signup-form">
-      <div class="auth-popup-field">
-        <label for="popup-name" class="auth-popup-label">Name</label>
-        <input type="text" id="popup-name" class="auth-popup-input" placeholder="Your name" required autocomplete="name" />
+    <form id="signup-form" class="ds-hidden" style="display:flex;flex-direction:column;gap:var(--ds-space-3-5);">
+      <div style="display:flex;flex-direction:column;gap:var(--ds-space-1);">
+        <label for="popup-name" class="ds-label-form">Name</label>
+        <input type="text" id="popup-name" class="ds-input" placeholder="Your name" required autocomplete="name" />
       </div>
-      <div class="auth-popup-field">
-        <label for="popup-signup-email" class="auth-popup-label">Email</label>
-        <input type="email" id="popup-signup-email" class="auth-popup-input" placeholder="you@example.com" required autocomplete="email" />
+      <div style="display:flex;flex-direction:column;gap:var(--ds-space-1);">
+        <label for="popup-signup-email" class="ds-label-form">Email</label>
+        <input type="email" id="popup-signup-email" class="ds-input" placeholder="you@example.com" required autocomplete="email" />
       </div>
-      <div class="auth-popup-field">
-        <label for="popup-signup-password" class="auth-popup-label">Password</label>
-        <input type="password" id="popup-signup-password" class="auth-popup-input" placeholder="At least 6 characters" required minlength="6" autocomplete="new-password" />
+      <div style="display:flex;flex-direction:column;gap:var(--ds-space-1);">
+        <label for="popup-signup-password" class="ds-label-form">Password</label>
+        <input type="password" id="popup-signup-password" class="ds-input" placeholder="At least 6 characters" required minlength="6" autocomplete="new-password" />
       </div>
-      <div class="auth-popup-error hidden" id="popup-signup-error"></div>
-      <button type="submit" class="auth-popup-btn" id="popup-signup-btn">Create account</button>
+      <div class="ds-error-text hidden" id="popup-signup-error" style="padding:var(--ds-space-1-5) var(--ds-space-3);background:var(--ds-danger-bg);border:1px solid var(--ds-danger-border);border-radius:var(--ds-radius-md);"></div>
+      <button type="submit" class="ds-btn ds-btn-primary" id="popup-signup-btn" style="width:100%;">Create account</button>
     </form>
   </div>
 </div>
@@ -182,187 +180,6 @@
 </script>
 
 <style>
-  /* ── Overlay ── */
-  .auth-popup-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(2, 6, 23, 0.7);
-    backdrop-filter: blur(4px);
-    animation: ap-fade-in 0.25s ease;
-  }
-  @keyframes ap-fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  /* ── Modal ── */
-  .auth-popup-modal {
-    position: relative;
-    width: 100%;
-    max-width: 400px;
-    max-height: 90vh;
-    overflow-y: auto;
-    background: #1e293b;
-    border: 1px solid rgba(51, 65, 85, 0.5);
-    border-radius: 1rem;
-    padding: 2rem 1.75rem 1.5rem;
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
-    animation: ap-pop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    margin: 1rem;
-  }
-  @keyframes ap-pop {
-    from { opacity: 0; transform: scale(0.95) translateY(10px); }
-    to { opacity: 1; transform: scale(1) translateY(0); }
-  }
-
-  @media (max-width: 480px) {
-    .auth-popup-modal {
-      max-width: 100%;
-      margin: 0.5rem;
-      border-radius: 0.75rem;
-      padding: 1.5rem 1.25rem 1.25rem;
-      max-height: 95vh;
-    }
-  }
-
-  /* ── Close ── */
-  .auth-popup-close {
-    position: absolute;
-    top: 0.75rem;
-    right: 0.75rem;
-    width: 2rem;
-    height: 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(51, 65, 85, 0.4);
-    border: none;
-    border-radius: 0.5rem;
-    color: #64748b;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .auth-popup-close:hover {
-    color: #e2e8f0;
-    background: rgba(51, 65, 85, 0.6);
-  }
-
-  /* ── Tabs ── */
-  .auth-popup-tabs {
-    display: flex;
-    gap: 0.25rem;
-    margin-bottom: 1.25rem;
-    background: rgba(15, 23, 42, 0.6);
-    border-radius: 0.5rem;
-    padding: 0.2rem;
-  }
-  .auth-popup-tab {
-    flex: 1;
-    padding: 0.5rem;
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: #64748b;
-    background: transparent;
-    border: none;
-    border-radius: 0.375rem;
-    cursor: pointer;
-    transition: all 0.15s;
-    font-family: 'Inter', sans-serif;
-  }
-  .auth-popup-tab.active {
-    color: #f1f5f9;
-    background: rgba(59, 130, 246, 0.15);
-  }
-  .auth-popup-tab:hover:not(.active) {
-    color: #94a3b8;
-  }
-
-  /* ── Header ── */
-  .auth-popup-header {
-    text-align: center;
-    margin-bottom: 1.25rem;
-  }
-  .auth-popup-title {
-    font-size: 1.15rem;
-    font-weight: 700;
-    color: #f1f5f9;
-    margin: 0 0 0.25rem;
-  }
-  .auth-popup-sub {
-    font-size: 0.8rem;
-    color: #64748b;
-    margin: 0;
-  }
-
-  /* ── Forms ── */
-  .auth-popup-form {
-    display: flex;
-    flex-direction: column;
-    gap: 0.85rem;
-  }
-  .auth-popup-field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-  .auth-popup-label {
-    font-size: 0.78rem;
-    font-weight: 500;
-    color: #94a3b8;
-  }
-  .auth-popup-input {
-    width: 100%;
-    padding: 0.6rem 0.8rem;
-    background: rgba(15, 23, 42, 0.6);
-    border: 1px solid rgba(51, 65, 85, 0.6);
-    border-radius: 0.5rem;
-    font-size: 0.875rem;
-    color: #e2e8f0;
-    outline: none;
-    transition: border-color 0.15s;
-    box-sizing: border-box;
-  }
-  .auth-popup-input:focus {
-    border-color: rgba(59, 130, 246, 0.5);
-  }
-  .auth-popup-input::placeholder {
-    color: #475569;
-  }
-
-  .auth-popup-error {
-    color: #ef4444;
-    font-size: 0.78rem;
-    padding: 0.4rem 0.65rem;
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.2);
-    border-radius: 0.375rem;
-  }
-
-  .auth-popup-btn {
-    width: 100%;
-    padding: 0.6rem 1rem;
-    background: #2563eb;
-    color: white;
-    font-size: 0.85rem;
-    font-weight: 500;
-    border: none;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    transition: background 0.15s;
-    font-family: 'Inter', sans-serif;
-  }
-  .auth-popup-btn:hover:not(:disabled) {
-    background: #3b82f6;
-  }
-  .auth-popup-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
   .hidden { display: none !important; }
 </style>
+

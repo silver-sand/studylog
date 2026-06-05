@@ -60,21 +60,21 @@ const filteredExams = exams.filter(e => selectedExams.some(s => s.includes(e.key
   <div class="max-w-4xl mx-auto">
     <!-- Header -->
     <div class="mb-8">
-      <h1 class="page-title">Syllabus Tracker</h1>
-      <p class="page-sub">Track your syllabus completion across subjects and chapters</p>
+      <h1 class="ds-heading-page" style="margin-bottom:0.25rem;">Syllabus Tracker</h1>
+      <p class="ds-body-sm" style="margin:0;">Track your syllabus completion across subjects and chapters</p>
     </div>
 
     <!-- Exam Tabs -->
-    <div class="exam-tabs" role="tablist">
+    <div class="ds-tabs" role="tablist" style="margin-bottom:var(--ds-space-6);overflow-x:auto;">
       {filteredExams.map((exam) => (
         <button
-          class:list={{ 'exam-tab': true, active: exam.key === defaultKey }}
+          class:list={{ 'ds-tab': true, active: exam.key === defaultKey }}
           data-exam={exam.key}
           role="tab"
           aria-selected={exam.key === defaultKey}
         >
           {exam.label}
-          <span class="exam-tab-count">{exam.overallPercent}%</span>
+          <span style="font-size:var(--ds-text-2xs);font-family:var(--ds-font-mono);opacity:0.7;">{exam.overallPercent}%</span>
         </button>
       ))}
     </div>
@@ -86,13 +86,13 @@ const filteredExams = exams.filter(e => selectedExams.some(s => s.includes(e.key
         data-exam-content={exam.key}
       >
         <!-- Overall progress summary -->
-        <div class="overall-bar-wrap">
-          <div class="overall-bar-label">
-            <span>Overall Progress</span>
-            <span class="overall-bar-numbers" id={`progress-text-${exam.key}`}>{exam.completedChapters}/{exam.totalChapters} chapters ({exam.overallPercent}%)</span>
+        <div class="ds-card ds-card-compact" style="margin-bottom:var(--ds-space-6);">
+          <div class="ds-flex-between ds-mb-4">
+            <span style="font-size:var(--ds-text-sm);color:var(--ds-text-secondary);">Overall Progress</span>
+            <span style="font-family:var(--ds-font-mono);font-size:var(--ds-text-xs);color:var(--ds-text-tertiary);" id={`progress-text-${exam.key}`}>{exam.completedChapters}/{exam.totalChapters} chapters ({exam.overallPercent}%)</span>
           </div>
-          <div class="overall-bar-bg">
-            <div class="overall-bar-fill" id={`progress-fill-${exam.key}`} style={`width: ${exam.overallPercent}%`}></div>
+          <div class="ds-progress">
+            <div class="ds-progress-bar" id={`progress-fill-${exam.key}`} style={`width: ${exam.overallPercent}%`}></div>
           </div>
         </div>
 
@@ -257,130 +257,21 @@ const filteredExams = exams.filter(e => selectedExams.some(s => s.includes(e.key
 </script>
 
 <style>
-  .page-title {
-    font-size: 1.375rem;
-    font-weight: 700;
-    color: #f1f5f9;
-    letter-spacing: -0.01em;
-    margin-bottom: 0.25rem;
-  }
-  .page-sub {
-    font-size: 0.875rem;
-    color: #64748b;
-  }
-
-  /* Exam tabs */
-  .exam-tabs {
-    display: flex;
-    gap: 0.25rem;
-    margin-bottom: 1.5rem;
-    background: rgba(15, 23, 42, 0.6);
-    border: 1px solid rgba(51, 65, 85, 0.4);
-    border-radius: 0.625rem;
-    padding: 0.25rem;
-    overflow-x: auto;
-  }
-  .exam-tab {
-    flex: 1;
-    padding: 0.5rem 0.75rem;
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: #64748b;
-    background: transparent;
-    border: none;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: all 0.15s ease;
-    font-family: 'Inter', sans-serif;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.4rem;
-  }
-  .exam-tab:hover {
-    color: #94a3b8;
-  }
-  .exam-tab.active {
-    color: #f1f5f9;
-    background: rgba(59, 130, 246, 0.15);
-  }
-  .exam-tab-count {
-    font-size: 0.65rem;
-    font-family: 'JetBrains Mono', monospace;
-    opacity: 0.7;
-  }
-
-  /* Overall progress bar */
-  .overall-bar-wrap {
-    margin-bottom: 1.5rem;
-    background: rgba(15, 23, 42, 0.6);
-    border: 1px solid rgba(51, 65, 85, 0.4);
-    border-radius: 0.75rem;
-    padding: 1rem 1.25rem;
-  }
-  .overall-bar-label {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.8rem;
-    color: #94a3b8;
-    margin-bottom: 0.5rem;
-  }
-  .overall-bar-numbers {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.75rem;
-    color: #64748b;
-  }
-  .overall-bar-bg {
-    width: 100%;
-    height: 0.5rem;
-    background: rgba(51, 65, 85, 0.5);
-    border-radius: 999px;
-    overflow: hidden;
-  }
-  .overall-bar-fill {
-    height: 100%;
-    border-radius: 999px;
-    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  /* Subject grid */
   .subject-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 0.5rem;
+    gap: var(--ds-space-2);
   }
   @media (min-width: 640px) {
-    .subject-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
+    .subject-grid { grid-template-columns: repeat(2, 1fr); }
   }
-
-  .subject-block {
-    display: flex;
-    flex-direction: column;
-  }
-  .syllabus-card-wrap {
-    cursor: pointer;
-    user-select: none;
-  }
+  .syllabus-card-wrap { cursor: pointer; user-select: none; }
   .syllabus-card-wrap:focus-visible {
-    outline: 2px solid rgba(59, 130, 246, 0.5);
+    outline: 2px solid var(--ds-accent-500);
     outline-offset: 2px;
-    border-radius: 0.75rem;
+    border-radius: var(--ds-radius-lg);
   }
-
-  .chapter-list-wrap {
-    overflow: hidden;
-    transition: max-height 0.3s ease;
-  }
-  .hidden {
-    display: none;
-  }
-
-  .exam-content {
-    transition: opacity 0.15s ease;
-  }
+  .chapter-list-wrap { overflow: hidden; transition: max-height 0.3s ease; }
+  .hidden { display: none; }
+  .exam-tab-count { font-size: var(--ds-text-2xs); font-family: var(--ds-font-mono); opacity: 0.7; }
 </style>
