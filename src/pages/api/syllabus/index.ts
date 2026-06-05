@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../../db';
 import { scopeDbToUser } from '../../../services/user-scope';
+import { EXAM_DEFINITIONS } from '../../../utils/exam-map';
 
 export const GET: APIRoute = async ({ url, request }) => {
   scopeDbToUser(request);
@@ -14,12 +15,19 @@ export const GET: APIRoute = async ({ url, request }) => {
 
     if (examType) {
       const chapters = db.getSyllabus(examType, subject);
-      const progress = db.getSyllabusProgress(examType);
+      const progress = db.getSyllabusProgress(examType, subject ? [subject] : undefined);
       return new Response(JSON.stringify({ chapters, progress }));
     }
 
-    // Return all exam progress summaries
-    const exams = ['JEE', 'NEET', 'CBSE_12', 'MHT_CET', 'CUET', 'GATE', 'CAT', 'UPSC'];
+    // Return all exam progress summaries (unique syllabus keys)
+    const seen = new Set<string>();
+    const exams = EXAM_DEFINITIONS
+      .map(e => e.syllabusKey)
+      .filter(key => {
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
     const summaries = exams.map(e => ({
       examType: e,
       progress: db.getSyllabusProgress(e),

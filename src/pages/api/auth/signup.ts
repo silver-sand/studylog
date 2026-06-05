@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { getDb } from '../../../db';
 import { signup } from '../../../services/auth-service';
 
 export const POST: APIRoute = async ({ request }) => {
@@ -15,7 +16,17 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: 'Password must be at least 6 characters' }), { status: 400 });
     }
 
-    const result = await signup(name.trim(), email.trim().toLowerCase(), password);
+    // Check if current user (set by middleware) is a guest — convert them
+    const currentUserId = getDb().getCurrentUser();
+    const currentUser = currentUserId ? getDb().getUserById(currentUserId) : null;
+    const isGuest = currentUser?.userType === 'guest';
+
+    const result = await signup(
+      name.trim(),
+      email.trim().toLowerCase(),
+      password,
+      isGuest ? { guestUserId: currentUserId } : undefined
+    );
 
     return new Response(JSON.stringify({ user: result.user }), {
       status: 201,

@@ -9,6 +9,7 @@ import type { Entry, CreateEntryData, EntryFilters } from '../types/entry';
 import type { WeeklyReview, CreateReviewData, DailyReview, CreateDailyReviewData, SyllabusChapter, SyllabusProgress, ChapterStatus } from '../types/review';
 import { STATUS_ORDER, STATUS_WEIGHTS, statusWeight, isMastered } from '../types/review';
 import { EXAM_SYLLABI } from '../utils/syllabus-data';
+import { legacyExamToSelected, getSubjectsForExamKeys } from '../utils/exam-map';
 import type { Settings, UpdateSettingsData } from '../types/settings';
 import type { MockTest, CreateMockTestData, MockTestAnalytics } from '../types/mock-test';
 import type { User, Session, CreateUserData } from '../types/auth';
@@ -96,10 +97,13 @@ function toSyllabusChapter(row: Record<string, any>): SyllabusChapter {
 }
 
 function toSettings(row: Record<string, any>): Settings {
+  const selectedExams = parseJSON(row.selected_exams, []);
+  const subjects = parseJSON(row.subjects, ['Physics', 'Chemistry', 'Mathematics']);
   return {
     id: row.id,
     targetHoursPerWeek: row.target_hours_per_week,
-    subjects: parseJSON(row.subjects, ['Physics', 'Chemistry', 'Mathematics']),
+    subjects,
+    selectedExams: Array.isArray(selectedExams) && selectedExams.length > 0 ? selectedExams : legacyExamToSelected(row.exam_type || 'JEE'),
     examType: row.exam_type || 'JEE',
     examDate: row.exam_date || null,
     theme: row.theme,
@@ -153,6 +157,10 @@ export class SQLiteAdapter implements DatabaseInterface {
       `ALTER TABLE settings ADD COLUMN user_id TEXT NOT NULL DEFAULT '1' REFERENCES users(id)`,
       `ALTER TABLE syllabus ADD COLUMN user_id TEXT NOT NULL DEFAULT '1' REFERENCES users(id)`,
       `ALTER TABLE mock_tests ADD COLUMN user_id TEXT NOT NULL DEFAULT '1' REFERENCES users(id)`,
+      // Phase 6: user_type for guest flow
+      `ALTER TABLE users ADD COLUMN user_type TEXT NOT NULL DEFAULT 'authenticated'`,
+      // Phase 7: selected_exams for multi-exam support
+      `ALTER TABLE settings ADD COLUMN selected_exams TEXT NOT NULL DEFAULT '[]'`,
     ];
     for (const sql of migrations) {
       try { this.db.run(sql); } catch { /* column already exists — ignore */ }
@@ -629,16 +637,22 @@ export class SQLiteAdapter implements DatabaseInterface {
     return count;
   }
 
-  getSyllabusProgress(examType: string): SyllabusProgress[] {
+  getSyllabusProgress(examType: string, subjects?: string[]): SyllabusProgress[] {
     const db = this.getDb();
+    const params: any[] = [examType, this.userId];
+    let subjectFilter = '';
+    if (subjects && subjects.length > 0) {
+      subjectFilter = ` AND subject IN (${subjects.map(() => '?').join(',')})`;
+      params.push(...subjects);
+    }
     const stmt = db.prepare(
       `SELECT subject, status, COUNT(*) as count
        FROM syllabus
-       WHERE exam_type = ? AND user_id = ?
+       WHERE exam_type = ? AND user_id = ?${subjectFilter}
        GROUP BY subject, status
        ORDER BY subject`
     );
-    stmt.bind([examType, this.userId]);
+    stmt.bind(params);
 
     const subjectMap = new Map<string, { total: number; sumWeight: number; mastered: number; revised: number }>();
     while (stmt.step()) {
@@ -670,12 +684,18 @@ export class SQLiteAdapter implements DatabaseInterface {
     return results;
   }
 
-  getWeakChapters(examType: string, threshold = 50): (SyllabusChapter & { health: number })[] {
+  getWeakChapters(examType: string, threshold = 50, subjects?: string[]): (SyllabusChapter & { health: number })[] {
     const db = this.getDb();
+    const params: any[] = [examType, this.userId];
+    let subjectFilter = '';
+    if (subjects && subjects.length > 0) {
+      subjectFilter = ` AND subject IN (${subjects.map(() => '?').join(',')})`;
+      params.push(...subjects);
+    }
     const stmt = db.prepare(
-      `SELECT * FROM syllabus WHERE exam_type = ? AND user_id = ? ORDER BY subject, sort_order`
+      `SELECT * FROM syllabus WHERE exam_type = ? AND user_id = ?${subjectFilter} ORDER BY subject, sort_order`
     );
-    stmt.bind([examType, this.userId]);
+    stmt.bind(params);
 
     const weak: (SyllabusChapter & { health: number })[] = [];
     const now = Date.now();
@@ -728,10 +748,11 @@ export class SQLiteAdapter implements DatabaseInterface {
     // Create default settings for this user
     // Use Date.now() as numeric ID for INTEGER PRIMARY KEY compatibility
     const id = Date.now();
+    const defaultExams = ['JEE'];
     db.run(
-      `INSERT INTO settings (id, user_id, target_hours_per_week, subjects, exam_type, theme, created_at, updated_at)
-       VALUES (?, ?, 35, '["Physics","Chemistry","Mathematics"]', 'JEE', 'dark', datetime('now'), datetime('now'))`,
-      [id, this.userId]
+      `INSERT INTO settings (id, user_id, target_hours_per_week, subjects, selected_exams, exam_type, theme, created_at, updated_at)
+       VALUES (?, ?, 35, '["Physics","Chemistry","Mathematics"]', ?, 'JEE', 'dark', datetime('now'), datetime('now'))`,
+      [id, this.userId, JSON.stringify(defaultExams)]
     );
     this.save();
     return this.getSettings();
@@ -751,13 +772,16 @@ export class SQLiteAdapter implements DatabaseInterface {
       // Create settings row first
       // Use Date.now() as numeric ID for INTEGER PRIMARY KEY compatibility
       const newId = Date.now();
+      const selectedExams = data.selectedExams ?? legacyExamToSelected(data.examType ?? current.examType ?? 'JEE');
+      const subjects = data.subjects ?? getSubjectsForExamKeys(selectedExams);
       db.run(
-        `INSERT INTO settings (id, user_id, target_hours_per_week, subjects, exam_type, exam_date, theme, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+        `INSERT INTO settings (id, user_id, target_hours_per_week, subjects, selected_exams, exam_type, exam_date, theme, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
         [
           newId, this.userId,
           data.targetHoursPerWeek ?? 35,
-          JSON.stringify(data.subjects ?? ['Physics', 'Chemistry', 'Mathematics']),
+          JSON.stringify(subjects),
+          JSON.stringify(selectedExams),
           data.examType ?? 'JEE',
           data.examDate ?? null,
           data.theme ?? 'dark',
@@ -768,10 +792,11 @@ export class SQLiteAdapter implements DatabaseInterface {
     }
 
     db.run(
-      `UPDATE settings SET target_hours_per_week=?, subjects=?, exam_type=?, exam_date=?, theme=?, updated_at=datetime('now') WHERE user_id=?`,
+      `UPDATE settings SET target_hours_per_week=?, subjects=?, selected_exams=?, exam_type=?, exam_date=?, theme=?, updated_at=datetime('now') WHERE user_id=?`,
       [
         data.targetHoursPerWeek ?? current.targetHoursPerWeek,
         JSON.stringify(data.subjects ?? current.subjects),
+        JSON.stringify(data.selectedExams ?? current.selectedExams),
         data.examType ?? current.examType,
         data.examDate !== undefined ? data.examDate : current.examDate,
         data.theme ?? current.theme,
@@ -978,11 +1003,11 @@ export class SQLiteAdapter implements DatabaseInterface {
     const id = generateId();
     const createdAt = new Date().toISOString();
     db.run(
-      `INSERT INTO users (id, name, email, password_hash, stream, goal, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [id, data.name, data.email, data.passwordHash, data.stream || null, data.goal || null, createdAt]
+      `INSERT INTO users (id, name, email, password_hash, user_type, stream, goal, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, data.name, data.email, data.passwordHash, data.userType ?? 'authenticated', data.stream || null, data.goal || null, createdAt]
     );
     this.save();
-    return { id, name: data.name, email: data.email, passwordHash: data.passwordHash, stream: data.stream, goal: data.goal, createdAt };
+    return { id, name: data.name, email: data.email, passwordHash: data.passwordHash, userType: data.userType ?? 'authenticated', stream: data.stream, goal: data.goal, createdAt };
   }
 
   getUserByEmail(email: string): User | null {
@@ -1036,13 +1061,14 @@ export class SQLiteAdapter implements DatabaseInterface {
     return null;
   }
 
-  updateUser(id: string, data: Partial<Pick<User, 'name' | 'stream' | 'goal'>>): User | null {
+  updateUser(id: string, data: Partial<Pick<User, 'name' | 'stream' | 'goal' | 'userType'>>): User | null {
     const db = this.getDb();
     const sets: string[] = [];
     const params: any[] = [];
     if (data.name !== undefined) { sets.push('name = ?'); params.push(data.name); }
     if (data.stream !== undefined) { sets.push('stream = ?'); params.push(data.stream); }
     if (data.goal !== undefined) { sets.push('goal = ?'); params.push(data.goal); }
+    if (data.userType !== undefined) { sets.push('user_type = ?'); params.push(data.userType); }
     if (sets.length === 0) return this.getUserById(id);
     params.push(id);
     db.run(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`, params);
@@ -1065,7 +1091,7 @@ export class SQLiteAdapter implements DatabaseInterface {
   }
 
   private toUser(row: Record<string, any>): User {
-    return { id: row.id, name: row.name, email: row.email, passwordHash: row.password_hash, stream: row.stream, goal: row.goal, createdAt: row.created_at };
+    return { id: row.id, name: row.name, email: row.email, passwordHash: row.password_hash, userType: row.user_type ?? 'authenticated', stream: row.stream, goal: row.goal, createdAt: row.created_at };
   }
 
   private toSession(row: Record<string, any>): Session {

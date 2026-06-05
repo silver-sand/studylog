@@ -1,246 +1,223 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import EntryForm from '../components/EntryForm.astro';
-import EntryList from '../components/EntryList.astro';
-import DailyReviewCard from '../components/DailyReviewCard.astro';
-import { createAIServiceFromEnv } from '../ai';
-import { getDb } from '../db';
-import { formatDate } from '../utils/date';
-import { getDailyReviewByDate } from '../services/daily-review-service';
-import { scopeDbToUser } from '../services/user-scope';
+import AuthPopup from '../components/AuthPopup.astro';
+import { getSessionUser, getTokenFromCookie } from '../services/auth-service';
 
-scopeDbToUser(Astro.request);
-const db = getDb();
-const today = formatDate(new Date());
-const todayEntry = db.getEntryByDate(today);
-const recentEntries = db.listEntries({ limit: 50 });
-const settings = db.getSettings();
-const ai = createAIServiceFromEnv();
-const aiProvider = ai.constructor.name;
-
-// Try to load today's daily review
-const todayReview = getDailyReviewByDate(today);
-const hasEntriesToday = recentEntries.some(e => e.date === today);
+const user = getSessionUser(getTokenFromCookie(Astro.request));
+const isGuest = user?.userType === 'guest';
+const isAuthenticated = !!user && !isGuest;
 ---
 
-<BaseLayout title="Daily Log">
-  <div class="max-w-3xl mx-auto">
-    <!-- Header -->
-    <div class="mb-8">
-      <h1 class="page-title">Daily Study Log</h1>
-      <p class="page-sub">
-        {todayEntry ? 'Update today\'s entry' : 'What did you study today?'}
-      </p>
-      <p class="ai-badge">
-        AI: {aiProvider === 'MockAIService' ? 'Offline mode' : 'Gemini'}
-      </p>
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#020617" />
+  <meta name="description" content="StudyLog — AI-powered daily micro-log and auto-review for competitive exam prep. Track what you study, get weekly reviews." />
+  <title>StudyLog — AI-Powered Study Tracker</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body class="bg-[#020617] text-slate-300 antialiased font-sans min-h-screen overflow-x-hidden">
+  <!-- ── Navigation ── -->
+  <header class="fixed top-0 left-0 right-0 z-50 bg-[#020617]/80 backdrop-blur-md border-b border-slate-800/40">
+    <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+          <span class="text-white text-xs font-bold">SL</span>
+        </div>
+        <span class="text-lg font-semibold text-white tracking-tight">StudyLog</span>
+      </a>
+      <nav class="flex items-center gap-4">
+        <a href="#features" class="text-sm text-slate-400 hover:text-slate-200 transition-colors hidden sm:block">Features</a>
+        <a href="#how-it-works" class="text-sm text-slate-400 hover:text-slate-200 transition-colors hidden sm:block">How It Works</a>
+        {isAuthenticated ? (
+          <a href="/daily" class="text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg transition-colors">Dashboard</a>
+        ) : (
+          <>
+            <button onclick="window.openAuthPopup('login')" class="text-sm text-slate-400 hover:text-slate-200 transition-colors">Log In</button>
+            <button onclick="window.openAuthPopup('signup')" class="text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg transition-colors">Get Started Free</button>
+          </>
+        )}
+      </nav>
     </div>
+  </header>
 
-    <!-- Entry Form -->
-    <div class="mb-8">
-      <EntryForm todayEntry={todayEntry ? {
-        id: todayEntry.id,
-        date: todayEntry.date,
-        content: todayEntry.content,
-        hoursStudied: todayEntry.hoursStudied,
-        studyType: todayEntry.studyType,
-        focusRating: todayEntry.focusRating,
-        examType: todayEntry.examType,
-      } : null} defaultExamType={settings.examType} />
-    </div>
-
-    <!-- Daily Review -->
-    {hasEntriesToday && (
-      <div class="mb-8" id="daily-review-section">
-        <div class="daily-review-actions">
-          {todayReview ? (
-            <DailyReviewCard review={todayReview} />
-          ) : (
-            <div class="generate-prompt">
-              <p class="generate-text">You have entries for today. Generate an AI-powered daily review to summarize your progress.</p>
-              <button id="generate-daily-btn" class="btn-secondary">
-                Generate Daily Review
-              </button>
-            </div>
-          )}
-          {todayReview && (
-            <button id="refresh-daily-btn" class="btn-ghost mt-3">
-              Refresh Review
+  <!-- ── Hero ── -->
+  <section class="min-h-screen flex items-center justify-center pt-20 pb-16 px-6">
+    <div class="max-w-3xl mx-auto text-center">
+      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-medium mb-8">
+        <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+        AI-Powered Study Analytics
+      </div>
+      <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight tracking-tight mb-6">
+        Your study journey,<br />
+        <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-violet-400">intelligently tracked</span>
+      </h1>
+      <p class="text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+        Micro-log your daily study sessions, get AI-powered weekly reviews, track syllabus progress across multiple exams, and stay on pace — all in one place.
+      </p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        {isAuthenticated ? (
+          <a href="/daily" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-8 py-3.5 rounded-xl transition-all text-base">
+            Go to Dashboard
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+        ) : (
+          <>
+            <a href="/daily" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-8 py-3.5 rounded-xl transition-all text-base">
+              Start Tracking Free
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </a>
+            <button onclick="window.openAuthPopup('signup')" class="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium px-8 py-3.5 rounded-xl border border-slate-700/50 transition-all text-base">
+              Create Account
             </button>
-          )}
+          </>
+        )}
+      </div>
+      <p class="text-xs text-slate-600 mt-6">No credit card. Start instantly.</p>
+    </div>
+  </section>
+
+  <!-- ── Features ── -->
+  <section id="features" class="py-20 px-6 border-t border-slate-800/40">
+    <div class="max-w-5xl mx-auto">
+      <div class="text-center mb-14">
+        <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4 tracking-tight">Everything you need to stay on track</h2>
+        <p class="text-slate-400 max-w-xl mx-auto">Designed for competitive exam prep. Built for consistency, not complexity.</p>
+      </div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Feature 1 -->
+        <div class="bg-slate-900/60 border border-slate-800/40 rounded-xl p-6 hover:border-slate-700/60 transition-all">
+          <div class="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">Micro Daily Log</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">Log what you studied in seconds. Track hours, subjects, chapters, and focus level. No complex journaling required.</p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="bg-slate-900/60 border border-slate-800/40 rounded-xl p-6 hover:border-slate-700/60 transition-all">
+          <div class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">AI Weekly Reviews</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">Get insightful AI-generated weekly reviews. Spot patterns, track consistency, and discover what's working.</p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="bg-slate-900/60 border border-slate-800/40 rounded-xl p-6 hover:border-slate-700/60 transition-all">
+          <div class="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect width="6" height="4" x="9" y="3" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">Syllabus Progress</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">Track your syllabus chapter by chapter. See completion percentages, revision status, and weak areas per subject.</p>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="bg-slate-900/60 border border-slate-800/40 rounded-xl p-6 hover:border-slate-700/60 transition-all">
+          <div class="w-10 h-10 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">Multi-Exam Support</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">Prepare for JEE, NEET, CBSE, CUET, CAT, UPSC, and more. Switch between exams without losing data.</p>
+        </div>
+
+        <!-- Feature 5 -->
+        <div class="bg-slate-900/60 border border-slate-800/40 rounded-xl p-6 hover:border-slate-700/60 transition-all">
+          <div class="w-10 h-10 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fb7185" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">Pace Prediction</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">Know if you're on track. See projected completion dates and get early warnings when you're falling behind.</p>
+        </div>
+
+        <!-- Feature 6 -->
+        <div class="bg-slate-900/60 border border-slate-800/40 rounded-xl p-6 hover:border-slate-700/60 transition-all">
+          <div class="w-10 h-10 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><path d="M16 14H8a4 4 0 0 0-4 4v2h16v-2a4 4 0 0 0-4-4z"/></svg>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">AI Mentor</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">Ask your personal AI mentor anything. Get study advice, concept explanations, and syllabus guidance in real-time.</p>
         </div>
       </div>
-    )}
-
-    <!-- Recent Entries -->
-    <div>
-      <h2 class="section-title">Recent Entries</h2>
-      <EntryList entries={recentEntries} />
     </div>
-  </div>
-</BaseLayout>
+  </section>
 
-<script>
-  const generateBtn = document.getElementById('generate-daily-btn');
-  const refreshBtn = document.getElementById('refresh-daily-btn');
-  const section = document.getElementById('daily-review-section');
-
-  async function loadDailyReview() {
-    if (!section) return;
-    section.innerHTML = '<p class="text-sm text-slate-500">Generating daily review...</p>';
-
-    try {
-      const res = await fetch('/api/daily', { method: 'POST' });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Failed' }));
-        throw new Error(err.error || 'Failed to generate');
-      }
-      const review = await res.json();
-
-      // Re-render the section with the new review
-      // We need to fetch the page partial — simplest: reload
-      window.location.reload();
-    } catch (err) {
-      section.innerHTML = `
-        <div class="p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-400">
-          Failed to generate daily review: ${err.message}
+  <!-- ── How It Works ── -->
+  <section id="how-it-works" class="py-20 px-6 border-t border-slate-800/40">
+    <div class="max-w-4xl mx-auto">
+      <div class="text-center mb-14">
+        <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4 tracking-tight">How it works</h2>
+        <p class="text-slate-400 max-w-xl mx-auto">Three simple steps to transform your study tracking.</p>
+      </div>
+      <div class="grid sm:grid-cols-3 gap-8">
+        <div class="text-center">
+          <div class="w-14 h-14 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center mx-auto mb-4">
+            <span class="text-2xl font-bold text-blue-400">1</span>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">Log Daily</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">Spend 30 seconds logging what you studied, for how long, and your focus level.</p>
         </div>
-        <button onclick="loadDailyReview()" class="btn-secondary mt-2">
-          Try Again
-        </button>
-      `;
-    }
-  }
+        <div class="text-center">
+          <div class="w-14 h-14 rounded-full bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center mx-auto mb-4">
+            <span class="text-2xl font-bold text-emerald-400">2</span>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">Get Insights</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">AI analyzes your entries and generates weekly reviews with strengths, weaknesses, and recommendations.</p>
+        </div>
+        <div class="text-center">
+          <div class="w-14 h-14 rounded-full bg-violet-600/20 border border-violet-500/30 flex items-center justify-center mx-auto mb-4">
+            <span class="text-2xl font-bold text-violet-400">3</span>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">Stay on Track</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">Monitor syllabus progress, pace predictions, and chapter health. Adjust your plan before it's too late.</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
-  generateBtn?.addEventListener('click', loadDailyReview);
-  refreshBtn?.addEventListener('click', loadDailyReview);
+  <!-- ── CTA ── -->
+  <section class="py-20 px-6 border-t border-slate-800/40">
+    <div class="max-w-2xl mx-auto text-center">
+      <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4 tracking-tight">Ready to study smarter?</h2>
+      <p class="text-lg text-slate-400 mb-8">Start tracking your study sessions today. No account required to begin.</p>
+      {isAuthenticated ? (
+        <a href="/daily" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-8 py-3.5 rounded-xl transition-all text-base">
+          Go to Dashboard
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+      ) : (
+        <a href="/daily" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-8 py-3.5 rounded-xl transition-all text-base">
+          Start Tracking Free
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+      )}
+    </div>
+  </section>
 
-  // ── Pick up timer data from sessionStorage ──
-  (function() {
-    try {
-      const raw = sessionStorage.getItem('studyTimerData');
-      if (!raw) return;
-      const data = JSON.parse(raw);
-      sessionStorage.removeItem('studyTimerData');
+  <!-- ── Footer ── -->
+  <footer class="py-8 px-6 border-t border-slate-800/40">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2 text-sm text-slate-600">
+        <span>© 2026 StudyLog</span>
+      </div>
+      <div class="flex items-center gap-6 text-xs text-slate-600">
+        <span>Built for students who mean business.</span>
+      </div>
+    </div>
+  </footer>
 
-      if (data.hours) {
-        const hoursField = document.getElementById('hours') as HTMLInputElement;
-        if (hoursField) hoursField.value = data.hours;
-      }
-      if (data.subject) {
-        // Pre-fill the content textarea with the subject
-        const ta = document.getElementById('entry-content') as HTMLTextAreaElement;
-        if (ta && !ta.value) {
-          const topic = data.topic ? ` - ${data.topic}` : '';
-          ta.value = `Studied ${data.subject}${topic}`;
-          // Trigger char count update
-          const evt = new Event('input');
-          ta.dispatchEvent(evt);
-        }
-      }
-    } catch (e) {
-      // Ignore parse errors
-    }
-  })();
+  <AuthPopup />
 
-  // Auto-dismiss entry form success — refresh daily review when entries change
-  const form = document.querySelector('form');
-  form?.addEventListener('submit', async (e) => {
-    // After a short delay, check if a daily review should appear
-    setTimeout(async () => {
-      if (generateBtn && section) {
-        // Check if entries exist now
-        try {
-          const res = await fetch('/api/daily?date=' + new Date().toISOString().split('T')[0]);
-          if (res.ok) {
-            const review = await res.json();
-            if (review && review.id) {
-              window.location.reload();
-            }
-          }
-        } catch {}
-      }
-    }, 2000);
-  });
-</script>
-
-<style>
-  .page-title {
-    font-size: 1.375rem;
-    font-weight: 700;
-    color: #f1f5f9;
-    letter-spacing: -0.01em;
-    margin-bottom: 0.25rem;
-  }
-  .page-sub {
-    font-size: 0.875rem;
-    color: #64748b;
-  }
-  .ai-badge {
-    font-size: 0.7rem;
-    color: #475569;
-    margin-top: 0.25rem;
-  }
-  .section-title {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #64748b;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-bottom: 0.75rem;
-  }
-  .daily-review-actions {
-    display: flex;
-    flex-direction: column;
-  }
-  .generate-prompt {
-    background: rgba(15, 23, 42, 0.8);
-    border: 1px solid rgba(51, 65, 85, 0.4);
-    border-radius: 0.75rem;
-    padding: 1.5rem;
-    text-align: center;
-  }
-  .generate-text {
-    font-size: 0.875rem;
-    color: #94a3b8;
-    margin-bottom: 1rem;
-    line-height: 1.5;
-  }
-  .btn-secondary {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(59, 130, 246, 0.1);
-    color: #93c5fd;
-    font-size: 0.825rem;
-    font-weight: 500;
-    padding: 0.6rem 1.25rem;
-    border-radius: 0.5rem;
-    border: 1px solid rgba(59, 130, 246, 0.2);
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .btn-secondary:hover {
-    background: rgba(59, 130, 246, 0.2);
-  }
-  .btn-ghost {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    color: #64748b;
-    font-size: 0.75rem;
-    padding: 0.4rem 1rem;
-    border-radius: 0.375rem;
-    border: 1px solid rgba(51, 65, 85, 0.4);
-    cursor: pointer;
-    transition: all 0.15s;
-    align-self: flex-start;
-  }
-  .btn-ghost:hover {
-    color: #94a3b8;
-    border-color: rgba(71, 85, 105, 0.6);
-  }
-  .mt-2 { margin-top: 0.5rem; }
-  .mt-3 { margin-top: 0.75rem; }
-</style>
+  <style>
+    html { scroll-behavior: smooth; }
+    ::selection { background: rgba(59, 130, 246, 0.25); color: #f1f5f9; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+  </style>
+</body>
+</html>

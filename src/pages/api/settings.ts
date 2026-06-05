@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../db';
 import { scopeDbToUser } from '../../services/user-scope';
+import { getSyllabusKeyForExam, getSubjectsForExamKeys } from '../../utils/exam-map';
 
 export const GET: APIRoute = async ({ request }) => {
   scopeDbToUser(request);
@@ -16,7 +17,7 @@ export const PUT: APIRoute = async ({ request }) => {
   scopeDbToUser(request);
   try {
     const body = await request.json();
-    const { targetHoursPerWeek, subjects, examType, examDate, theme } = body;
+    const { targetHoursPerWeek, selectedExams, subjects, examDate, theme } = body;
 
     if (targetHoursPerWeek !== undefined) {
       const h = Number(targetHoursPerWeek);
@@ -25,23 +26,32 @@ export const PUT: APIRoute = async ({ request }) => {
       }
     }
 
-    if (subjects !== undefined) {
-      if (!Array.isArray(subjects) || subjects.length === 0) {
-        return new Response(JSON.stringify({ error: 'At least one subject is required' }), { status: 400 });
+    if (selectedExams !== undefined) {
+      if (!Array.isArray(selectedExams) || selectedExams.length === 0) {
+        return new Response(JSON.stringify({ error: 'At least one exam is required' }), { status: 400 });
       }
     }
 
-    if (examType !== undefined && (typeof examType !== 'string' || examType.trim().length === 0)) {
-      return new Response(JSON.stringify({ error: 'Exam type must be a non-empty string' }), { status: 400 });
+    // Auto-compute subjects from selected exams if exams changed and subjects weren't explicitly provided
+    let computedSubjects = subjects;
+    if (selectedExams !== undefined && subjects === undefined) {
+      computedSubjects = getSubjectsForExamKeys(selectedExams);
     }
 
     const settings = getDb().updateSettings({
       targetHoursPerWeek: targetHoursPerWeek !== undefined ? Number(targetHoursPerWeek) : undefined,
-      subjects: subjects !== undefined ? subjects : undefined,
-      examType: examType !== undefined ? examType : undefined,
+      selectedExams: selectedExams !== undefined ? selectedExams : undefined,
+      subjects: computedSubjects !== undefined ? computedSubjects : undefined,
       examDate: examDate !== undefined ? examDate : undefined,
       theme: theme !== undefined ? theme : undefined,
     });
+
+    // Seed syllabus for newly selected exams
+    if (selectedExams !== undefined) {
+      for (const examKey of selectedExams) {
+        getDb().seedSyllabusData(examKey);
+      }
+    }
 
     return new Response(JSON.stringify(settings));
   } catch (e) {

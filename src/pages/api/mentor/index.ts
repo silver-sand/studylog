@@ -3,6 +3,7 @@ import { getDb } from '../../../db';
 import { createAIServiceFromEnv } from '../../../ai';
 import type { MentorContext, ChatMessage } from '../../../types/ai';
 import { scopeDbToUser } from '../../../services/user-scope';
+import { getSyllabusKeyForExam } from '../../../utils/exam-map';
 
 export const POST: APIRoute = async ({ request }) => {
   scopeDbToUser(request);
@@ -16,14 +17,10 @@ export const POST: APIRoute = async ({ request }) => {
     const db = getDb();
     const settings = db.getSettings();
 
-    // Map exam name to syllabus key
-    const examKeyMap: Record<string, string> = {
-      'JEE Main': 'JEE', 'JEE Advanced': 'JEE',
-      'NEET': 'NEET', 'CET': 'MHT_CET',
-      'Boards (PCM)': 'CBSE_12', 'Boards (PCB)': 'CBSE_12', 'Boards (Commerce)': 'CBSE_12',
-      'CUET': 'CUET', 'GATE': 'GATE', 'CAT': 'CAT', 'UPSC': 'UPSC',
-    };
-    const examKey = examKeyMap[settings.examType] || 'JEE';
+    // Use first selected exam for mentor context
+    const selectedExams = settings.selectedExams?.length ? settings.selectedExams : ['JEE'];
+    const primaryExam = selectedExams[0];
+    const examKey = getSyllabusKeyForExam(primaryExam);
 
     db.seedSyllabusData();
 
@@ -50,7 +47,7 @@ export const POST: APIRoute = async ({ request }) => {
     const settingsStr = `Target: ${settings.targetHoursPerWeek}h/week, Subjects: ${settings.subjects?.join(', ') || 'none'}`;
 
     const context: MentorContext = {
-      examType: settings.examType || 'Unknown',
+      examType: primaryExam,
       recentEntries: entriesStr,
       syllabusProgress: `${overallPercent}% overall\n${syllabusStr}`,
       weakChapters: weakStr,

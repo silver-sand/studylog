@@ -1,7 +1,7 @@
-<div class="auth-popup-overlay" id="auth-popup">
+<div class="auth-popup-overlay hidden" id="auth-popup">
   <div class="auth-popup-modal">
     <!-- Close button -->
-    <button class="auth-popup-close" id="auth-popup-close" title="Continue without account">✕</button>
+    <button class="auth-popup-close" id="auth-popup-close" title="Close">✕</button>
 
     <!-- Tabs -->
     <div class="auth-popup-tabs">
@@ -45,26 +45,6 @@
       <div class="auth-popup-error hidden" id="popup-signup-error"></div>
       <button type="submit" class="auth-popup-btn" id="popup-signup-btn">Create account</button>
     </form>
-
-    <!-- Guest link -->
-    <div class="auth-popup-guest">
-      <button class="auth-popup-guest-btn" id="auth-guest-btn">Continue without account →</button>
-    </div>
-  </div>
-
-  <!-- Warning overlay -->
-  <div class="auth-warning hidden" id="auth-warning">
-    <div class="auth-warning-card">
-      <div class="auth-warning-icon">⚠️</div>
-      <h3 class="auth-warning-title">Your data won't be saved!</h3>
-      <p class="auth-warning-desc">
-        Without an account, any study data you enter — entries, progress, reviews — will be lost when you close the browser or clear your cache.
-      </p>
-      <div class="auth-warning-actions">
-        <button class="auth-popup-btn" id="warning-signup">Sign up now</button>
-        <button class="auth-warning-dismiss" id="warning-dismiss">I understand, continue anyway</button>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -72,10 +52,6 @@
 (function () {
   const popup = document.getElementById('auth-popup');
   const closeBtn = document.getElementById('auth-popup-close');
-  const guestBtn = document.getElementById('auth-guest-btn');
-  const warning = document.getElementById('auth-warning');
-  const warningSignup = document.getElementById('warning-signup');
-  const warningDismiss = document.getElementById('warning-dismiss');
 
   const tabLogin = document.getElementById('tab-login');
   const tabSignup = document.getElementById('tab-signup');
@@ -95,12 +71,13 @@
   const signupError = document.getElementById('popup-signup-error');
   const signupBtn = document.getElementById('popup-signup-btn');
 
-  // Check if user has dismissed before
-  const dismissed = localStorage.getItem('sl-auth-dismissed');
-  if (dismissed) {
-    popup.classList.add('hidden');
-    return;
-  }
+  // ── Global open function (called from sidebar buttons) ──
+  window.openAuthPopup = function (tab) {
+    popup.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    if (tab === 'signup') showTab('signup');
+    else showTab('login');
+  };
 
   // ── Tab switching ──
   function showTab(tab) {
@@ -116,23 +93,15 @@
   tabLogin.addEventListener('click', () => showTab('login'));
   tabSignup.addEventListener('click', () => showTab('signup'));
 
-  // ── Close / Guest flow ──
-  function showWarning() {
-    warning.classList.remove('hidden');
+  // ── Close ──
+  function closePopup() {
+    popup.classList.add('hidden');
+    document.body.style.overflow = '';
   }
 
-  closeBtn.addEventListener('click', showWarning);
-  guestBtn.addEventListener('click', showWarning);
-
-  warningSignup.addEventListener('click', () => {
-    warning.classList.add('hidden');
-    showTab('signup');
-  });
-
-  warningDismiss.addEventListener('click', () => {
-    localStorage.setItem('sl-auth-dismissed', '1');
-    warning.classList.add('hidden');
-    popup.classList.add('hidden');
+  closeBtn.addEventListener('click', closePopup);
+  popup.addEventListener('click', (e) => {
+    if (e.target === popup) closePopup();
   });
 
   // ── Login submit ──
@@ -164,7 +133,7 @@
     }
   });
 
-  // ── Signup submit ──
+  // ── Signup submit (converts guest to authenticated) ──
   signupForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     signupError.classList.add('hidden');
@@ -393,85 +362,6 @@
   .auth-popup-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-  }
-
-  /* ── Guest link ── */
-  .auth-popup-guest {
-    text-align: center;
-    margin-top: 0.85rem;
-    padding-top: 0.85rem;
-    border-top: 1px solid rgba(51, 65, 85, 0.3);
-  }
-  .auth-popup-guest-btn {
-    background: none;
-    border: none;
-    color: #475569;
-    font-size: 0.75rem;
-    cursor: pointer;
-    transition: color 0.15s;
-    font-family: 'Inter', sans-serif;
-  }
-  .auth-popup-guest-btn:hover {
-    color: #94a3b8;
-  }
-
-  /* ── Warning overlay ── */
-  .auth-warning {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(2, 6, 23, 0.85);
-    border-radius: 1rem;
-    z-index: 10;
-    padding: 1.5rem;
-    animation: ap-fade-in 0.2s ease;
-  }
-  @media (max-width: 480px) {
-    .auth-warning {
-      border-radius: 0.75rem;
-    }
-  }
-  .auth-warning-card {
-    text-align: center;
-    max-width: 320px;
-  }
-  .auth-warning-icon {
-    font-size: 2.5rem;
-    margin-bottom: 0.75rem;
-  }
-  .auth-warning-title {
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: #fca5a5;
-    margin: 0 0 0.6rem;
-  }
-  .auth-warning-desc {
-    font-size: 0.8rem;
-    color: #94a3b8;
-    line-height: 1.55;
-    margin: 0 0 1.25rem;
-  }
-  .auth-warning-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  .auth-warning-dismiss {
-    background: transparent;
-    border: 1px solid rgba(51, 65, 85, 0.5);
-    color: #64748b;
-    font-size: 0.78rem;
-    padding: 0.55rem 1rem;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    transition: all 0.15s;
-    font-family: 'Inter', sans-serif;
-  }
-  .auth-warning-dismiss:hover {
-    color: #94a3b8;
-    border-color: rgba(71, 85, 105, 0.7);
   }
 
   .hidden { display: none !important; }

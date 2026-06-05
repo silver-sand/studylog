@@ -1,8 +1,11 @@
+export type UserType = 'authenticated' | 'guest';
+
 export interface User {
   id: string;
   name: string;
   email: string;
   passwordHash: string;
+  userType: UserType;
   stream?: string;
   goal?: string;
   createdAt: string;
@@ -20,6 +23,7 @@ export interface CreateUserData {
   name: string;
   email: string;
   passwordHash: string;
+  userType?: UserType;
   stream?: string;
   goal?: string;
 }

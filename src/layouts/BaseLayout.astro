@@ -10,8 +10,9 @@ export interface Props {
 const { title } = Astro.props;
 const user = getSessionUser(getTokenFromCookie(Astro.request));
 const currentPath = Astro.url.pathname;
-// Don't show auth popup on auth/onboarding pages
-const showAuthPopup = !user && !['/login', '/signup', '/onboarding'].includes(currentPath);
+// Auth popup is always rendered (hidden by default) for sidebar button trigger
+// Guest users are auto-created by middleware, no gate needed
+const showAuthPopup = false;
 ---
 
 <!DOCTYPE html>
@@ -35,7 +36,7 @@ const showAuthPopup = !user && !['/login', '/signup', '/onboarding'].includes(cu
       </main>
     </div>
 
-    {showAuthPopup && <AuthPopup />}
+    <AuthPopup />
 
     <style>
       ::selection {

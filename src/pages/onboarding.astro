@@ -1,10 +1,12 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getSessionUser, getTokenFromCookie } from '../services/auth-service';
+import { STREAMS } from '../utils/stream-map';
+import { EXAM_DEFINITIONS, getSubjectsForExamKeys } from '../utils/exam-map';
 
 const user = getSessionUser(getTokenFromCookie(Astro.request));
 if (!user) {
-  return Astro.redirect('/login');
+  return Astro.redirect('/');
 }
 ---
 
@@ -17,55 +19,47 @@ if (!user) {
         <div class="step" data-step="2">2</div>
         <div class="step-line"></div>
         <div class="step" data-step="3">3</div>
-        <div class="step-line"></div>
-        <div class="step" data-step="4">4</div>
       </div>
 
-      <!-- Step 1: Name -->
+      <!-- Step 1: Name + Stream -->
       <div class="step-content" data-step="1">
-        <h2 class="step-title">Welcome! What should I call you?</h2>
-        <p class="step-sub">This helps me personalize your experience.</p>
-        <input type="text" id="onboarding-name" class="form-input" placeholder="Your name" value={user.name} required />
-      </div>
-
-      <!-- Step 2: Stream -->
-      <div class="step-content hidden" data-step="2">
-        <h2 class="step-title">Which stream are you in?</h2>
-        <p class="step-sub">This determines your subject set and exam preferences.</p>
-        <div class="stream-options">
-          <button type="button" class="stream-card" data-stream="science">
-            <span class="stream-icon">🔬</span>
-            <span class="stream-name">Science</span>
-            <span class="stream-desc">Physics, Chemistry, Mathematics, Biology</span>
-          </button>
-          <button type="button" class="stream-card" data-stream="commerce">
-            <span class="stream-icon">📊</span>
-            <span class="stream-name">Commerce</span>
-            <span class="stream-desc">Accountancy, Business Studies, Economics</span>
-          </button>
+        <h2 class="step-title">Welcome! Who are you?</h2>
+        <p class="step-sub">Tell me your name and stream so I can set things up.</p>
+        <input type="text" id="onboarding-name" class="form-input" placeholder="Your name" value={user.name !== 'Guest' ? user.name : ''} required />
+        <div class="stream-options mt-4">
+          {Object.entries(STREAMS).map(([key, stream]) => (
+            <button type="button" class="stream-card" data-stream={key}>
+              <span class="stream-icon">{stream.icon}</span>
+              <span class="stream-name">{stream.label}</span>
+              <span class="stream-desc">{stream.examKeys.length} exams available</span>
+            </button>
+          ))}
         </div>
         <input type="hidden" id="onboarding-stream" />
       </div>
 
-      <!-- Step 3: Goal -->
-      <div class="step-content hidden" data-step="3">
-        <h2 class="step-title">What's your goal?</h2>
-        <p class="step-sub">Select your primary exam target.</p>
-        <div class="goal-options" id="goal-options">
-          <button type="button" class="goal-card" data-goal="JEE">🎯 JEE Main / Advanced</button>
-          <button type="button" class="goal-card" data-goal="NEET">🩺 NEET</button>
-          <button type="button" class="goal-card" data-goal="CET">📋 MHT-CET</button>
-          <button type="button" class="goal-card" data-goal="Boards">📚 Board Exams</button>
-          <button type="button" class="goal-card" data-goal="CUET">🎓 CUET</button>
-          <button type="button" class="goal-card" data-goal="GATE">⚙️ GATE</button>
-          <button type="button" class="goal-card" data-goal="CAT">💼 CAT</button>
-          <button type="button" class="goal-card" data-goal="UPSC">🏛️ UPSC</button>
+      <!-- Step 2: Exams (multi-select based on stream) -->
+      <div class="step-content hidden" data-step="2">
+        <h2 class="step-title">Which exams are you preparing for?</h2>
+        <p class="step-sub">Select one or more exams. Subjects will be auto-configured.</p>
+        <div class="exam-grid" id="exam-grid">
+          {EXAM_DEFINITIONS.map(exam => (
+            <button type="button"
+              class="exam-card hidden"
+              data-exam={exam.key}
+              data-group={exam.group}
+            >
+              <span class="exam-name">{exam.label}</span>
+              <span class="exam-subjects">{exam.subjects.length} subjects</span>
+            </button>
+          ))}
         </div>
-        <input type="hidden" id="onboarding-goal" />
+        <p class="mt-3 text-xs text-slate-500" id="exam-count">Select at least one exam</p>
+        <input type="hidden" id="onboarding-exams" />
       </div>
 
-      <!-- Step 4: Target -->
-      <div class="step-content hidden" data-step="4">
+      <!-- Step 3: Target -->
+      <div class="step-content hidden" data-step="3">
         <h2 class="step-title">Set your weekly target</h2>
         <p class="step-sub">How many hours can you study per week?</p>
         <div class="target-input-group">
@@ -86,13 +80,14 @@ if (!user) {
 </BaseLayout>
 
 <script>
-  const steps = [1, 2, 3, 4];
+  const steps = [1, 2, 3];
   let currentStep = 1;
   const indicators = document.querySelectorAll('.step');
   const stepContents = document.querySelectorAll('.step-content');
   const prevBtn = document.getElementById('prev-btn');
   const nextBtn = document.getElementById('next-btn');
   const errorDiv = document.getElementById('form-error');
+  const examGrid = document.getElementById('exam-grid');
 
   function showError(msg) {
     errorDiv.textContent = msg;
@@ -117,10 +112,19 @@ if (!user) {
 
   function getStepData(step) {
     switch (step) {
-      case 1: return { valid: (document.getElementById('onboarding-name') as HTMLInputElement).value.trim().length > 0 };
-      case 2: return { valid: !!(document.getElementById('onboarding-stream') as HTMLInputElement).value };
-      case 3: return { valid: !!(document.getElementById('onboarding-goal') as HTMLInputElement).value };
-      case 4: return { valid: parseInt((document.getElementById('onboarding-hours') as HTMLInputElement).value) > 0 };
+      case 1: {
+        const name = document.getElementById('onboarding-name').value.trim();
+        const stream = document.getElementById('onboarding-stream').value;
+        return { valid: name.length > 0 && !!stream };
+      }
+      case 2: {
+        const selected = document.querySelectorAll('#exam-grid .exam-card.selected');
+        return { valid: selected.length > 0 };
+      }
+      case 3: {
+        const hours = parseInt(document.getElementById('onboarding-hours').value);
+        return { valid: hours > 0 && hours <= 168 };
+      }
     }
     return { valid: true };
   }
@@ -132,11 +136,29 @@ if (!user) {
   nextBtn.addEventListener('click', async () => {
     const data = getStepData(currentStep);
     if (!data.valid) {
-      showError('Please fill in this field to continue.');
+      showError('Please complete this step to continue.');
       return;
     }
 
     if (currentStep < steps.length) {
+      // Before advancing to step 2, filter exams by selected stream
+      if (currentStep === 1) {
+        const stream = document.getElementById('onboarding-stream').value;
+        document.querySelectorAll('#exam-grid .exam-card').forEach(card => {
+          if (card.dataset.group === stream) {
+            card.classList.remove('hidden');
+            // If only one exam in this stream, pre-select it
+          } else {
+            card.classList.add('hidden');
+            card.classList.remove('selected');
+          }
+        });
+        // Auto-select first exam if only one
+        const visibleCards = document.querySelectorAll('#exam-grid .exam-card:not(.hidden)');
+        if (visibleCards.length === 1) {
+          visibleCards[0].classList.add('selected');
+        }
+      }
       updateStep(currentStep + 1);
     } else {
       // Submit onboarding
@@ -144,15 +166,18 @@ if (!user) {
       nextBtn.textContent = 'Saving...';
 
       try {
-        const name = (document.getElementById('onboarding-name') as HTMLInputElement).value.trim();
-        const stream = (document.getElementById('onboarding-stream') as HTMLInputElement).value;
-        const goal = (document.getElementById('onboarding-goal') as HTMLInputElement).value;
-        const targetHours = (document.getElementById('onboarding-hours') as HTMLInputElement).value;
+        const name = document.getElementById('onboarding-name').value.trim();
+        const stream = document.getElementById('onboarding-stream').value;
+        const selectedExams = [];
+        document.querySelectorAll('#exam-grid .exam-card.selected').forEach(card => {
+          selectedExams.push(card.dataset.exam);
+        });
+        const targetHours = document.getElementById('onboarding-hours').value;
 
         const res = await fetch('/api/onboarding', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, stream, goal, targetHours }),
+          body: JSON.stringify({ name, stream, selectedExams, targetHours }),
         });
 
         if (!res.ok) {
@@ -174,19 +199,19 @@ if (!user) {
     card.addEventListener('click', () => {
       document.querySelectorAll('.stream-card').forEach(c => c.classList.remove('selected'));
       card.classList.add('selected');
-      (document.getElementById('onboarding-stream') as HTMLInputElement).value = card.dataset.stream;
+      document.getElementById('onboarding-stream').value = card.dataset.stream;
       hideError();
     });
   });
 
-  // Goal selection
-  document.querySelectorAll('.goal-card').forEach(card => {
-    card.addEventListener('click', () => {
-      document.querySelectorAll('.goal-card').forEach(c => c.classList.remove('selected'));
-      card.classList.add('selected');
-      (document.getElementById('onboarding-goal') as HTMLInputElement).value = card.dataset.goal;
-      hideError();
-    });
+  // Exam selection (multi-select)
+  examGrid.addEventListener('click', (e) => {
+    const card = e.target.closest('.exam-card');
+    if (!card) return;
+    card.classList.toggle('selected');
+    const count = document.querySelectorAll('#exam-grid .exam-card.selected').length;
+    document.getElementById('exam-count').textContent = count + ' selected';
+    hideError();
   });
 
   // Enter key advances
@@ -205,7 +230,7 @@ if (!user) {
   }
   .onboarding-card {
     width: 100%;
-    max-width: 460px;
+    max-width: 500px;
     background: rgba(15, 23, 42, 0.8);
     border: 1px solid rgba(51, 65, 85, 0.4);
     border-radius: 0.75rem;
@@ -270,6 +295,8 @@ if (!user) {
   .form-input:focus {
     border-color: rgba(59, 130, 246, 0.5);
   }
+  .mt-3 { margin-top: 0.75rem; }
+  .mt-4 { margin-top: 1rem; }
   .stream-options {
     display: flex;
     flex-direction: column;
@@ -308,30 +335,41 @@ if (!user) {
     font-size: 0.75rem;
     color: #64748b;
   }
-  .goal-options {
+  .exam-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.5rem;
   }
-  .goal-card {
-    padding: 0.75rem;
+  .exam-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    padding: 0.85rem 0.5rem;
     background: rgba(15, 23, 42, 0.6);
     border: 1px solid rgba(51, 65, 85, 0.4);
     border-radius: 0.5rem;
     cursor: pointer;
     transition: all 0.15s;
     text-align: center;
-    font-size: 0.8rem;
-    color: #cbd5e1;
+    color: inherit;
     font-family: inherit;
   }
-  .goal-card:hover {
+  .exam-card:hover {
     border-color: rgba(71, 85, 105, 0.7);
   }
-  .goal-card.selected {
+  .exam-card.selected {
     border-color: #2563eb;
     background: rgba(37, 99, 235, 0.1);
+  }
+  .exam-name {
+    font-size: 0.78rem;
+    font-weight: 600;
     color: #e2e8f0;
+  }
+  .exam-subjects {
+    font-size: 0.65rem;
+    color: #64748b;
   }
   .target-input-group {
     display: flex;

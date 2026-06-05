@@ -38,8 +38,8 @@ export interface Database {
   getSyllabusByIds(ids: string[]): SyllabusChapter[];
   updateSyllabusStatus(id: string, status: string): SyllabusChapter;
   batchUpdateSyllabusStatus(updates: { id: string; status: string }[]): number;
-  getSyllabusProgress(examType: string): SyllabusProgress[];
-  getWeakChapters(examType: string, threshold?: number): (SyllabusChapter & { health: number })[];
+  getSyllabusProgress(examType: string, subjects?: string[]): SyllabusProgress[];
+  getWeakChapters(examType: string, threshold?: number, subjects?: string[]): (SyllabusChapter & { health: number })[];
 
   // Settings
   getSettings(): Settings;
@@ -54,7 +54,7 @@ export interface Database {
   createUser(data: CreateUserData): User;
   getUserByEmail(email: string): User | null;
   getUserById(id: string): User | null;
-  updateUser(id: string, data: Partial<Pick<User, 'name' | 'stream' | 'goal'>>): User | null;
+  updateUser(id: string, data: Partial<Pick<User, 'name' | 'stream' | 'goal' | 'userType'>>): User | null;
   createSession(userId: string, token: string, expiresAt: string): Session;
   getSessionByToken(token: string): Session | null;
   deleteSession(token: string): boolean;

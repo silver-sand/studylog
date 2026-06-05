@@ -53,25 +53,3 @@ export function getSubjectTextColor(subject: string): string {
   if (key.includes('applied math')) return SUBJECT_TEXT_COLORS.applied_mathematics;
   return 'text-gray-400';
 }
-
-export const SUBJECTS_LIST = [
-  'Physics', 'Chemistry', 'Mathematics', 'Biology', 'English',
-  'Accountancy', 'Business Studies', 'Economics', 'Applied Mathematics',
-  'Hindi', 'Computer Science', 'History', 'Geography',
-  'General Studies',
-];
-
-export const EXAM_TYPES_LIST = [
-  'JEE Main',
-  'JEE Advanced',
-  'NEET',
-  'CET',
-  'Boards (PCM)',
-  'Boards (PCB)',
-  'Boards (Commerce)',
-  'CUET',
-  'GATE',
-  'CAT',
-  'UPSC',
-  'Other',
-];

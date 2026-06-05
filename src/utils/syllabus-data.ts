@@ -556,14 +556,3 @@ export const EXAM_SYLLABI: SyllabusChapter[] = [
   { examType: 'UPSC', subject: 'Ethics and CSAT', chapter: 'Basic Numeracy', sortOrder: 7 },
   { examType: 'UPSC', subject: 'Ethics and CSAT', chapter: 'Data Interpretation', sortOrder: 8 },
 ];
-
-export const EXAM_TYPES_FOR_SYLLABUS = [
-  { key: 'JEE', label: 'JEE Main' },
-  { key: 'NEET', label: 'NEET UG' },
-  { key: 'CBSE_12', label: 'CBSE Class 12' },
-  { key: 'MHT_CET', label: 'MHT CET' },
-  { key: 'CUET', label: 'CUET UG' },
-  { key: 'GATE', label: 'GATE' },
-  { key: 'CAT', label: 'CAT' },
-  { key: 'UPSC', label: 'UPSC CSE' },
-] as const;

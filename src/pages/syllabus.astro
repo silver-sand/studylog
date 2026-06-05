@@ -4,7 +4,7 @@ import SyllabusCard from '../components/SyllabusCard.astro';
 import ChapterList from '../components/ChapterList.astro';
 import TourTooltip from '../components/TourTooltip.astro';
 import { getDb } from '../db';
-import { EXAM_TYPES_FOR_SYLLABUS } from '../utils/syllabus-data';
+import { EXAM_DEFINITIONS } from '../utils/exam-map';
 import { scopeDbToUser } from '../services/user-scope';
 
 scopeDbToUser(Astro.request);
@@ -21,15 +21,24 @@ interface ExamData {
   overallPercent: number;
 }
 
-const exams: ExamData[] = EXAM_TYPES_FOR_SYLLABUS.map((exam) => {
-  const progress = db.getSyllabusProgress(exam.key);
-  const chapters = db.getSyllabus(exam.key);
+// Use unique syllabus keys for exam display
+const seen = new Set<string>();
+const examList = EXAM_DEFINITIONS.filter(e => {
+  if (seen.has(e.syllabusKey)) return false;
+  seen.add(e.syllabusKey);
+  return true;
+});
+
+const exams: ExamData[] = examList.map((exam) => {
+  const progress = db.getSyllabusProgress(exam.syllabusKey);
+  const chapters = db.getSyllabus(exam.syllabusKey);
   const totalChapters = progress.reduce((s, p) => s + p.total, 0);
   const weightedSum = progress.reduce((s, p) => s + p.weightedPercent * p.total, 0);
   const overallPercent = totalChapters > 0 ? Math.round(weightedSum / totalChapters) : 0;
   const completedChapters = progress.reduce((s, p) => s + p.completed, 0);
   return {
-    ...exam,
+    key: exam.syllabusKey,
+    label: exam.label,
     progress,
     chapters,
     totalChapters,
@@ -39,18 +48,12 @@ const exams: ExamData[] = EXAM_TYPES_FOR_SYLLABUS.map((exam) => {
 });
 
 const defaultExam = exams[0];
-const defaultKey = defaultExam.key;
+const defaultKey = defaultExam?.key;
 
-// Filter to user's selected exam if they have one set
+// Filter to user's selected exams
 const settings = db.getSettings();
-const examKeyMap: Record<string, string> = {
-  'JEE Main': 'JEE', 'JEE Advanced': 'JEE',
-  'NEET': 'NEET', 'CET': 'MHT_CET',
-  'Boards (PCM)': 'CBSE_12', 'Boards (PCB)': 'CBSE_12', 'Boards (Commerce)': 'CBSE_12',
-  'CUET': 'CUET', 'GATE': 'GATE', 'CAT': 'CAT', 'UPSC': 'UPSC',
-};
-const selectedKey = examKeyMap[settings.examType];
-const filteredExams = selectedKey ? exams.filter(e => e.key === selectedKey) : exams;
+const selectedExams = settings.selectedExams?.length ? settings.selectedExams : ['JEE'];
+const filteredExams = exams.filter(e => selectedExams.some(s => s.includes(e.key) || e.key.includes(s)));
 ---
 
 <BaseLayout title="Syllabus Tracker">

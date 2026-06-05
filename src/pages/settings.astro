@@ -1,7 +1,8 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getDb } from '../db';
-import { SUBJECTS_LIST, EXAM_TYPES_LIST } from '../utils/constants';
+import { EXAM_DEFINITIONS, getSubjectsForExamKeys } from '../utils/exam-map';
+import { STREAMS, getExamsForStream } from '../utils/stream-map';
 import { scopeDbToUser } from '../services/user-scope';
 import { getSessionUser, getTokenFromCookie } from '../services/auth-service';
 
@@ -9,6 +10,11 @@ scopeDbToUser(Astro.request);
 const db = getDb();
 const settings = db.getSettings();
 const user = getSessionUser(getTokenFromCookie(Astro.request));
+const isGuest = user?.userType === 'guest';
+
+// Determine user's stream from settings or first exam
+const defaultExams = settings.selectedExams?.length ? settings.selectedExams : ['JEE'];
+const userStream = settings.stream || 'science';
 ---
 
 <BaseLayout title="Settings">
@@ -26,12 +32,15 @@ const user = getSessionUser(getTokenFromCookie(Astro.request));
           <div class="account-info">
             <h2 class="card-title" style="margin-bottom:0.1rem">{user?.name || 'User'}</h2>
             <p class="account-email">{user?.email || ''}</p>
+            {isGuest && <p class="text-xs text-amber-400/80 mt-1">Guest — <a href="#" onclick="event.preventDefault();window.openAuthPopup('signup')" class="text-blue-400 hover:text-blue-300 underline">Sign up</a> to save your data permanently</p>}
           </div>
         </div>
-        <button type="button" id="account-logout-btn" class="logout-btn">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
-          Log out
-        </button>
+        {!isGuest && (
+          <button type="button" id="account-logout-btn" class="logout-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="3" y1="12" y2="12"/></svg>
+            Log out
+          </button>
+        )}
       </div>
 
       <!-- Target Hours -->
@@ -53,45 +62,56 @@ const user = getSessionUser(getTokenFromCookie(Astro.request));
         </div>
       </div>
 
-      <!-- Subjects -->
+      <!-- Stream -->
       <div class="card">
-        <h2 class="card-title">Subjects</h2>
-        <p class="card-desc">Select the subjects you're studying.</p>
+        <h2 class="card-title">Your Stream</h2>
+        <p class="card-desc">Select your stream to filter available exams.</p>
+        <div class="stream-grid" id="stream-grid">
+          {Object.entries(STREAMS).map(([key, stream]) => (
+            <div
+              class:list={{ 'chip': true, 'chip-selected': userStream === key }}
+              data-stream={key}
+              data-selected={userStream === key ? '1' : '0'}
+            >
+              <span class="text-base mr-1">{stream.icon}</span>
+              <span>{stream.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
 
-        <div class="subject-grid" id="subjects-grid">
-          {SUBJECTS_LIST.map(subject => {
-            const isSelected = settings.subjects.includes(subject);
+      <!-- Exams (multi-select) -->
+      <div class="card">
+        <h2 class="card-title">Exams / Entrance</h2>
+        <p class="card-desc">Which exams are you preparing for?</p>
+        <div class="exam-grid" id="exam-grid">
+          {EXAM_DEFINITIONS.map(exam => {
+            const isSelected = defaultExams.includes(exam.key);
             return (
               <div
-                class:list={{ 'chip': true, 'chip-selected': isSelected }}
-                data-subject={subject}
+                class:list={{ 'chip': true, 'chip-selected-exam': isSelected, 'exam-grid-item': true }}
+                data-exam={exam.key}
                 data-selected={isSelected ? '1' : '0'}
+                data-group={exam.group}
               >
-                {subject}
+                <span class="exam-label">{exam.label}</span>
+                <span class="exam-subjects text-xs opacity-60">{exam.subjects.length} subjects</span>
               </div>
             );
           })}
         </div>
-        <p class="chip-hint selected-count" id="subject-count">{settings.subjects.length} selected (min 1)</p>
       </div>
 
-      <!-- Exam Type -->
+      <!-- Subjects (auto-computed from exams, shown as info) -->
       <div class="card">
-        <h2 class="card-title">Exam / Entrance</h2>
-        <p class="card-desc">Which exam are you preparing for?</p>
-        <div class="exam-grid" id="exam-grid">
-          {EXAM_TYPES_LIST.map(exam => {
-            const isSelected = settings.examType === exam;
-            return (
-              <div
-                class:list={{ 'chip': true, 'chip-selected-exam': isSelected }}
-                data-exam={exam}
-                data-selected={isSelected ? '1' : '0'}
-              >
-                {exam}
-              </div>
-            );
-          })}
+        <h2 class="card-title">Subjects</h2>
+        <p class="card-desc">Subjects are auto-selected based on your exams. <span class="text-amber-400/70">Settings &rarr; Exams</span> to change.</p>
+        <div class="subject-grid" id="subjects-grid">
+          {getSubjectsForExamKeys(defaultExams).map(subject => (
+            <div class="chip chip-selected" data-subject={subject}>
+              {subject}
+            </div>
+          ))}
         </div>
       </div>
 
@@ -125,40 +145,89 @@ const user = getSessionUser(getTokenFromCookie(Astro.request));
   </div>
 </BaseLayout>
 
+<script is:inline>
+  window.__EXAM_SUBJECTS = {
+    {EXAM_DEFINITIONS.map(e => `${JSON.stringify(e.key)}: ${JSON.stringify(e.subjects)}`).join(',\n    ')}
+  };
+</script>
+
 <script>
-  const form = document.getElementById('settings-form');
-  const saveBtn = document.getElementById('save-btn');
-  const successDiv = document.getElementById('settings-success');
-  const errorDiv = document.getElementById('settings-error');
+  // ── Stream selection ──
+  const streamChips = document.querySelectorAll('#stream-grid .chip');
+  const examItems = document.querySelectorAll('#exam-grid .exam-grid-item');
 
-  // ── Subject chips (multi-select) ──
-  const subjectChips = document.querySelectorAll('#subjects-grid .chip');
-  const subjectCount = document.getElementById('subject-count');
-
-  subjectChips.forEach(chip => {
-    chip.addEventListener('click', () => {
-      const isSelected = chip.dataset.selected === '1';
-      chip.dataset.selected = isSelected ? '0' : '1';
-      chip.classList.toggle('chip-selected');
-      const count = document.querySelectorAll('#subjects-grid .chip[data-selected="1"]').length;
-      subjectCount.textContent = count + ' selected (min 1)';
+  function filterExamsByStream(stream) {
+    examItems.forEach(item => {
+      const group = item.dataset.group;
+      if (group === stream) {
+        item.classList.remove('hidden');
+      } else {
+        item.classList.add('hidden');
+        // Deselect hidden exams
+        item.dataset.selected = '0';
+        item.classList.remove('chip-selected-exam');
+      }
     });
-  });
+  }
 
-  // ── Exam chips (single-select) ──
-  const examChips = document.querySelectorAll('#exam-grid .chip');
-
-  examChips.forEach(chip => {
+  streamChips.forEach(chip => {
     chip.addEventListener('click', () => {
-      if (chip.dataset.selected === '1') return;
-      examChips.forEach(c => {
+      streamChips.forEach(c => {
         c.dataset.selected = '0';
-        c.classList.remove('chip-selected-exam');
+        c.classList.remove('chip-selected');
       });
       chip.dataset.selected = '1';
-      chip.classList.add('chip-selected-exam');
+      chip.classList.add('chip-selected');
+      filterExamsByStream(chip.dataset.stream);
+      updateSubjectGrid();
     });
   });
+
+  // Filter on load
+  const activeStream = document.querySelector('#stream-grid .chip[data-selected="1"]');
+  if (activeStream) filterExamsByStream(activeStream.dataset.stream);
+
+  // ── Exam chips (multi-select) ──
+  examItems.forEach(chip => {
+    chip.addEventListener('click', () => {
+      const isSelected = chip.dataset.selected === '1';
+      // Deselect all if only one would remain selected
+      const selectedCount = document.querySelectorAll('#exam-grid .chip[data-selected="1"]').length;
+      if (isSelected && selectedCount <= 1) return;
+      chip.dataset.selected = isSelected ? '0' : '1';
+      chip.classList.toggle('chip-selected-exam');
+      updateSubjectGrid();
+    });
+  });
+
+  // ── Subject grid (auto-computed from exams) ──
+  const EXAMS = window.__EXAM_SUBJECTS || {};
+
+  function updateSubjectGrid() {
+    const selectedExams = [];
+    document.querySelectorAll('#exam-grid .chip[data-selected="1"]').forEach(chip => {
+      selectedExams.push(chip.dataset.exam);
+    });
+
+    const subjects = new Set();
+    selectedExams.forEach(key => {
+      if (EXAMS[key]) EXAMS[key].forEach(s => subjects.add(s));
+    });
+
+    const grid = document.getElementById('subjects-grid');
+    grid.innerHTML = '';
+    if (subjects.size === 0) {
+      grid.innerHTML = '<p class="text-sm text-slate-500">Select at least one exam to see subjects.</p>';
+      return;
+    }
+    subjects.forEach(subject => {
+      const div = document.createElement('div');
+      div.className = 'chip chip-selected';
+      div.dataset.subject = subject;
+      div.textContent = subject;
+      grid.appendChild(div);
+    });
+  }
 
   // ── Logout ──
   const logoutBtn = document.getElementById('account-logout-btn');
@@ -170,6 +239,11 @@ const user = getSessionUser(getTokenFromCookie(Astro.request));
   });
 
   // ── Form submit ──
+  const form = document.getElementById('settings-form');
+  const saveBtn = document.getElementById('save-btn');
+  const successDiv = document.getElementById('settings-success');
+  const errorDiv = document.getElementById('settings-error');
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     successDiv.classList.add('hidden');
@@ -177,18 +251,15 @@ const user = getSessionUser(getTokenFromCookie(Astro.request));
 
     const targetHours = parseFloat(document.getElementById('target-hours').value);
 
-    const subjects = [];
-    document.querySelectorAll('#subjects-grid .chip[data-selected="1"]').forEach(chip => {
-      subjects.push(chip.dataset.subject);
+    const selectedExams = [];
+    document.querySelectorAll('#exam-grid .chip[data-selected="1"]').forEach(chip => {
+      selectedExams.push(chip.dataset.exam);
     });
-
-    const examChip = document.querySelector('#exam-grid .chip[data-selected="1"]');
-    const examType = examChip ? examChip.dataset.exam : 'JEE';
 
     const examDate = document.getElementById('exam-date').value || null;
 
-    if (subjects.length === 0) {
-      errorDiv.textContent = 'Select at least one subject.';
+    if (selectedExams.length === 0) {
+      errorDiv.textContent = 'Select at least one exam.';
       errorDiv.classList.remove('hidden');
       return;
     }
@@ -200,7 +271,7 @@ const user = getSessionUser(getTokenFromCookie(Astro.request));
       const res = await fetch('/api/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetHoursPerWeek: targetHours, subjects, examType, examDate }),
+        body: JSON.stringify({ targetHoursPerWeek: targetHours, selectedExams, examDate }),
       });
 
       if (!res.ok) throw new Error('Failed to save');
@@ -263,14 +334,14 @@ const user = getSessionUser(getTokenFromCookie(Astro.request));
     border-color: rgba(59, 130, 246, 0.5);
     box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
   }
-  .subject-grid, .exam-grid {
+  .stream-grid, .subject-grid, .exam-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 0.5rem;
     margin-top: 0.75rem;
   }
   @media (min-width: 768px) {
-    .subject-grid, .exam-grid {
+    .stream-grid, .subject-grid, .exam-grid {
       grid-template-columns: repeat(3, 1fr);
     }
   }
@@ -301,11 +372,6 @@ const user = getSessionUser(getTokenFromCookie(Astro.request));
     border-color: rgba(236, 72, 153, 0.5);
     color: #f9a8d4;
     box-shadow: 0 0 6px rgba(236, 72, 153, 0.15);
-  }
-  .chip-hint {
-    font-size: 0.7rem;
-    color: #475569;
-    margin-top: 0.5rem;
   }
   .btn-primary {
     display: inline-flex;
@@ -401,5 +467,20 @@ const user = getSessionUser(getTokenFromCookie(Astro.request));
   .logout-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+  .exam-grid-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+  }
+  .exam-label {
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+  .exam-subjects {
+    font-size: 0.65rem;
+    color: inherit;
+    opacity: 0.6;
   }
 </style>
