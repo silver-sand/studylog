@@ -17,7 +17,7 @@ export const PUT: APIRoute = async ({ request }) => {
   scopeDbToUser(request);
   try {
     const body = await request.json();
-    const { targetHoursPerWeek, selectedExams, subjects, examDate, theme } = body;
+    const { targetHoursPerWeek, studyDaysPerWeek, selectedExams, subjects, examDate, theme } = body;
 
     if (targetHoursPerWeek !== undefined) {
       const h = Number(targetHoursPerWeek);
@@ -40,16 +40,18 @@ export const PUT: APIRoute = async ({ request }) => {
 
     const settings = getDb().updateSettings({
       targetHoursPerWeek: targetHoursPerWeek !== undefined ? Number(targetHoursPerWeek) : undefined,
+      studyDaysPerWeek: studyDaysPerWeek !== undefined ? Number(studyDaysPerWeek) : undefined,
       selectedExams: selectedExams !== undefined ? selectedExams : undefined,
       subjects: computedSubjects !== undefined ? computedSubjects : undefined,
       examDate: examDate !== undefined ? examDate : undefined,
       theme: theme !== undefined ? theme : undefined,
     });
 
-    // Seed syllabus for newly selected exams
+    // Seed syllabus for newly selected exams (filtered by subjects to avoid commerce/science mixing)
     if (selectedExams !== undefined) {
+      const subjectsToSeed = computedSubjects ?? getSubjectsForExamKeys(selectedExams);
       for (const examKey of selectedExams) {
-        getDb().seedSyllabusData(examKey);
+        getDb().seedSyllabusData(examKey, subjectsToSeed);
       }
     }
 

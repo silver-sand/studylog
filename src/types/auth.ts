@@ -1,3 +1,6 @@
+import type { StreamKey } from '../utils/stream-map';
+import type { ClassLevel } from './profile';
+
 export type UserType = 'authenticated' | 'guest';
 
 export interface User {
@@ -7,7 +10,10 @@ export interface User {
   passwordHash: string;
   userType: UserType;
   stream?: string;
+  classLevel?: string;
   goal?: string;
+  weeklyStudyGoal?: number;
+  studyDaysPerWeek?: number;
   createdAt: string;
 }
 
@@ -25,7 +31,10 @@ export interface CreateUserData {
   passwordHash: string;
   userType?: UserType;
   stream?: string;
+  classLevel?: string;
   goal?: string;
+  weeklyStudyGoal?: number;
+  studyDaysPerWeek?: number;
 }
 
 export interface AuthResult {

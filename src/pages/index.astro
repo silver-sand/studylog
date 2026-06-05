@@ -68,10 +68,10 @@ const isAuthenticated = !!user && !isGuest;
           </a>
         ) : (
           <>
-            <a href="/daily" class="ds-btn ds-btn-primary ds-btn-lg" style="gap:var(--ds-space-2);">
+            <button id="start-guest-btn" class="ds-btn ds-btn-primary ds-btn-lg" style="gap:var(--ds-space-2);">
               Start Tracking Free
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-            </a>
+            </button>
             <button onclick="window.openAuthPopup('signup')" class="ds-btn ds-btn-outline ds-btn-lg">Create Account</button>
           </>
         )}
@@ -189,10 +189,10 @@ const isAuthenticated = !!user && !isGuest;
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </a>
       ) : (
-        <a href="/daily" class="ds-btn ds-btn-primary ds-btn-lg" style="gap:var(--ds-space-2);">
+        <button id="cta-guest-btn" class="ds-btn ds-btn-primary ds-btn-lg" style="gap:var(--ds-space-2);">
           Start Tracking Free
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-        </a>
+        </button>
       )}
     </div>
   </section>
@@ -210,6 +210,32 @@ const isAuthenticated = !!user && !isGuest;
   </footer>
 
   <AuthPopup />
+
+  <script>
+    async function createGuestSession() {
+      try {
+        const res = await fetch('/api/auth/guest', { method: 'POST' });
+        if (res.ok) {
+          window.location.href = '/daily';
+        } else {
+          // Fallback: go to daily anyway
+          window.location.href = '/daily';
+        }
+      } catch {
+        window.location.href = '/daily';
+      }
+    }
+
+    document.getElementById('start-guest-btn')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      createGuestSession();
+    });
+
+    document.getElementById('cta-guest-btn')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      createGuestSession();
+    });
+  </script>
 
   <style>
     html { scroll-behavior: smooth; }

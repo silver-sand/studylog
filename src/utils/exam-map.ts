@@ -9,8 +9,8 @@ export interface ExamDefinition {
   key: string;
   /** Human-readable label e.g. 'JEE Main', 'CBSE Class 12 (Commerce)' */
   label: string;
-  /** Stream group for onboarding filtering */
-  group: 'science' | 'commerce';
+  /** Stream group(s) this exam belongs to */
+  groups: ('science' | 'commerce' | 'humanities')[];
   /** Default subjects this exam covers */
   subjects: string[];
   /** Key into syllabus-data.ts EXAM_SYLLABI array */
@@ -22,42 +22,45 @@ export const EXAM_DEFINITIONS: ExamDefinition[] = [
   {
     key: 'JEE',
     label: 'JEE Main',
-    group: 'science',
+    groups: ['science'],
     subjects: ['Physics', 'Chemistry', 'Mathematics'],
     syllabusKey: 'JEE',
   },
   {
     key: 'JEE_ADVANCED',
     label: 'JEE Advanced',
-    group: 'science',
+    groups: ['science'],
     subjects: ['Physics', 'Chemistry', 'Mathematics'],
     syllabusKey: 'JEE',
   },
   {
     key: 'NEET',
     label: 'NEET UG',
-    group: 'science',
+    groups: ['science'],
     subjects: ['Physics', 'Chemistry', 'Biology'],
     syllabusKey: 'NEET',
   },
   {
     key: 'CBSE_12_SCIENCE',
     label: 'CBSE Class 12 (Science)',
-    group: 'science',
-    subjects: ['Physics', 'Chemistry', 'Mathematics', 'Biology', 'English', 'Computer Science'],
+    groups: ['science'],
+    subjects: [
+      'Physics', 'Chemistry', 'Mathematics', 'Biology',
+      'English', 'Computer Science', 'Physical Education',
+    ],
     syllabusKey: 'CBSE_12',
   },
   {
     key: 'MHT_CET_SCIENCE',
     label: 'MHT CET (Science)',
-    group: 'science',
+    groups: ['science'],
     subjects: ['Physics', 'Chemistry', 'Mathematics', 'Biology'],
     syllabusKey: 'MHT_CET',
   },
   {
     key: 'GATE',
     label: 'GATE',
-    group: 'science',
+    groups: ['science'],
     subjects: ['General Aptitude', 'Engineering Mathematics', 'Computer Science'],
     syllabusKey: 'GATE',
   },
@@ -66,34 +69,45 @@ export const EXAM_DEFINITIONS: ExamDefinition[] = [
   {
     key: 'CBSE_12_COMMERCE',
     label: 'CBSE Class 12 (Commerce)',
-    group: 'commerce',
-    subjects: ['Accountancy', 'Business Studies', 'Economics', 'Applied Mathematics', 'English'],
+    groups: ['commerce'],
+    subjects: [
+      'Accountancy', 'Business Studies', 'Economics',
+      'Applied Mathematics', 'English', 'Informatics Practices',
+    ],
     syllabusKey: 'CBSE_12',
   },
   {
     key: 'CUET',
     label: 'CUET UG',
-    group: 'commerce',
-    subjects: ['English Language', 'General Knowledge', 'Logical Reasoning', 'Numerical Ability', 'Current Affairs'],
+    groups: ['commerce', 'humanities'],
+    subjects: [
+      'English Language', 'General Knowledge', 'Logical Reasoning',
+      'Numerical Ability', 'Current Affairs',
+    ],
     syllabusKey: 'CUET',
   },
   {
     key: 'CAT',
     label: 'CAT',
-    group: 'commerce',
+    groups: ['commerce'],
     subjects: ['VARC', 'DILR', 'Quantitative Ability'],
     syllabusKey: 'CAT',
   },
+
+  // ── Humanities stream ──
   {
     key: 'UPSC',
     label: 'UPSC CSE',
-    group: 'science',
-    subjects: ['History', 'Geography', 'Polity', 'Economy', 'Science and Tech', 'Ethics and CSAT'],
+    groups: ['science', 'humanities'],
+    subjects: [
+      'History', 'Geography', 'Polity', 'Economy',
+      'Science and Technology', 'Ethics and CSAT',
+    ],
     syllabusKey: 'UPSC',
   },
 ];
 
-/** Get syllabus key (for filtering syllabus-data.ts) from an exam definition key */
+/** Get the syllabus key for a given exam key */
 export function getSyllabusKeyForExam(examKey: string): string {
   return EXAM_DEFINITIONS.find((e) => e.key === examKey)?.syllabusKey ?? 'JEE';
 }

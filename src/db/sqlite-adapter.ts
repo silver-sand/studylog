@@ -102,6 +102,7 @@ function toSettings(row: Record<string, any>): Settings {
   return {
     id: row.id,
     targetHoursPerWeek: row.target_hours_per_week,
+    studyDaysPerWeek: row.study_days_per_week ?? 5,
     subjects,
     selectedExams: Array.isArray(selectedExams) && selectedExams.length > 0 ? selectedExams : legacyExamToSelected(row.exam_type || 'JEE'),
     examType: row.exam_type || 'JEE',
@@ -161,6 +162,12 @@ export class SQLiteAdapter implements DatabaseInterface {
       `ALTER TABLE users ADD COLUMN user_type TEXT NOT NULL DEFAULT 'authenticated'`,
       // Phase 7: selected_exams for multi-exam support
       `ALTER TABLE settings ADD COLUMN selected_exams TEXT NOT NULL DEFAULT '[]'`,
+      // Phase 8: profile fields for users
+      `ALTER TABLE users ADD COLUMN class_level TEXT`,
+      `ALTER TABLE users ADD COLUMN weekly_study_goal REAL NOT NULL DEFAULT 35`,
+      `ALTER TABLE users ADD COLUMN study_days_per_week INTEGER NOT NULL DEFAULT 5`,
+      // Phase 8: study_days_per_week for settings
+      `ALTER TABLE settings ADD COLUMN study_days_per_week INTEGER NOT NULL DEFAULT 5`,
     ];
     for (const sql of migrations) {
       try { this.db.run(sql); } catch { /* column already exists — ignore */ }
@@ -515,12 +522,17 @@ export class SQLiteAdapter implements DatabaseInterface {
 
   // ── Syllabus ──
 
-  seedSyllabusData(examType?: string): void {
+  seedSyllabusData(examType?: string, subjects?: string[]): void {
     const db = this.getDb();
 
-    const items = examType
+    let items = examType
       ? EXAM_SYLLABI.filter(item => item.examType === examType)
       : EXAM_SYLLABI;
+
+    // Filter by subjects if provided — prevents commerce users from getting science chapters
+    if (subjects && subjects.length > 0) {
+      items = items.filter(item => subjects.includes(item.subject));
+    }
 
     if (items.length === 0) return;
 
@@ -750,8 +762,8 @@ export class SQLiteAdapter implements DatabaseInterface {
     const id = Date.now();
     const defaultExams = ['JEE'];
     db.run(
-      `INSERT INTO settings (id, user_id, target_hours_per_week, subjects, selected_exams, exam_type, theme, created_at, updated_at)
-       VALUES (?, ?, 35, '["Physics","Chemistry","Mathematics"]', ?, 'JEE', 'dark', datetime('now'), datetime('now'))`,
+      `INSERT INTO settings (id, user_id, target_hours_per_week, study_days_per_week, subjects, selected_exams, exam_type, theme, created_at, updated_at)
+       VALUES (?, ?, 35, 5, '["Physics","Chemistry","Mathematics"]', ?, 'JEE', 'dark', datetime('now'), datetime('now'))`,
       [id, this.userId, JSON.stringify(defaultExams)]
     );
     this.save();
@@ -775,11 +787,12 @@ export class SQLiteAdapter implements DatabaseInterface {
       const selectedExams = data.selectedExams ?? legacyExamToSelected(data.examType ?? current.examType ?? 'JEE');
       const subjects = data.subjects ?? getSubjectsForExamKeys(selectedExams);
       db.run(
-        `INSERT INTO settings (id, user_id, target_hours_per_week, subjects, selected_exams, exam_type, exam_date, theme, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+        `INSERT INTO settings (id, user_id, target_hours_per_week, study_days_per_week, subjects, selected_exams, exam_type, exam_date, theme, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
         [
           newId, this.userId,
           data.targetHoursPerWeek ?? 35,
+          data.studyDaysPerWeek ?? 5,
           JSON.stringify(subjects),
           JSON.stringify(selectedExams),
           data.examType ?? 'JEE',
@@ -792,9 +805,10 @@ export class SQLiteAdapter implements DatabaseInterface {
     }
 
     db.run(
-      `UPDATE settings SET target_hours_per_week=?, subjects=?, selected_exams=?, exam_type=?, exam_date=?, theme=?, updated_at=datetime('now') WHERE user_id=?`,
+      `UPDATE settings SET target_hours_per_week=?, study_days_per_week=?, subjects=?, selected_exams=?, exam_type=?, exam_date=?, theme=?, updated_at=datetime('now') WHERE user_id=?`,
       [
         data.targetHoursPerWeek ?? current.targetHoursPerWeek,
+        data.studyDaysPerWeek ?? current.studyDaysPerWeek,
         JSON.stringify(data.subjects ?? current.subjects),
         JSON.stringify(data.selectedExams ?? current.selectedExams),
         data.examType ?? current.examType,
@@ -1003,11 +1017,18 @@ export class SQLiteAdapter implements DatabaseInterface {
     const id = generateId();
     const createdAt = new Date().toISOString();
     db.run(
-      `INSERT INTO users (id, name, email, password_hash, user_type, stream, goal, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, data.name, data.email, data.passwordHash, data.userType ?? 'authenticated', data.stream || null, data.goal || null, createdAt]
+      `INSERT INTO users (id, name, email, password_hash, user_type, stream, class_level, goal, weekly_study_goal, study_days_per_week, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, data.name, data.email, data.passwordHash, data.userType ?? 'authenticated', data.stream || null, data.classLevel || null, data.goal || null, data.weeklyStudyGoal ?? 35, data.studyDaysPerWeek ?? 5, createdAt]
     );
     this.save();
-    return { id, name: data.name, email: data.email, passwordHash: data.passwordHash, userType: data.userType ?? 'authenticated', stream: data.stream, goal: data.goal, createdAt };
+    return {
+      id, name: data.name, email: data.email, passwordHash: data.passwordHash,
+      userType: data.userType ?? 'authenticated', stream: data.stream,
+      classLevel: data.classLevel, goal: data.goal,
+      weeklyStudyGoal: data.weeklyStudyGoal ?? 35,
+      studyDaysPerWeek: data.studyDaysPerWeek ?? 5,
+      createdAt,
+    };
   }
 
   getUserByEmail(email: string): User | null {
@@ -1061,7 +1082,7 @@ export class SQLiteAdapter implements DatabaseInterface {
     return null;
   }
 
-  updateUser(id: string, data: Partial<Pick<User, 'name' | 'stream' | 'goal' | 'userType'>>): User | null {
+  updateUser(id: string, data: Partial<Pick<User, 'name' | 'stream' | 'goal' | 'userType' | 'classLevel' | 'weeklyStudyGoal' | 'studyDaysPerWeek'>>): User | null {
     const db = this.getDb();
     const sets: string[] = [];
     const params: any[] = [];
@@ -1069,6 +1090,9 @@ export class SQLiteAdapter implements DatabaseInterface {
     if (data.stream !== undefined) { sets.push('stream = ?'); params.push(data.stream); }
     if (data.goal !== undefined) { sets.push('goal = ?'); params.push(data.goal); }
     if (data.userType !== undefined) { sets.push('user_type = ?'); params.push(data.userType); }
+    if (data.classLevel !== undefined) { sets.push('class_level = ?'); params.push(data.classLevel); }
+    if (data.weeklyStudyGoal !== undefined) { sets.push('weekly_study_goal = ?'); params.push(data.weeklyStudyGoal); }
+    if (data.studyDaysPerWeek !== undefined) { sets.push('study_days_per_week = ?'); params.push(data.studyDaysPerWeek); }
     if (sets.length === 0) return this.getUserById(id);
     params.push(id);
     db.run(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`, params);
@@ -1091,7 +1115,16 @@ export class SQLiteAdapter implements DatabaseInterface {
   }
 
   private toUser(row: Record<string, any>): User {
-    return { id: row.id, name: row.name, email: row.email, passwordHash: row.password_hash, userType: row.user_type ?? 'authenticated', stream: row.stream, goal: row.goal, createdAt: row.created_at };
+    return {
+      id: row.id, name: row.name, email: row.email, passwordHash: row.password_hash,
+      userType: row.user_type ?? 'authenticated',
+      stream: row.stream,
+      classLevel: row.class_level,
+      goal: row.goal,
+      weeklyStudyGoal: row.weekly_study_goal ?? 35,
+      studyDaysPerWeek: row.study_days_per_week ?? 5,
+      createdAt: row.created_at,
+    };
   }
 
   private toSession(row: Record<string, any>): Session {

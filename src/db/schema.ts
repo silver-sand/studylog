@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS settings (
   id INTEGER PRIMARY KEY DEFAULT 1,
   user_id TEXT NOT NULL DEFAULT '1' REFERENCES users(id),
   target_hours_per_week REAL NOT NULL DEFAULT 35,
+  study_days_per_week INTEGER NOT NULL DEFAULT 5,
   subjects TEXT NOT NULL DEFAULT '["Physics","Chemistry","Mathematics"]',
   selected_exams TEXT NOT NULL DEFAULT '[]',
   exam_type TEXT NOT NULL DEFAULT 'JEE',
@@ -112,7 +113,10 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash TEXT NOT NULL,
   user_type TEXT NOT NULL DEFAULT 'authenticated',
   stream TEXT,
+  class_level TEXT,
   goal TEXT,
+  weekly_study_goal REAL NOT NULL DEFAULT 35,
+  study_days_per_week INTEGER NOT NULL DEFAULT 5,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

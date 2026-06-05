@@ -57,7 +57,7 @@ export function createGuestUser(): { user: Omit<User, 'passwordHash'>; token: st
   const expiresAt = getExpiresAt();
   db.createSession(user.id, token, expiresAt);
 
-  return { user: { id: user.id, name: user.name, email: user.email, userType: user.userType, stream: user.stream, goal: user.goal, createdAt: user.createdAt }, token };
+  return { user: { id: user.id, name: user.name, email: user.email, userType: user.userType, stream: user.stream, classLevel: user.classLevel, goal: user.goal, weeklyStudyGoal: user.weeklyStudyGoal, studyDaysPerWeek: user.studyDaysPerWeek, createdAt: user.createdAt }, token };
 }
 
 /**
@@ -91,7 +91,7 @@ export async function convertGuestToAuthenticated(
   db.createSession(user.id, token, expiresAt);
 
   const user = db.getUserById(userId)!;
-  return { user: { id: user.id, name: user.name, email: user.email, userType: user.userType, stream: user.stream, goal: user.goal, createdAt: user.createdAt }, token };
+  return { user: { id: user.id, name: user.name, email: user.email, userType: user.userType, stream: user.stream, classLevel: user.classLevel, goal: user.goal, weeklyStudyGoal: user.weeklyStudyGoal, studyDaysPerWeek: user.studyDaysPerWeek, createdAt: user.createdAt }, token };
 }
 
 // ── Public API ──
@@ -115,7 +115,7 @@ export async function signup(name: string, email: string, password: string, isGu
   const expiresAt = getExpiresAt();
   db.createSession(user.id, token, expiresAt);
 
-  return { user: { id: user.id, name: user.name, email: user.email, userType: user.userType, stream: user.stream, goal: user.goal, createdAt: user.createdAt }, token };
+  return { user: { id: user.id, name: user.name, email: user.email, userType: user.userType, stream: user.stream, classLevel: user.classLevel, goal: user.goal, weeklyStudyGoal: user.weeklyStudyGoal, studyDaysPerWeek: user.studyDaysPerWeek, createdAt: user.createdAt }, token };
 }
 
 export async function login(email: string, password: string): Promise<AuthResult> {
@@ -140,7 +140,7 @@ export async function login(email: string, password: string): Promise<AuthResult
   const expiresAt = getExpiresAt();
   db.createSession(user.id, token, expiresAt);
 
-  return { user: { id: user.id, name: user.name, email: user.email, userType: user.userType, stream: user.stream, goal: user.goal, createdAt: user.createdAt }, token };
+  return { user: { id: user.id, name: user.name, email: user.email, userType: user.userType, stream: user.stream, classLevel: user.classLevel, goal: user.goal, weeklyStudyGoal: user.weeklyStudyGoal, studyDaysPerWeek: user.studyDaysPerWeek, createdAt: user.createdAt }, token };
 }
 
 export function logout(token: string): boolean {
@@ -161,11 +161,21 @@ export function getSessionUser(token: string | undefined | null): Omit<User, 'pa
   const user = db.getUserById(session.userId);
   if (!user) return null;
 
-  return { id: user.id, name: user.name, email: user.email, userType: user.userType, stream: user.stream, goal: user.goal, createdAt: user.createdAt };
+  return { id: user.id, name: user.name, email: user.email, userType: user.userType, stream: user.stream, classLevel: user.classLevel, goal: user.goal, weeklyStudyGoal: user.weeklyStudyGoal, studyDaysPerWeek: user.studyDaysPerWeek, createdAt: user.createdAt };
 }
 
 export function getTokenFromCookie(request: Request): string | null {
   const cookie = request.headers.get('cookie') || '';
   const match = cookie.match(/(?:^|;\s*)session_token=([^;]+)/);
   return match ? decodeURIComponent(match[1]) : null;
+}
+
+/**
+ * Exit guest mode: delete the guest's session so they see the landing page.
+ * Does NOT delete the guest user or their data — signing up later reconnects.
+ */
+export function exitGuestMode(token: string): boolean {
+  const db = getDb();
+  db.deleteSession(token);
+  return true;
 }

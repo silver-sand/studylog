@@ -14,16 +14,16 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: 'Not authenticated' }), { status: 401 });
     }
 
-    const { name, stream, selectedExams, targetHours } = await request.json();
+    const { name, stream, classLevel, selectedExams, targetHours, studyDaysPerWeek } = await request.json();
     const db = getDb();
 
     // Update user profile
-    if (name || stream) {
-      db.updateUser(user.id, { name: name || undefined, stream: stream || undefined });
+    if (name || stream || classLevel) {
+      db.updateUser(user.id, { name: name || undefined, stream: stream || undefined, classLevel: classLevel || undefined });
     }
 
     // Pre-fill settings
-    if (targetHours || selectedExams?.length) {
+    if (targetHours || studyDaysPerWeek || selectedExams?.length) {
       const current = db.getSettings();
 
       // Use explicitly selected exams, fall back to stream defaults
@@ -33,13 +33,14 @@ export const POST: APIRoute = async ({ request }) => {
 
       db.updateSettings({
         targetHoursPerWeek: targetHours ? Number(targetHours) : current.targetHoursPerWeek,
+        studyDaysPerWeek: studyDaysPerWeek ? Number(studyDaysPerWeek) : current.studyDaysPerWeek,
         selectedExams: exams,
         subjects: computedSubjects,
       });
 
-      // Seed syllabus for all selected exams
+      // Seed syllabus for all selected exams (filtered by subjects so commerce doesn't get science)
       for (const examKey of exams) {
-        db.seedSyllabusData(examKey);
+        db.seedSyllabusData(examKey, computedSubjects);
       }
     }
 

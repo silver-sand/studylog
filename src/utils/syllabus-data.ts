@@ -8,6 +8,73 @@ export interface SyllabusChapter {
 
 export const EXAM_SYLLABI: SyllabusChapter[] = [
   // ═══════════════════════════════════════════
+  // CBSE CLASS 12 — Humanities Subjects
+  // ═══════════════════════════════════════════
+
+  // ── Psychology ──
+  { examType: 'CBSE_12', subject: 'Psychology', chapter: 'Variations in Psychological Attributes', sortOrder: 1 },
+  { examType: 'CBSE_12', subject: 'Psychology', chapter: 'Self and Personality', sortOrder: 2 },
+  { examType: 'CBSE_12', subject: 'Psychology', chapter: 'Meeting Life Challenges', sortOrder: 3 },
+  { examType: 'CBSE_12', subject: 'Psychology', chapter: 'Psychological Disorders', sortOrder: 4 },
+  { examType: 'CBSE_12', subject: 'Psychology', chapter: 'Therapeutic Approaches', sortOrder: 5 },
+  { examType: 'CBSE_12', subject: 'Psychology', chapter: 'Attitude and Social Cognition', sortOrder: 6 },
+  { examType: 'CBSE_12', subject: 'Psychology', chapter: 'Social Influence and Group Processes', sortOrder: 7 },
+
+  // ── Sociology ──
+  { examType: 'CBSE_12', subject: 'Sociology', chapter: 'Introducing Indian Society', sortOrder: 1 },
+  { examType: 'CBSE_12', subject: 'Sociology', chapter: 'Social Institutions: Continuity and Change', sortOrder: 2 },
+  { examType: 'CBSE_12', subject: 'Sociology', chapter: 'Social Inequality and Exclusion', sortOrder: 3 },
+  { examType: 'CBSE_12', subject: 'Sociology', chapter: 'The Challenges of Unity in Diversity', sortOrder: 4 },
+  { examType: 'CBSE_12', subject: 'Sociology', chapter: 'Structural Change', sortOrder: 5 },
+  { examType: 'CBSE_12', subject: 'Sociology', chapter: 'Social Movements', sortOrder: 6 },
+
+  // ── Political Science ──
+  { examType: 'CBSE_12', subject: 'Political Science', chapter: 'The Cold War Era and Non-Aligned Movement', sortOrder: 1 },
+  { examType: 'CBSE_12', subject: 'Political Science', chapter: 'The End of Bipolarity', sortOrder: 2 },
+  { examType: 'CBSE_12', subject: 'Political Science', chapter: 'US Hegemony in World Politics', sortOrder: 3 },
+  { examType: 'CBSE_12', subject: 'Political Science', chapter: 'Alternative Centres of Power', sortOrder: 4 },
+  { examType: 'CBSE_12', subject: 'Political Science', chapter: 'Contemporary South Asia', sortOrder: 5 },
+  { examType: 'CBSE_12', subject: 'Political Science', chapter: 'International Organisations', sortOrder: 6 },
+  { examType: 'CBSE_12', subject: 'Political Science', chapter: 'Security in Contemporary World', sortOrder: 7 },
+  { examType: 'CBSE_12', subject: 'Political Science', chapter: 'Environment and Natural Resources', sortOrder: 8 },
+  { examType: 'CBSE_12', subject: 'Political Science', chapter: 'Globalisation', sortOrder: 9 },
+  { examType: 'CBSE_12', subject: 'Political Science', chapter: 'Constituent Assembly and the Constitution', sortOrder: 10 },
+  { examType: 'CBSE_12', subject: 'Political Science', chapter: 'Fundamental Rights and Directive Principles', sortOrder: 11 },
+  { examType: 'CBSE_12', subject: 'Political Science', chapter: 'Federalism', sortOrder: 12 },
+
+  // ── Physical Education ──
+  { examType: 'CBSE_12', subject: 'Physical Education', chapter: 'Planning in Sports', sortOrder: 1 },
+  { examType: 'CBSE_12', subject: 'Physical Education', chapter: 'Sports and Nutrition', sortOrder: 2 },
+  { examType: 'CBSE_12', subject: 'Physical Education', chapter: 'Yoga and Lifestyle', sortOrder: 3 },
+  { examType: 'CBSE_12', subject: 'Physical Education', chapter: 'Physical Education and Sports for CWSN', sortOrder: 4 },
+  { examType: 'CBSE_12', subject: 'Physical Education', chapter: 'Children and Women in Sports', sortOrder: 5 },
+  { examType: 'CBSE_12', subject: 'Physical Education', chapter: 'Test and Measurement in Sports', sortOrder: 6 },
+  { examType: 'CBSE_12', subject: 'Physical Education', chapter: 'Physiology and Injuries in Sports', sortOrder: 7 },
+  { examType: 'CBSE_12', subject: 'Physical Education', chapter: 'Psychology and Sports', sortOrder: 8 },
+  { examType: 'CBSE_12', subject: 'Physical Education', chapter: 'Training in Sports', sortOrder: 9 },
+
+  // ── Informatics Practices ──
+  { examType: 'CBSE_12', subject: 'Informatics Practices', chapter: 'Data Handling using Pandas I', sortOrder: 1 },
+  { examType: 'CBSE_12', subject: 'Informatics Practices', chapter: 'Data Handling using Pandas II', sortOrder: 2 },
+  { examType: 'CBSE_12', subject: 'Informatics Practices', chapter: 'Data Visualization using Matplotlib', sortOrder: 3 },
+  { examType: 'CBSE_12', subject: 'Informatics Practices', chapter: 'Database Query using SQL', sortOrder: 4 },
+  { examType: 'CBSE_12', subject: 'Informatics Practices', chapter: 'Introduction to Computer Networks', sortOrder: 5 },
+  { examType: 'CBSE_12', subject: 'Informatics Practices', chapter: 'Society, Law and Ethics', sortOrder: 6 },
+  { examType: 'CBSE_12', subject: 'Informatics Practices', chapter: 'Data Structures and Algorithms', sortOrder: 7 },
+  { examType: 'CBSE_12', subject: 'Informatics Practices', chapter: 'Project Based Learning', sortOrder: 8 },
+
+  // ── Computer Science ──
+  { examType: 'CBSE_12', subject: 'Computer Science', chapter: 'Computational Thinking and Programming I', sortOrder: 1 },
+  { examType: 'CBSE_12', subject: 'Computer Science', chapter: 'Computational Thinking and Programming II', sortOrder: 2 },
+  { examType: 'CBSE_12', subject: 'Computer Science', chapter: 'Data Structures', sortOrder: 3 },
+  { examType: 'CBSE_12', subject: 'Computer Science', chapter: 'Computer Networks', sortOrder: 4 },
+  { examType: 'CBSE_12', subject: 'Computer Science', chapter: 'Database Management Systems', sortOrder: 5 },
+  { examType: 'CBSE_12', subject: 'Computer Science', chapter: 'Society, Law and Ethics', sortOrder: 6 },
+
+  // ═══════════════════════════════════════════
+  // JEE MAIN
+  // ═══════════════════════════════════════════
+  // ═══════════════════════════════════════════
   // JEE MAIN
   // ═══════════════════════════════════════════
 

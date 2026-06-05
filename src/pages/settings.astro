@@ -93,7 +93,7 @@ const userStream = settings.stream || 'science';
                 class:list={{ 'settings-chip': true, 'settings-chip--exam-selected': isSelected, 'settings-chip--item': true }}
                 data-exam={exam.key}
                 data-selected={isSelected ? '1' : '0'}
-                data-group={exam.group}
+                data-groups={JSON.stringify(exam.groups)}
               >
                 <span class="settings-chip-label">{exam.label}</span>
                 <span class="settings-chip-sub">{exam.subjects.length} subjects</span>
@@ -160,8 +160,8 @@ const userStream = settings.stream || 'science';
 
   function filterExamsByStream(stream) {
     examItems.forEach(item => {
-      const group = item.dataset.group;
-      if (group === stream) {
+      const groups = JSON.parse(item.dataset.groups || '[]');
+      if (groups.includes(stream)) {
         item.classList.remove('hidden');
       } else {
         item.classList.add('hidden');

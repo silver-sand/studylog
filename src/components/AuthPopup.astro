@@ -1,6 +1,9 @@
 <div class="ds-overlay hidden" id="auth-popup">
   <div class="ds-modal ds-modal-sm" style="position:relative;">
 
+    <!-- Close button -->
+    <button id="auth-popup-close" style="position:absolute;top:var(--ds-space-3);right:var(--ds-space-3);background:none;border:none;color:var(--ds-text-muted);font-size:1.25rem;cursor:pointer;line-height:1;padding:var(--ds-space-1);border-radius:var(--ds-radius-sm);" aria-label="Close">&times;</button>
+
     <!-- Tabs -->
     <div class="ds-tabs" style="margin-bottom:var(--ds-space-5);">
       <button class="ds-tab active" data-tab="login" id="tab-login">Log In</button>
@@ -43,6 +46,12 @@
       <div class="ds-error-text hidden" id="popup-signup-error" style="padding:var(--ds-space-1-5) var(--ds-space-3);background:var(--ds-danger-bg);border:1px solid var(--ds-danger-border);border-radius:var(--ds-radius-md);"></div>
       <button type="submit" class="ds-btn ds-btn-primary" id="popup-signup-btn" style="width:100%;">Create account</button>
     </form>
+
+    <!-- Footer links -->
+    <div style="margin-top:var(--ds-space-4);display:flex;flex-direction:column;align-items:center;gap:var(--ds-space-2);">
+      <a href="/daily" id="auth-popup-guest" class="ds-link" style="font-size:var(--ds-text-sm);">Continue as Guest</a>
+      <a href="/" id="auth-popup-home" class="ds-link" style="font-size:var(--ds-text-xs);color:var(--ds-text-muted);">Back to Home</a>
+    </div>
   </div>
 </div>
 

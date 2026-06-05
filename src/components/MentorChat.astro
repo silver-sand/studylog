@@ -95,7 +95,7 @@ const { title = 'AI Mentor' } = Astro.props;
   });
 
   // Chip buttons
-  document.querySelectorAll('.chip').forEach(chip => {
+  document.querySelectorAll('.ds-chip').forEach(chip => {
     chip.addEventListener('click', () => {
       const prompt = chip.dataset.prompt;
       if (prompt && !isStreaming) {

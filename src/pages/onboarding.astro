@@ -3,76 +3,129 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import { getSessionUser, getTokenFromCookie } from '../services/auth-service';
 import { STREAMS } from '../utils/stream-map';
 import { EXAM_DEFINITIONS, getSubjectsForExamKeys } from '../utils/exam-map';
+import { createDefaultProfile, computeDailyAverage } from '../types/profile';
 
 const user = getSessionUser(getTokenFromCookie(Astro.request));
 if (!user) {
   return Astro.redirect('/');
 }
+const profile = createDefaultProfile();
+const CLASS_LEVELS = [
+  { value: 'class_9', label: 'Class 9' },
+  { value: 'class_10', label: 'Class 10' },
+  { value: 'class_11', label: 'Class 11' },
+  { value: 'class_12', label: 'Class 12' },
+  { value: 'dropper', label: 'Dropper' },
+  { value: 'college', label: 'College' },
+  { value: 'other', label: 'Other' },
+];
 ---
 
 <BaseLayout title="Get Started">
   <main class="ds-flex-center" style="min-height:80vh;padding:2rem 1rem;">
-    <div class="ds-onboarding-card">
-      <div class="ds-flex-center ds-gap-md" id="step-indicator" style="margin-bottom:2rem;">
+    <div class="ds-onboarding-card" style="max-width:480px;width:100%;">
+
+      <!-- Step indicator -->
+      <div class="ds-flex-center ds-gap-md" id="step-indicator" style="margin-bottom:var(--ds-space-6);">
         <div class="ds-step active" data-step="1">1</div>
-        <div class="ds-divider" style="width:2rem;"></div>
+        <div class="ds-divider" style="width:1.5rem;"></div>
         <div class="ds-step" data-step="2">2</div>
-        <div class="ds-divider" style="width:2rem;"></div>
+        <div class="ds-divider" style="width:1.5rem;"></div>
         <div class="ds-step" data-step="3">3</div>
+        <div class="ds-divider" style="width:1.5rem;"></div>
+        <div class="ds-step" data-step="4">4</div>
+        <div class="ds-divider" style="width:1.5rem;"></div>
+        <div class="ds-step" data-step="5">5</div>
       </div>
 
-      <!-- Step 1: Name + Stream -->
+      <!-- Step 1: Name + Class Level -->
       <div class="step-content" data-step="1">
-        <h2 class="ds-heading-section ds-mb-0" style="font-size:var(--ds-text-xl);">Welcome! Who are you?</h2>
-        <p class="ds-body-sm" style="margin-bottom:1.25rem;">Tell me your name and stream so I can set things up.</p>
-        <input type="text" id="onboarding-name" class="ds-input" placeholder="Your name" value={user.name !== 'Guest' ? user.name : ''} required />
-        <div class="stream-options ds-mt-4">
+        <h2 class="ds-heading-section" style="font-size:var(--ds-text-xl);margin:0 0 0.25rem;">Tell us about yourself</h2>
+        <p class="ds-caption" style="margin:0 0 var(--ds-space-5);">Your name and current education level.</p>
+        <div style="display:flex;flex-direction:column;gap:var(--ds-space-3);">
+          <input type="text" id="onboarding-name" class="ds-input" placeholder="Your name" value={user.name !== 'Guest' ? user.name : ''} required />
+          <select id="onboarding-classlevel" class="ds-input">
+            <option value="">Select your class level</option>
+            {CLASS_LEVELS.map(cl => (
+              <option value={cl.value}>{cl.label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <!-- Step 2: Stream -->
+      <div class="step-content ds-hidden" data-step="2">
+        <h2 class="ds-heading-section" style="font-size:var(--ds-text-xl);margin:0 0 0.25rem;">Choose your stream</h2>
+        <p class="ds-caption" style="margin:0 0 var(--ds-space-5);">This helps us recommend the right exams and subjects.</p>
+        <div style="display:flex;flex-direction:column;gap:var(--ds-space-2-5);">
           {Object.entries(STREAMS).map(([key, stream]) => (
-            <button type="button" class="stream-card" data-stream={key}>
-              <span class="stream-icon">{stream.icon}</span>
-              <span class="stream-name">{stream.label}</span>
-              <span class="stream-desc">{stream.examKeys.length} exams available</span>
+            <button type="button" class="stream-card" data-stream={key} style="display:flex;align-items:center;gap:var(--ds-space-3);padding:var(--ds-space-3-5) var(--ds-space-4);border-radius:var(--ds-radius-lg);border:1px solid var(--ds-border-subtle);background:var(--ds-surface-900);transition:all 0.15s;cursor:pointer;text-align:left;">
+              <span style="font-size:1.5rem;">{stream.icon}</span>
+              <div>
+                <div style="font-weight:var(--ds-weight-semibold);color:var(--ds-text-primary);">{stream.label}</div>
+                <div style="font-size:var(--ds-text-xs);color:var(--ds-text-muted);">{stream.examKeys.length} exams available</div>
+              </div>
             </button>
           ))}
         </div>
         <input type="hidden" id="onboarding-stream" />
       </div>
 
-      <!-- Step 2: Exams (multi-select based on stream) -->
-      <div class="step-content ds-hidden" data-step="2">
-        <h2 class="ds-heading-section ds-mb-0" style="font-size:var(--ds-text-xl);">Which exams are you preparing for?</h2>
-        <p class="ds-body-sm" style="margin-bottom:1.25rem;">Select one or more exams. Subjects will be auto-configured.</p>
-        <div class="exam-grid" id="exam-grid">
+      <!-- Step 3: Exams -->
+      <div class="step-content ds-hidden" data-step="3">
+        <h2 class="ds-heading-section" style="font-size:var(--ds-text-xl);margin:0 0 0.25rem;">Select your exams</h2>
+        <p class="ds-caption" style="margin:0 0 var(--ds-space-5);">Choose one or more exams. Subjects auto-configure.</p>
+        <div class="exam-grid" id="exam-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:var(--ds-space-2);">
           {EXAM_DEFINITIONS.map(exam => (
             <button type="button"
               class="exam-card ds-hidden"
               data-exam={exam.key}
-              data-group={exam.group}
+              data-groups={JSON.stringify(exam.groups)}
+              style="padding:var(--ds-space-2-5) var(--ds-space-3);border-radius:var(--ds-radius-lg);border:1px solid var(--ds-border-subtle);background:var(--ds-surface-900);cursor:pointer;text-align:left;transition:all 0.15s;"
             >
-              <span class="exam-name">{exam.label}</span>
-              <span class="exam-subjects">{exam.subjects.length} subjects</span>
+              <div style="font-size:var(--ds-text-sm);font-weight:var(--ds-weight-semibold);color:var(--ds-text-primary);">{exam.label}</div>
+              <div style="font-size:var(--ds-text-2xs);color:var(--ds-text-muted);">{exam.subjects.length} subjects</div>
             </button>
           ))}
         </div>
-        <p class="ds-caption ds-mt-4" id="exam-count">Select at least one exam</p>
+        <p class="ds-caption" style="margin-top:var(--ds-space-3);" id="exam-count">Select at least one exam</p>
         <input type="hidden" id="onboarding-exams" />
       </div>
 
-      <!-- Step 3: Target -->
-      <div class="step-content ds-hidden" data-step="3">
-        <h2 class="ds-heading-section ds-mb-0" style="font-size:var(--ds-text-xl);">Set your weekly target</h2>
-        <p class="ds-body-sm" style="margin-bottom:1.25rem;">How many hours can you study per week?</p>
-        <div class="target-input-group">
-          <input type="number" id="onboarding-hours" class="ds-input" min="1" max="168" value="35" style="width:6rem;text-align:center;font-size:var(--ds-text-lg);" />
-          <span class="ds-body-sm">hours / week</span>
+      <!-- Step 4: Target hours + days -->
+      <div class="step-content ds-hidden" data-step="4">
+        <h2 class="ds-heading-section" style="font-size:var(--ds-text-xl);margin:0 0 0.25rem;">Set your weekly target</h2>
+        <p class="ds-caption" style="margin:0 0 var(--ds-space-5);">How many hours and days per week?</p>
+        <div style="display:flex;flex-direction:column;gap:var(--ds-space-4);">
+          <div style="display:flex;align-items:center;gap:var(--ds-space-3);">
+            <input type="number" id="onboarding-hours" class="ds-input" min="1" max="168" value="35" style="width:5rem;text-align:center;font-size:var(--ds-text-lg);" />
+            <span class="ds-body-sm">hours / week</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:var(--ds-space-3);">
+            <input type="number" id="onboarding-days" class="ds-input" min="1" max="7" value="5" style="width:5rem;text-align:center;font-size:var(--ds-text-lg);" />
+            <span class="ds-body-sm">days / week</span>
+          </div>
+          <p class="ds-caption" style="margin:0;" id="daily-average-display">≈ 7 hours per study day</p>
         </div>
-        <p class="ds-caption ds-mt-4">You can change this anytime in Settings.</p>
       </div>
 
-      <div id="form-error" class="ds-error-text ds-hidden" style="padding:0.5rem 0.75rem;background:var(--ds-danger-bg);border:1px solid var(--ds-danger-border);border-radius:var(--ds-radius-md);"></div>
+      <!-- Step 5: Review -->
+      <div class="step-content ds-hidden" data-step="5">
+        <h2 class="ds-heading-section" style="font-size:var(--ds-text-xl);margin:0 0 0.25rem;">Review your setup</h2>
+        <p class="ds-caption" style="margin:0 0 var(--ds-space-5);">Everything look right?</p>
+        <div id="review-summary" style="display:flex;flex-direction:column;gap:var(--ds-space-3);padding:var(--ds-space-4);border-radius:var(--ds-radius-lg);background:var(--ds-surface-900);border:1px solid var(--ds-border-subtle);">
+          <div class="review-row"><span class="review-label">Name</span><span class="review-value" id="review-name"></span></div>
+          <div class="review-row"><span class="review-label">Class</span><span class="review-value" id="review-class"></span></div>
+          <div class="review-row"><span class="review-label">Stream</span><span class="review-value" id="review-stream"></span></div>
+          <div class="review-row"><span class="review-label">Exams</span><span class="review-value" id="review-exams"></span></div>
+          <div class="review-row"><span class="review-label">Target</span><span class="review-value" id="review-target"></span></div>
+        </div>
+      </div>
 
-      <div class="ds-flex-between ds-mt-8">
-        <button id="prev-btn" class="ds-btn ds-btn-ghost ds-hidden">Back</button>
+      <div id="form-error" class="ds-error-text ds-hidden" style="margin-top:var(--ds-space-3);padding:var(--ds-space-1-5) var(--ds-space-3);background:var(--ds-danger-bg);border:1px solid var(--ds-danger-border);border-radius:var(--ds-radius-md);"></div>
+
+      <div style="display:flex;gap:var(--ds-space-3);margin-top:var(--ds-space-6);">
+        <button id="prev-btn" class="ds-btn ds-btn-ghost ds-hidden" style="flex-shrink:0;">Back</button>
         <button id="next-btn" class="ds-btn ds-btn-primary" style="flex:1;">Continue</button>
       </div>
     </div>
@@ -80,22 +133,24 @@ if (!user) {
 </BaseLayout>
 
 <script>
-  const steps = [1, 2, 3];
+  const CLASS_LEVEL_LABELS = {
+    class_9: 'Class 9', class_10: 'Class 10', class_11: 'Class 11', class_12: 'Class 12',
+    dropper: 'Dropper', college: 'College', other: 'Other',
+  };
+  const STREAM_LABELS = { science: 'Science', commerce: 'Commerce', humanities: 'Humanities' };
+
+  const steps = [1, 2, 3, 4, 5];
   let currentStep = 1;
+  let selectedExams = [];
+
   const indicators = document.querySelectorAll('.step');
   const stepContents = document.querySelectorAll('.step-content');
   const prevBtn = document.getElementById('prev-btn');
   const nextBtn = document.getElementById('next-btn');
   const errorDiv = document.getElementById('form-error');
-  const examGrid = document.getElementById('exam-grid');
 
-  function showError(msg) {
-    errorDiv.textContent = msg;
-    errorDiv.classList.remove('hidden');
-  }
-  function hideError() {
-    errorDiv.classList.add('hidden');
-  }
+  function showError(msg) { errorDiv.textContent = msg; errorDiv.classList.remove('hidden'); }
+  function hideError() { errorDiv.classList.add('hidden'); }
 
   function updateStep(step) {
     currentStep = step;
@@ -107,24 +162,37 @@ if (!user) {
       el.classList.toggle('completed', s < step);
     });
     prevBtn.classList.toggle('hidden', step === 1);
-    nextBtn.textContent = step === steps.length ? 'Finish' : 'Continue';
+    nextBtn.textContent = step === steps.length ? 'Finish Setup' : 'Continue';
   }
 
   function getStepData(step) {
     switch (step) {
       case 1: {
         const name = document.getElementById('onboarding-name').value.trim();
-        const stream = document.getElementById('onboarding-stream').value;
-        return { valid: name.length > 0 && !!stream };
+        const classLevel = document.getElementById('onboarding-classlevel').value;
+        if (!name) return { valid: false, msg: 'Please enter your name.' };
+        if (!classLevel) return { valid: false, msg: 'Please select your class level.' };
+        return { valid: true, data: { name, classLevel } };
       }
       case 2: {
-        const selected = document.querySelectorAll('#exam-grid .exam-card.selected');
-        return { valid: selected.length > 0 };
+        const stream = document.getElementById('onboarding-stream').value;
+        if (!stream) return { valid: false, msg: 'Please select a stream.' };
+        return { valid: true, data: { stream } };
       }
       case 3: {
-        const hours = parseInt(document.getElementById('onboarding-hours').value);
-        return { valid: hours > 0 && hours <= 168 };
+        const selected = document.querySelectorAll('#exam-grid .exam-card.selected');
+        if (selected.length === 0) return { valid: false, msg: 'Please select at least one exam.' };
+        return { valid: true, data: { exams: Array.from(selected).map(c => c.dataset.exam) } };
       }
+      case 4: {
+        const hours = parseInt(document.getElementById('onboarding-hours').value);
+        const days = parseInt(document.getElementById('onboarding-days').value);
+        if (isNaN(hours) || hours < 1 || hours > 168) return { valid: false, msg: 'Hours must be between 1 and 168.' };
+        if (isNaN(days) || days < 1 || days > 7) return { valid: false, msg: 'Days must be between 1 and 7.' };
+        return { valid: true, data: { targetHours: hours, studyDays: days } };
+      }
+      case 5:
+        return { valid: true };
     }
     return { valid: true };
   }
@@ -134,50 +202,71 @@ if (!user) {
   });
 
   nextBtn.addEventListener('click', async () => {
-    const data = getStepData(currentStep);
-    if (!data.valid) {
-      showError('Please complete this step to continue.');
+    const result = getStepData(currentStep);
+    if (!result.valid) {
+      showError(result.msg || 'Please complete this step to continue.');
       return;
     }
 
-    if (currentStep < steps.length) {
-      // Before advancing to step 2, filter exams by selected stream
-      if (currentStep === 1) {
-        const stream = document.getElementById('onboarding-stream').value;
-        document.querySelectorAll('#exam-grid .exam-card').forEach(card => {
-          if (card.dataset.group === stream) {
-            card.classList.remove('hidden');
-            // If only one exam in this stream, pre-select it
-          } else {
-            card.classList.add('hidden');
-            card.classList.remove('selected');
-          }
-        });
-        // Auto-select first exam if only one
-        const visibleCards = document.querySelectorAll('#exam-grid .exam-card:not(.hidden)');
-        if (visibleCards.length === 1) {
-          visibleCards[0].classList.add('selected');
+    if (currentStep === 1) {
+      // Name + class done — store for review later
+    }
+
+    if (currentStep === 2) {
+      // Filter exams by stream
+      const stream = document.getElementById('onboarding-stream').value;
+      document.querySelectorAll('#exam-grid .exam-card').forEach(card => {
+        const groups = JSON.parse(card.dataset.groups || '[]');
+        if (groups.includes(stream)) {
+          card.classList.remove('hidden');
+        } else {
+          card.classList.add('hidden');
+          card.classList.remove('selected');
         }
+      });
+      const visibleCards = document.querySelectorAll('#exam-grid .exam-card:not(.hidden)');
+      if (visibleCards.length === 1) {
+        visibleCards[0].classList.add('selected');
       }
+      updateExamCount();
+    }
+
+    if (currentStep === 4) {
+      // Update daily average display
+      updateDailyAverage();
+    }
+
+    if (currentStep === 5) {
+      // Populate review summary
+      document.getElementById('review-name').textContent = document.getElementById('onboarding-name').value.trim();
+      document.getElementById('review-class').textContent = CLASS_LEVEL_LABELS[document.getElementById('onboarding-classlevel').value] || '';
+      document.getElementById('review-stream').textContent = STREAM_LABELS[document.getElementById('onboarding-stream').value] || '';
+      const exams = Array.from(document.querySelectorAll('#exam-grid .exam-card.selected')).map(c => c.textContent.trim().split('\n')[0].trim());
+      document.getElementById('review-exams').textContent = exams.join(', ') || 'None';
+      const hours = document.getElementById('onboarding-hours').value;
+      const days = document.getElementById('onboarding-days').value;
+      document.getElementById('review-target').textContent = `${hours} hrs / ${days} days (≈${Math.round(hours/days * 10) / 10} hrs/day)`;
+    }
+
+    if (currentStep < steps.length) {
       updateStep(currentStep + 1);
     } else {
-      // Submit onboarding
+      // Submit
       nextBtn.disabled = true;
       nextBtn.textContent = 'Saving...';
 
       try {
         const name = document.getElementById('onboarding-name').value.trim();
+        const classLevel = document.getElementById('onboarding-classlevel').value;
         const stream = document.getElementById('onboarding-stream').value;
-        const selectedExams = [];
-        document.querySelectorAll('#exam-grid .exam-card.selected').forEach(card => {
-          selectedExams.push(card.dataset.exam);
-        });
+        const exams = Array.from(document.querySelectorAll('#exam-grid .exam-card.selected')).map(c => c.dataset.exam);
         const targetHours = document.getElementById('onboarding-hours').value;
+        const studyDays = document.getElementById('onboarding-days').value;
 
         const res = await fetch('/api/onboarding', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, stream, selectedExams, targetHours }),
+          body: JSON.stringify({ name, classLevel, stream, selectedExams: exams, targetHours, studyDaysPerWeek: studyDays }),
         });
 
         if (!res.ok) {
@@ -189,30 +278,50 @@ if (!user) {
       } catch (err) {
         showError(err instanceof Error ? err.message : 'Something went wrong');
         nextBtn.disabled = false;
-        nextBtn.textContent = 'Finish';
+        nextBtn.textContent = 'Finish Setup';
       }
     }
   });
 
+  function updateExamCount() {
+    const count = document.querySelectorAll('#exam-grid .exam-card.selected').length;
+    document.getElementById('exam-count').textContent = count + ' exam' + (count !== 1 ? 's' : '') + ' selected';
+  }
+
+  function updateDailyAverage() {
+    const h = parseInt(document.getElementById('onboarding-hours').value) || 0;
+    const d = parseInt(document.getElementById('onboarding-days').value) || 1;
+    const avg = Math.round((h / d) * 10) / 10;
+    document.getElementById('daily-average-display').textContent = `≈ ${avg} hours per study day`;
+  }
+
   // Stream selection
   document.querySelectorAll('.stream-card').forEach(card => {
     card.addEventListener('click', () => {
-      document.querySelectorAll('.stream-card').forEach(c => c.classList.remove('selected'));
-      card.classList.add('selected');
+      document.querySelectorAll('.stream-card').forEach(c => c.style.borderColor = 'var(--ds-border-subtle)');
+      card.style.borderColor = 'var(--ds-accent-500)';
       document.getElementById('onboarding-stream').value = card.dataset.stream;
       hideError();
     });
   });
 
   // Exam selection (multi-select)
-  examGrid.addEventListener('click', (e) => {
+  document.getElementById('exam-grid').addEventListener('click', (e) => {
     const card = e.target.closest('.exam-card');
-    if (!card) return;
+    if (!card || card.classList.contains('hidden')) return;
     card.classList.toggle('selected');
-    const count = document.querySelectorAll('#exam-grid .exam-card.selected').length;
-    document.getElementById('exam-count').textContent = count + ' selected';
+    if (card.classList.contains('selected')) {
+      card.style.borderColor = 'var(--ds-accent-500)';
+    } else {
+      card.style.borderColor = 'var(--ds-border-subtle)';
+    }
+    updateExamCount();
     hideError();
   });
+
+  // Live daily average updates
+  document.getElementById('onboarding-hours').addEventListener('input', updateDailyAverage);
+  document.getElementById('onboarding-days').addEventListener('input', updateDailyAverage);
 
   // Enter key advances
   document.addEventListener('keydown', (e) => {
@@ -221,22 +330,11 @@ if (!user) {
 </script>
 
 <style>
-  .stream-card { cursor: pointer; }
-  .stream-card.selected {
-    border-color: var(--ds-accent-500);
-    background: var(--ds-accent-bg);
-  }
-  .stream-icon { font-size: 1.5rem; }
-  .stream-name { font-size: 0.9rem; font-weight: 600; color: var(--ds-text-primary); }
-  .stream-desc { font-size: var(--ds-text-xs); color: var(--ds-text-muted); }
-  .exam-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--ds-space-2); }
-  .exam-card { cursor: pointer; }
-  .exam-card.selected {
-    border-color: var(--ds-accent-500);
-    background: var(--ds-accent-bg);
-  }
-  .exam-name { font-size: var(--ds-text-sm); font-weight: 600; color: var(--ds-text-primary); }
-  .exam-subjects { font-size: var(--ds-text-2xs); color: var(--ds-text-muted); }
-  .target-input-group { display: flex; align-items: center; gap: var(--ds-space-3); }
   .hidden { display: none !important; }
+  .review-row { display: flex; justify-content: space-between; align-items: center; padding: 0.25rem 0; }
+  .review-label { font-size: var(--ds-text-sm); color: var(--ds-text-muted); }
+  .review-value { font-size: var(--ds-text-sm); color: var(--ds-text-primary); font-weight: var(--ds-weight-medium); text-align: right; }
+  @media (max-width: 480px) {
+    .exam-grid { grid-template-columns: 1fr !important; }
+  }
 </style>
