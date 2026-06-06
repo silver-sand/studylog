@@ -123,7 +123,7 @@ const CLASS_LEVELS = [
         <div class="exam-grid" id="exam-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:var(--ds-space-2);">
           {EXAM_DEFINITIONS.map(exam => (
             <button type="button"
-              class="exam-card ds-hidden"
+              class="exam-card hidden"
               data-exam={exam.key}
               data-groups={JSON.stringify(exam.groups)}
               style="padding:var(--ds-space-2-5) var(--ds-space-3);border-radius:var(--ds-radius-lg);border:1px solid var(--ds-border-subtle);background:var(--ds-surface-900);cursor:pointer;text-align:left;transition:all 0.15s;"
@@ -219,7 +219,7 @@ const CLASS_LEVELS = [
         </div>
       </div>
 
-      <div id="form-error" class="ds-error-text ds-hidden" style="margin-top:var(--ds-space-3);padding:var(--ds-space-1-5) var(--ds-space-3);background:var(--ds-danger-bg);border:1px solid var(--ds-danger-border);border-radius:var(--ds-radius-md);"></div>
+      <div id="form-error" class="ds-error-text hidden" style="margin-top:var(--ds-space-3);padding:var(--ds-space-1-5) var(--ds-space-3);background:var(--ds-danger-bg);border:1px solid var(--ds-danger-border);border-radius:var(--ds-radius-md);"></div>
 
       <div style="display:flex;gap:var(--ds-space-3);margin-top:var(--ds-space-6);">
         <button id="prev-btn" class="ds-btn ds-btn-ghost hidden" style="flex-shrink:0;">← Back</button>
