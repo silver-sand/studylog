@@ -20,25 +20,26 @@ const arrowSvg = isUp
   {data.current.hours === 0 && data.previous.hours === 0 ? (
     <p class="ds-caption" style="text-align:center;padding:2rem 0;">Start logging your study sessions to see your progress here.</p>
   ) : (
-  <div class="columns">
-    <div class="col prev">
-      <span class="col-label">Last Week</span>
-      <span class="col-hours">{data.previous.hours}h</span>
-      <span class="col-days">{data.previous.days} days</span>
-    </div>
-    <div class="vs">
-      <span class="arrow-icon" set:html={arrowSvg}></span>
-      <span class="change" class:list={{ up: isUp, down: isDown, flat: !isUp && !isDown }}>
-        {data.change > 0 ? '+' : ''}{data.change}h
-      </span>
-      <span class="change-pct" class:list={{ up: isUp, down: isDown }}>
-        {data.changePercent > 0 ? '+' : ''}{data.changePercent}%
-      </span>
-    </div>
-    <div class="col current">
-      <span class="col-label">This Week</span>
-      <span class="col-hours">{data.current.hours}h</span>
-      <span class="col-days">{data.current.days} days</span>
+    <div class="columns">
+      <div class="col prev">
+        <span class="col-label">Last Week</span>
+        <span class="col-hours">{data.previous.hours}h</span>
+        <span class="col-days">{data.previous.days} days</span>
+      </div>
+      <div class="vs">
+        <span class="arrow-icon" set:html={arrowSvg}></span>
+        <span class="change" class:list={{ up: isUp, down: isDown, flat: !isUp && !isDown }}>
+          {data.change > 0 ? '+' : ''}{data.change}h
+        </span>
+        <span class="change-pct" class:list={{ up: isUp, down: isDown }}>
+          {data.changePercent > 0 ? '+' : ''}{data.changePercent}%
+        </span>
+      </div>
+      <div class="col current">
+        <span class="col-label">This Week</span>
+        <span class="col-hours">{data.current.hours}h</span>
+        <span class="col-days">{data.current.days} days</span>
+      </div>
     </div>
   )}
 </div>
