@@ -59,8 +59,9 @@ const c = colorMap[color];
     background: var(--ds-bg-surface);
     border: 1px solid var(--ds-border-default);
     border-radius: var(--ds-radius-lg);
-    padding: var(--ds-space-2) var(--ds-space-3);
+    padding: clamp(var(--ds-space-1), 1.5vw, var(--ds-space-3)) clamp(var(--ds-space-2), 2vw, var(--ds-space-3));
     transition: border-color 0.15s, transform 0.15s;
+    width: 100%;
   }
   .syllabus-card:hover {
     border-color: var(--ds-border-hover);
@@ -77,24 +78,25 @@ const c = colorMap[color];
     gap: var(--ds-space-1);
   }
   .subject-icon {
-    width: 2rem;
-    height: 2rem;
+    width: clamp(1.75rem, 2.2vw, 2.5rem);
+    height: clamp(1.75rem, 2.2vw, 2.5rem);
     border-radius: var(--ds-radius-md);
     border: 1px solid var(--ds-border-subtle);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.85rem;
+    font-size: clamp(0.75rem, 1vw, 0.95rem);
     font-weight: 700;
+    flex-shrink: 0;
   }
   .subject-name {
-    font-size: var(--ds-text-sm);
+    font-size: clamp(var(--ds-text-base), 1.2vw, var(--ds-text-md));
     font-weight: var(--ds-weight-semibold);
     color: var(--ds-text-primary);
     margin: 0;
   }
   .subject-count {
-    font-size: var(--ds-text-2xs);
+    font-size: var(--ds-text-xs);
     color: var(--ds-text-muted);
     margin: 0;
     font-family: var(--ds-font-mono);
@@ -104,7 +106,7 @@ const c = colorMap[color];
     align-items: center;
   }
   .percent-text {
-    font-size: var(--ds-text-lg);
+    font-size: clamp(var(--ds-text-base), 1.5vw, var(--ds-text-xl));
     font-weight: var(--ds-weight-bold);
     font-family: var(--ds-font-mono);
   }

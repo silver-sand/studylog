@@ -302,6 +302,12 @@ function subjectColor(s: string): string {
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
     border-bottom: none;
+    transition: border-radius 0.2s ease;
+  }
+  .subject-section.collapsed > .subject-header > .syllabus-card {
+    border-bottom-left-radius: var(--ds-radius-lg);
+    border-bottom-right-radius: var(--ds-radius-lg);
+    border-bottom: 1px solid var(--ds-border-default);
   }
 
   /* Chevron indicator */
@@ -319,10 +325,10 @@ function subjectColor(s: string): string {
     top: 50%;
     width: 0;
     height: 0;
-    border-left: 5px solid transparent;
-    border-right: 5px solid transparent;
-    border-top: 6px solid var(--ds-text-muted);
-    transition: transform 0.2s ease;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 8px solid var(--ds-text-muted);
+    transition: transform 0.25s ease, border-top-color 0.15s;
     pointer-events: none;
   }
   .collapsed .subject-header::after {
@@ -330,6 +336,12 @@ function subjectColor(s: string): string {
   }
   .subject-header:hover::after {
     border-top-color: var(--ds-text-secondary);
+  }
+  .subject-section {
+    transition: margin-bottom 0.2s ease;
+  }
+  .subject-section.collapsed {
+    margin-bottom: 0;
   }
   .subject-section.collapsed .chapter-list {
     display: none;
