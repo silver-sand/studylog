@@ -14,8 +14,8 @@ const subjects = settings.subjects || ['Physics', 'Chemistry', 'Mathematics', 'B
 <BaseLayout title="Study Timer">
   <div class="max-w-lg mx-auto">
     <div class="mb-6">
-      <h1 class="page-title">Study Timer</h1>
-      <p class="page-sub">Track your study sessions with precision. When you're done, save directly as a log entry.</p>
+      <h1 class="ds-heading-page" style="margin-bottom:0.25rem;">Study Timer</h1>
+      <p class="ds-body-sm" style="margin:0;">Track your study sessions with precision. When you're done, save directly as a log entry.</p>
     </div>
 
     <StudyTimer subjects={subjects} />
@@ -30,15 +30,5 @@ const subjects = settings.subjects || ['Physics', 'Chemistry', 'Mathematics', 'B
 </BaseLayout>
 
 <style>
-  .page-title {
-    font-size: 1.375rem;
-    font-weight: 700;
-    color: #f1f5f9;
-    letter-spacing: -0.01em;
-    margin-bottom: 0.25rem;
-  }
-  .page-sub {
-    font-size: 0.875rem;
-    color: #64748b;
-  }
+  /* Timer page uses design system classes */
 </style>

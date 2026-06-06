@@ -1110,6 +1110,13 @@ export class SQLiteAdapter implements DatabaseInterface {
     return this.getUserById(id);
   }
 
+  updateUserCredentials(id: string, email: string, passwordHash: string): boolean {
+    const db = this.getDb();
+    db.run(`UPDATE users SET email = ?, password_hash = ? WHERE id = ?`, [email, passwordHash, id]);
+    this.save();
+    return true;
+  }
+
   deleteSession(token: string): boolean {
     const db = this.getDb();
     db.run(`DELETE FROM sessions WHERE token = ?`, [token]);

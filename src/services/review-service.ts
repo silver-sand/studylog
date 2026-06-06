@@ -1,9 +1,14 @@
 import { getDb } from '../db';
 import { createAIServiceFromEnv } from '../ai';
+import type { AIService } from '../ai/interface';
 import { getWeekRange } from '../utils/date';
 import type { WeeklyReview } from '../types/review';
 
-const ai = createAIServiceFromEnv();
+let aiInstance: AIService | null = null;
+function getAI(): AIService {
+  if (!aiInstance) aiInstance = createAIServiceFromEnv();
+  return aiInstance;
+}
 
 export async function generateReview(weekStart?: string): Promise<WeeklyReview> {
   const db = getDb();
@@ -14,7 +19,7 @@ export async function generateReview(weekStart?: string): Promise<WeeklyReview> 
     throw new Error(`No entries found for week ${range.weekStart} to ${range.weekEnd}. Add some study logs first!`);
   }
 
-  const reviewData = await ai.generateWeeklyReview(
+  const reviewData = await getAI().generateWeeklyReview(
     entries.map(e => ({
       id: e.id,
       date: e.date,

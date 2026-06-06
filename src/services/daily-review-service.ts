@@ -1,9 +1,14 @@
 import { getDb } from '../db';
 import { createAIServiceFromEnv } from '../ai';
+import type { AIService } from '../ai/interface';
 import { formatDate } from '../utils/date';
 import type { DailyReview } from '../types/review';
 
-const ai = createAIServiceFromEnv();
+let aiInstance: AIService | null = null;
+function getAI(): AIService {
+  if (!aiInstance) aiInstance = createAIServiceFromEnv();
+  return aiInstance;
+}
 
 export async function generateDailyReview(date?: string): Promise<DailyReview> {
   const db = getDb();
@@ -12,7 +17,7 @@ export async function generateDailyReview(date?: string): Promise<DailyReview> {
 
   if (entries.length === 0) {
     // Still generate a summary for empty days
-    const reviewData = await ai.generateDailyReview([]);
+    const reviewData = await getAI().generateDailyReview([]);
     return db.upsertDailyReview({
       date: targetDate,
       content: reviewData.content,
@@ -26,7 +31,7 @@ export async function generateDailyReview(date?: string): Promise<DailyReview> {
     });
   }
 
-  const reviewData = await ai.generateDailyReview(
+  const reviewData = await getAI().generateDailyReview(
     entries.map(e => ({
       id: e.id,
       date: e.date,

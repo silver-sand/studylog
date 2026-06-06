@@ -1,4 +1,4 @@
-import type { EntryAnalysis, WeeklyReviewData, MentorContext, ChatMessage } from '../types/ai';
+import type { EntryAnalysis, WeeklyReviewData, DailyReviewData, MentorContext, ChatMessage } from '../types/ai';
 import type { Entry } from '../types/entry';
 
 export interface AIService {
@@ -8,6 +8,9 @@ export interface AIService {
   readonly modelName: string;
 
   analyzeEntry(content: string): Promise<EntryAnalysis>;
+  generateDailyReview(
+    entries: Pick<Entry, 'id' | 'date' | 'content' | 'subjects' | 'chapters' | 'hoursStudied' | 'studyType' | 'focusRating'>[]
+  ): Promise<DailyReviewData>;
   generateWeeklyReview(
     entries: Pick<Entry, 'id' | 'date' | 'content' | 'subjects' | 'chapters' | 'hoursStudied'>[]
   ): Promise<WeeklyReviewData>;

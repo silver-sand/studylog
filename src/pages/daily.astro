@@ -143,9 +143,11 @@ const hasEntriesToday = recentEntries.some(e => e.date === today);
   })();
 
   // Auto-dismiss entry form success — refresh daily review when entries change
+  let submitTimeout = null;
   const form = document.querySelector('form');
   form?.addEventListener('submit', async (e) => {
-    setTimeout(async () => {
+    if (submitTimeout) clearTimeout(submitTimeout);
+    submitTimeout = setTimeout(async () => {
       if (generateBtn && section) {
         try {
           const res = await fetch('/api/daily?date=' + new Date().toISOString().split('T')[0]);

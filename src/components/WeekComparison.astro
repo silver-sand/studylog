@@ -15,8 +15,11 @@ const arrowSvg = isUp
   : '';
 ---
 
-<div class="card">
+<div class="ds-card">
   <h3 class="card-title">Week Over Week</h3>
+  {data.current.hours === 0 && data.previous.hours === 0 ? (
+    <p class="ds-caption" style="text-align:center;padding:2rem 0;">Start logging your study sessions to see your progress here.</p>
+  ) : (
   <div class="columns">
     <div class="col prev">
       <span class="col-label">Last Week</span>
@@ -37,16 +40,10 @@ const arrowSvg = isUp
       <span class="col-hours">{data.current.hours}h</span>
       <span class="col-days">{data.current.days} days</span>
     </div>
-  </div>
+  )}
 </div>
 
 <style>
-  .card {
-    background: rgba(15, 23, 42, 0.8);
-    border: 1px solid rgba(51, 65, 85, 0.4);
-    border-radius: 0.75rem;
-    padding: 1.25rem;
-  }
   .card-title {
     font-size: 0.75rem;
     font-weight: 500;

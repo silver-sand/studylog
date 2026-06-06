@@ -1,12 +1,43 @@
 import { getDb } from '../db';
 import type { AuthResult, User } from '../types/auth';
 
+// ── Node 18+ safe crypto ──
+// Use global crypto if available (browsers, Node 19+), otherwise fall back to Node's crypto module.
+function getCrypto(): typeof globalThis.crypto & { randomUUID?: () => string } {
+  if (typeof globalThis !== 'undefined' && globalThis.crypto) {
+    return globalThis.crypto as any;
+  }
+  // Node 18: require('crypto').webcrypto is the Web Crypto API
+  try {
+    const nodeCrypto = require('crypto');
+    return (nodeCrypto as any).webcrypto || nodeCrypto;
+  } catch {
+    throw new Error('No crypto API available');
+  }
+}
+
+function generateUUID(): string {
+  const c = getCrypto();
+  if (typeof c.randomUUID === 'function') {
+    return c.randomUUID();
+  }
+  // Polyfill for older runtimes
+  const bytes = new Uint8Array(16);
+  c.getRandomValues(bytes);
+  // Set version 4 UUID bits
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
+}
+
 // ── Password hashing (Web Crypto API) ──
 
 async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(password);
-  const hash = await crypto.subtle.digest('SHA-256', data);
+  const c = getCrypto();
+  const hash = await c.subtle.digest('SHA-256', data);
   return Array.from(new Uint8Array(hash))
     .map(b => b.toString(16).padStart(2, '0'))
     .join('');
@@ -20,8 +51,9 @@ async function verifyPassword(password: string, hash: string): Promise<boolean> 
 // ── Session tokens ──
 
 function generateToken(): string {
+  const c = getCrypto();
   const bytes = new Uint8Array(32);
-  crypto.getRandomValues(bytes);
+  c.getRandomValues(bytes);
   return Array.from(bytes)
     .map(b => b.toString(16).padStart(2, '0'))
     .join('');
@@ -41,8 +73,7 @@ function getExpiresAt(): string {
  */
 export function createGuestUser(): { user: Omit<User, 'passwordHash'>; token: string } {
   const db = getDb();
-  const crypto = globalThis.crypto;
-  const guestId = crypto.randomUUID();
+  const guestId = generateUUID();
   const guestEmail = `guest-${guestId}@studylog.local`;
   const guestName = 'Guest';
 
@@ -79,14 +110,8 @@ export async function convertGuestToAuthenticated(
 
   const passwordHash = await hashPassword(password);
   db.updateUser(userId, { userType: 'authenticated', name });
-  // Update email and password_hash directly (updateUser doesn't expose these)
-  try {
-    const rawDb = (db as any).getDb();
-    rawDb.run(`UPDATE users SET email = ?, password_hash = ? WHERE id = ?`, [email, passwordHash, userId]);
-    (db as any).save();
-  } catch (e) {
-    console.warn('Failed to persist email/password during guest conversion:', e);
-  }
+  // Update email and password hash via the secure interface method
+  db.updateUserCredentials(userId, email, passwordHash);
 
   const user = db.getUserById(userId)!;
 
@@ -154,8 +179,6 @@ export function logout(token: string): boolean {
 export function getSessionUser(token: string | undefined | null): Omit<User, 'passwordHash'> | null {
   if (!token) return null;
   const db = getDb();
-
-  db.deleteExpiredSessions();
 
   const session = db.getSessionByToken(token);
   if (!session) return null;

@@ -1,8 +1,13 @@
 import { getDb } from '../db';
 import { createAIServiceFromEnv } from '../ai';
+import type { AIService } from '../ai/interface';
 import type { Entry, CreateEntryData, EntryFilters } from '../types/entry';
 
-const ai = createAIServiceFromEnv();
+let aiInstance: AIService | null = null;
+function getAI(): AIService {
+  if (!aiInstance) aiInstance = createAIServiceFromEnv();
+  return aiInstance;
+}
 
 export async function createEntry(data: CreateEntryData): Promise<Entry> {
   const db = getDb();
@@ -10,7 +15,7 @@ export async function createEntry(data: CreateEntryData): Promise<Entry> {
   const entry = db.createEntry(data);
 
   try {
-    const analysis = await ai.analyzeEntry(data.content);
+    const analysis = await getAI().analyzeEntry(data.content);
     return db.updateEntry(entry.id, {
       subjects: analysis.subjects,
       chapters: analysis.chapters,
@@ -35,7 +40,7 @@ export async function reanalyzeEntry(id: string): Promise<Entry | null> {
   db.updateEntry(id, { aiStatus: 'processing' });
 
   try {
-    const analysis = await ai.analyzeEntry(entry.content);
+    const analysis = await getAI().analyzeEntry(entry.content);
     return db.updateEntry(id, {
       subjects: analysis.subjects,
       chapters: analysis.chapters,

@@ -140,7 +140,7 @@ const filteredExams = exams.filter(e => selectedExams.some(s => s.includes(e.key
 
 <script>
   // ── Exam tab switching ──
-  const tabs = document.querySelectorAll('.exam-tab');
+  const tabs = document.querySelectorAll('.ds-tab');
   const contents = new Map();
   document.querySelectorAll('.exam-content').forEach((el) => {
     contents.set(el.dataset.examContent, el);

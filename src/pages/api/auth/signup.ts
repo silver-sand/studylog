@@ -1,8 +1,12 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../../db';
 import { signup } from '../../../services/auth-service';
+import { validateOrigin } from '../_csrf';
 
 export const POST: APIRoute = async ({ request }) => {
+  if (!validateOrigin(request)) {
+    return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
+  }
   try {
     const { name, email, password } = await request.json();
 

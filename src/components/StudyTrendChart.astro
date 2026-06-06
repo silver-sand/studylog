@@ -20,10 +20,10 @@ const points = data
   .join(' ');
 ---
 
-<div class="card">
+<div class="ds-card">
   <h3 class="card-title">Study Trend — Last {data.length} Days</h3>
   {data.length === 0 || data.every((d) => d.hours === 0) ? (
-    <p class="empty">No study data yet.</p>
+    <p class="ds-caption" style="text-align:center;padding:2rem 0;">Start logging your study sessions to see your progress here.</p>
   ) : (
     <div class="chart-wrap">
       <svg viewBox={`0 0 100 ${chartHeight}`} class="chart-svg" preserveAspectRatio="none">
@@ -84,12 +84,6 @@ const points = data
 </div>
 
 <style>
-  .card {
-    background: rgba(15, 23, 42, 0.8);
-    border: 1px solid rgba(51, 65, 85, 0.4);
-    border-radius: 0.75rem;
-    padding: 1.25rem;
-  }
   .card-title {
     font-size: 0.75rem;
     font-weight: 500;
@@ -97,10 +91,6 @@ const points = data
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin-bottom: 0.75rem;
-  }
-  .empty {
-    font-size: 0.85rem;
-    color: #475569;
   }
   .chart-wrap {
     width: 100%;

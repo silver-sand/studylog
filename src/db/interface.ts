@@ -55,6 +55,8 @@ export interface Database {
   getUserByEmail(email: string): User | null;
   getUserById(id: string): User | null;
   updateUser(id: string, data: Partial<Pick<User, 'name' | 'stream' | 'goal' | 'userType' | 'classLevel' | 'weakSubjects' | 'coaching' | 'targetRank' | 'weeklyStudyGoal' | 'studyDaysPerWeek'>>): User | null;
+  /** Update email and password hash (excluded from updateUser for security). */
+  updateUserCredentials(id: string, email: string, passwordHash: string): boolean;
   createSession(userId: string, token: string, expiresAt: string): Session;
   getSessionByToken(token: string): Session | null;
   deleteSession(token: string): boolean;
