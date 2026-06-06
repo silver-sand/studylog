@@ -20,15 +20,19 @@ const user = db.getCurrentUser();
 const hasEntries = stats.totalHoursThisWeek > 0 || stats.entriesThisMonth > 0;
 
 // Compute weak chapters from syllabus data
-const weakChapters = db.getSyllabusProgress(examKey)
-  .filter(p => p.weightedPercent < 50)
-  .slice(0, 5)
-  .map(p => ({
-    subject: p.subject || p.subtopic,
-    name: p.subtopic,
-    percent: p.weightedPercent,
-  }));
-const focusChapter = weakChapters?.[0] || null;
+const syllProgress = db.getSyllabusProgress(examKey);
+const hasAnyProgress = syllProgress.some(p => p.weightedPercent > 0);
+const weakChapters = hasAnyProgress
+  ? syllProgress
+      .filter(p => p.weightedPercent < 50)
+      .slice(0, 5)
+      .map(p => ({
+        subject: p.subject || p.subtopic,
+        name: p.subtopic,
+        percent: p.weightedPercent,
+      }))
+  : [];
+const focusChapter = hasAnyProgress ? (weakChapters?.[0] || null) : null;
 
 function formatGreeting(): string {
   const hour = new Date().getHours();

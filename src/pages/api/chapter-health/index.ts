@@ -13,6 +13,9 @@ export const GET: APIRoute = async ({ url, request }) => {
     }
 
     db.seedSyllabusData();
+    const allProgress = db.getSyllabusProgress(examType);
+    const hasProgress = allProgress.some(p => p.weightedPercent > 0);
+
     const weakChapters = db.getWeakChapters(examType);
     const count = weakChapters.length;
 
@@ -55,9 +58,10 @@ export const GET: APIRoute = async ({ url, request }) => {
 
     return new Response(JSON.stringify({
       examType,
-      weakCount: count,
+      hasProgress,
+      weakCount: hasProgress ? count : 0,
       totalChapters: allChapters.length,
-      weakChapters: weakChapters.slice(0, 20), // limit to 20 worst
+      weakChapters: hasProgress ? weakChapters.slice(0, 20) : [],
       subjectHealth,
     }));
   } catch (e) {

@@ -45,7 +45,17 @@ const { examType } = Astro.props;
       if (!res.ok) throw new Error('Failed to load');
       const data = await res.json();
 
-      badge.textContent = `${data.weakCount} weak`;
+      badge.textContent = data.weakCount > 0 ? `${data.weakCount} weak` : '—';
+
+      if (!data.hasProgress) {
+        body.innerHTML = `<p class="no-progress">
+          📋 No syllabus progress yet.<br>
+          <span style="font-size:0.7rem;color:#64748b;">
+            <a href="/syllabus" style="color:var(--ds-accent-400);">Mark chapters as studied</a> to see improvement areas.
+          </span>
+        </p>`;
+        return;
+      }
 
       if (!data.weakChapters || data.weakChapters.length === 0) {
         body.innerHTML = `<p class="all-good">🎉 All chapters are healthy!</p>`;
