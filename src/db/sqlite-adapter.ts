@@ -168,6 +168,10 @@ export class SQLiteAdapter implements DatabaseInterface {
       `ALTER TABLE users ADD COLUMN study_days_per_week INTEGER NOT NULL DEFAULT 5`,
       // Phase 8: study_days_per_week for settings
       `ALTER TABLE settings ADD COLUMN study_days_per_week INTEGER NOT NULL DEFAULT 5`,
+      // Phase 9: profile query fields for users
+      `ALTER TABLE users ADD COLUMN weak_subjects TEXT NOT NULL DEFAULT '[]'`,
+      `ALTER TABLE users ADD COLUMN coaching TEXT`,
+      `ALTER TABLE users ADD COLUMN target_rank TEXT`,
     ];
     for (const sql of migrations) {
       try { this.db.run(sql); } catch { /* column already exists — ignore */ }
@@ -1017,14 +1021,17 @@ export class SQLiteAdapter implements DatabaseInterface {
     const id = generateId();
     const createdAt = new Date().toISOString();
     db.run(
-      `INSERT INTO users (id, name, email, password_hash, user_type, stream, class_level, goal, weekly_study_goal, study_days_per_week, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, data.name, data.email, data.passwordHash, data.userType ?? 'authenticated', data.stream || null, data.classLevel || null, data.goal || null, data.weeklyStudyGoal ?? 35, data.studyDaysPerWeek ?? 5, createdAt]
+      `INSERT INTO users (id, name, email, password_hash, user_type, stream, class_level, goal, weak_subjects, coaching, target_rank, weekly_study_goal, study_days_per_week, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, data.name, data.email, data.passwordHash, data.userType ?? 'authenticated', data.stream || null, data.classLevel || null, data.goal || null, JSON.stringify(data.weakSubjects ?? []), data.coaching || null, data.targetRank || null, data.weeklyStudyGoal ?? 35, data.studyDaysPerWeek ?? 5, createdAt]
     );
     this.save();
     return {
       id, name: data.name, email: data.email, passwordHash: data.passwordHash,
       userType: data.userType ?? 'authenticated', stream: data.stream,
       classLevel: data.classLevel, goal: data.goal,
+      weakSubjects: data.weakSubjects ?? [],
+      coaching: (data.coaching as User['coaching']) ?? null,
+      targetRank: data.targetRank ?? null,
       weeklyStudyGoal: data.weeklyStudyGoal ?? 35,
       studyDaysPerWeek: data.studyDaysPerWeek ?? 5,
       createdAt,
@@ -1082,7 +1089,7 @@ export class SQLiteAdapter implements DatabaseInterface {
     return null;
   }
 
-  updateUser(id: string, data: Partial<Pick<User, 'name' | 'stream' | 'goal' | 'userType' | 'classLevel' | 'weeklyStudyGoal' | 'studyDaysPerWeek'>>): User | null {
+  updateUser(id: string, data: Partial<Pick<User, 'name' | 'stream' | 'goal' | 'userType' | 'classLevel' | 'weakSubjects' | 'coaching' | 'targetRank' | 'weeklyStudyGoal' | 'studyDaysPerWeek'>>): User | null {
     const db = this.getDb();
     const sets: string[] = [];
     const params: any[] = [];
@@ -1093,6 +1100,9 @@ export class SQLiteAdapter implements DatabaseInterface {
     if (data.classLevel !== undefined) { sets.push('class_level = ?'); params.push(data.classLevel); }
     if (data.weeklyStudyGoal !== undefined) { sets.push('weekly_study_goal = ?'); params.push(data.weeklyStudyGoal); }
     if (data.studyDaysPerWeek !== undefined) { sets.push('study_days_per_week = ?'); params.push(data.studyDaysPerWeek); }
+    if (data.weakSubjects !== undefined) { sets.push('weak_subjects = ?'); params.push(JSON.stringify(data.weakSubjects)); }
+    if (data.coaching !== undefined) { sets.push('coaching = ?'); params.push(data.coaching); }
+    if (data.targetRank !== undefined) { sets.push('target_rank = ?'); params.push(data.targetRank); }
     if (sets.length === 0) return this.getUserById(id);
     params.push(id);
     db.run(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`, params);
@@ -1121,6 +1131,9 @@ export class SQLiteAdapter implements DatabaseInterface {
       stream: row.stream,
       classLevel: row.class_level,
       goal: row.goal,
+      weakSubjects: parseJSON(row.weak_subjects, []),
+      coaching: row.coaching ?? null,
+      targetRank: row.target_rank ?? null,
       weeklyStudyGoal: row.weekly_study_goal ?? 35,
       studyDaysPerWeek: row.study_days_per_week ?? 5,
       createdAt: row.created_at,

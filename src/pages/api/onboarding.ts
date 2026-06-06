@@ -14,12 +14,19 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: 'Not authenticated' }), { status: 401 });
     }
 
-    const { name, stream, classLevel, selectedExams, targetHours, studyDaysPerWeek } = await request.json();
+    const { name, stream, classLevel, selectedExams, targetHours, studyDaysPerWeek, weakSubjects, coaching, targetRank } = await request.json();
     const db = getDb();
 
     // Update user profile
-    if (name || stream || classLevel) {
-      db.updateUser(user.id, { name: name || undefined, stream: stream || undefined, classLevel: classLevel || undefined });
+    if (name || stream || classLevel || weakSubjects || coaching || targetRank) {
+      db.updateUser(user.id, {
+        name: name || undefined,
+        stream: stream || undefined,
+        classLevel: classLevel || undefined,
+        weakSubjects: weakSubjects !== undefined ? weakSubjects : undefined,
+        coaching: coaching !== undefined ? coaching : undefined,
+        targetRank: targetRank !== undefined ? targetRank : undefined,
+      });
     }
 
     // Pre-fill settings

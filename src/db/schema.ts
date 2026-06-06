@@ -115,6 +115,9 @@ CREATE TABLE IF NOT EXISTS users (
   stream TEXT,
   class_level TEXT,
   goal TEXT,
+  weak_subjects TEXT NOT NULL DEFAULT '[]',
+  coaching TEXT,
+  target_rank TEXT,
   weekly_study_goal REAL NOT NULL DEFAULT 35,
   study_days_per_week INTEGER NOT NULL DEFAULT 5,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))

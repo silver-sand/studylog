@@ -12,6 +12,9 @@ export interface User {
   stream?: string;
   classLevel?: string;
   goal?: string;
+  weakSubjects: string[];
+  coaching: 'coaching_only' | 'self_study' | 'both' | null;
+  targetRank: string | null;
   weeklyStudyGoal?: number;
   studyDaysPerWeek?: number;
   createdAt: string;
@@ -33,6 +36,9 @@ export interface CreateUserData {
   stream?: string;
   classLevel?: string;
   goal?: string;
+  weakSubjects?: string[];
+  coaching?: 'coaching_only' | 'self_study' | 'both' | null;
+  targetRank?: string | null;
   weeklyStudyGoal?: number;
   studyDaysPerWeek?: number;
 }

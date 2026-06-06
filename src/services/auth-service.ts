@@ -57,7 +57,7 @@ export function createGuestUser(): { user: Omit<User, 'passwordHash'>; token: st
   const expiresAt = getExpiresAt();
   db.createSession(user.id, token, expiresAt);
 
-  return { user: { id: user.id, name: user.name, email: user.email, userType: user.userType, stream: user.stream, classLevel: user.classLevel, goal: user.goal, weeklyStudyGoal: user.weeklyStudyGoal, studyDaysPerWeek: user.studyDaysPerWeek, createdAt: user.createdAt }, token };
+  return { user: { id: user.id, name: user.name, email: user.email, userType: user.userType, stream: user.stream, classLevel: user.classLevel, goal: user.goal, weakSubjects: user.weakSubjects, coaching: user.coaching, targetRank: user.targetRank, weeklyStudyGoal: user.weeklyStudyGoal, studyDaysPerWeek: user.studyDaysPerWeek, createdAt: user.createdAt }, token };
 }
 
 /**
@@ -86,12 +86,12 @@ export async function convertGuestToAuthenticated(
     typedDb.save();
   } catch { /* ignore */ }
 
+  const user = db.getUserById(userId)!;
+
   const token = generateToken();
   const expiresAt = getExpiresAt();
   db.createSession(user.id, token, expiresAt);
-
-  const user = db.getUserById(userId)!;
-  return { user: { id: user.id, name: user.name, email: user.email, userType: user.userType, stream: user.stream, classLevel: user.classLevel, goal: user.goal, weeklyStudyGoal: user.weeklyStudyGoal, studyDaysPerWeek: user.studyDaysPerWeek, createdAt: user.createdAt }, token };
+  return { user: { id: user.id, name: user.name, email: user.email, userType: user.userType, stream: user.stream, classLevel: user.classLevel, goal: user.goal, weakSubjects: user.weakSubjects, coaching: user.coaching, targetRank: user.targetRank, weeklyStudyGoal: user.weeklyStudyGoal, studyDaysPerWeek: user.studyDaysPerWeek, createdAt: user.createdAt }, token };
 }
 
 // ── Public API ──
@@ -115,7 +115,7 @@ export async function signup(name: string, email: string, password: string, isGu
   const expiresAt = getExpiresAt();
   db.createSession(user.id, token, expiresAt);
 
-  return { user: { id: user.id, name: user.name, email: user.email, userType: user.userType, stream: user.stream, classLevel: user.classLevel, goal: user.goal, weeklyStudyGoal: user.weeklyStudyGoal, studyDaysPerWeek: user.studyDaysPerWeek, createdAt: user.createdAt }, token };
+  return { user: { id: user.id, name: user.name, email: user.email, userType: user.userType, stream: user.stream, classLevel: user.classLevel, goal: user.goal, weakSubjects: user.weakSubjects, coaching: user.coaching, targetRank: user.targetRank, weeklyStudyGoal: user.weeklyStudyGoal, studyDaysPerWeek: user.studyDaysPerWeek, createdAt: user.createdAt }, token };
 }
 
 export async function login(email: string, password: string): Promise<AuthResult> {
@@ -140,7 +140,7 @@ export async function login(email: string, password: string): Promise<AuthResult
   const expiresAt = getExpiresAt();
   db.createSession(user.id, token, expiresAt);
 
-  return { user: { id: user.id, name: user.name, email: user.email, userType: user.userType, stream: user.stream, classLevel: user.classLevel, goal: user.goal, weeklyStudyGoal: user.weeklyStudyGoal, studyDaysPerWeek: user.studyDaysPerWeek, createdAt: user.createdAt }, token };
+  return { user: { id: user.id, name: user.name, email: user.email, userType: user.userType, stream: user.stream, classLevel: user.classLevel, goal: user.goal, weakSubjects: user.weakSubjects, coaching: user.coaching, targetRank: user.targetRank, weeklyStudyGoal: user.weeklyStudyGoal, studyDaysPerWeek: user.studyDaysPerWeek, createdAt: user.createdAt }, token };
 }
 
 export function logout(token: string): boolean {
@@ -161,7 +161,7 @@ export function getSessionUser(token: string | undefined | null): Omit<User, 'pa
   const user = db.getUserById(session.userId);
   if (!user) return null;
 
-  return { id: user.id, name: user.name, email: user.email, userType: user.userType, stream: user.stream, classLevel: user.classLevel, goal: user.goal, weeklyStudyGoal: user.weeklyStudyGoal, studyDaysPerWeek: user.studyDaysPerWeek, createdAt: user.createdAt };
+  return { id: user.id, name: user.name, email: user.email, userType: user.userType, stream: user.stream, classLevel: user.classLevel, goal: user.goal, weakSubjects: user.weakSubjects, coaching: user.coaching, targetRank: user.targetRank, weeklyStudyGoal: user.weeklyStudyGoal, studyDaysPerWeek: user.studyDaysPerWeek, createdAt: user.createdAt };
 }
 
 export function getTokenFromCookie(request: Request): string | null {

@@ -16,6 +16,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     const db = getDb();
     const settings = db.getSettings();
+    const currentUser = db.getUserById(db.getCurrentUser());
 
     // Use first selected exam for mentor context
     const selectedExams = settings.selectedExams?.length ? settings.selectedExams : ['JEE'];
@@ -24,7 +25,32 @@ export const POST: APIRoute = async ({ request }) => {
 
     db.seedSyllabusData();
 
-    // Build context
+    // Build profile context string
+    const profileParts: string[] = [];
+    if (currentUser?.classLevel) {
+      profileParts.push(`Class ${currentUser.classLevel.replace('class_', '')}`);
+    }
+    if (currentUser?.stream) {
+      profileParts.push(currentUser.stream.charAt(0).toUpperCase() + currentUser.stream.slice(1));
+    }
+    if (currentUser?.coaching) {
+      const labels: Record<string, string> = { coaching_only: 'Attends coaching only', self_study: 'Self-studying', both: 'Coaching + self-study' };
+      profileParts.push(labels[currentUser.coaching] || currentUser.coaching);
+    }
+    if (currentUser?.weakSubjects?.length) {
+      profileParts.push(`Weak in: ${currentUser.weakSubjects.join(', ')}`);
+    }
+    if (currentUser?.targetRank) {
+      profileParts.push(`Goal: ${currentUser.targetRank}`);
+    }
+    if (currentUser?.goal) {
+      profileParts.push(`Goal: ${currentUser.goal}`);
+    }
+    const userProfile = profileParts.length > 0
+      ? `Student profile: ${profileParts.join(' · ')}.`
+      : 'Student profile: Not yet configured.';
+
+    // Build syllabus/entry context
     const progress = db.getSyllabusProgress(examKey);
     const weakChapters = db.getWeakChapters(examKey, 60);
     const recentEntries = db.listEntries({ limit: 10 });
@@ -52,6 +78,7 @@ export const POST: APIRoute = async ({ request }) => {
       syllabusProgress: `${overallPercent}% overall\n${syllabusStr}`,
       weakChapters: weakStr,
       settings: settingsStr,
+      userProfile,
     };
 
     // Validate and sanitize history

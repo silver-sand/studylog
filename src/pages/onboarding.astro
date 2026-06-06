@@ -1,15 +1,35 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getSessionUser, getTokenFromCookie } from '../services/auth-service';
+import { getDb } from '../db';
 import { STREAMS } from '../utils/stream-map';
 import { EXAM_DEFINITIONS, getSubjectsForExamKeys } from '../utils/exam-map';
+import { scopeDbToUser } from '../services/user-scope';
 import { createDefaultProfile, computeDailyAverage } from '../types/profile';
 
+scopeDbToUser(Astro.request);
+const db = getDb();
 const user = getSessionUser(getTokenFromCookie(Astro.request));
 if (!user) {
   return Astro.redirect('/');
 }
-const profile = createDefaultProfile();
+
+const isUpdate = Astro.url.searchParams.has('update');
+const settings = db.getSettings();
+
+// Load existing data for pre-fill on update
+const existingProfile = user?.classLevel ? {
+  name: user.name,
+  classLevel: user.classLevel,
+  stream: user.stream || '',
+  selectedExams: settings.selectedExams || [],
+  targetHours: settings.targetHoursPerWeek,
+  studyDays: settings.studyDaysPerWeek,
+  coaching: (user as any).coaching || '',
+  weakSubjects: (user as any).weakSubjects || [],
+  targetRank: (user as any).targetRank || '',
+} : null;
+
 const CLASS_LEVELS = [
   { value: 'class_9', label: 'Class 9' },
   { value: 'class_10', label: 'Class 10' },
@@ -21,33 +41,56 @@ const CLASS_LEVELS = [
 ];
 ---
 
-<BaseLayout title="Get Started">
+<BaseLayout title={isUpdate ? 'Update Study Profile' : 'Set Up Your Workspace'}>
   <main class="ds-flex-center" style="min-height:80vh;padding:2rem 1rem;">
-    <div class="ds-onboarding-card" style="max-width:480px;width:100%;">
+    <div class="ds-onboarding-card" style="max-width:520px;width:100%;">
 
       <!-- Step indicator -->
       <div class="ds-flex-center ds-gap-md" id="step-indicator" style="margin-bottom:var(--ds-space-6);">
-        <div class="ds-step active" data-step="1">1</div>
-        <div class="ds-divider" style="width:1.5rem;"></div>
+        <div class="ds-step active" data-step="0">🏁</div>
+        <div class="ds-divider" style="width:1rem;"></div>
+        <div class="ds-step" data-step="1">1</div>
+        <div class="ds-divider" style="width:1rem;"></div>
         <div class="ds-step" data-step="2">2</div>
-        <div class="ds-divider" style="width:1.5rem;"></div>
+        <div class="ds-divider" style="width:1rem;"></div>
         <div class="ds-step" data-step="3">3</div>
-        <div class="ds-divider" style="width:1.5rem;"></div>
+        <div class="ds-divider" style="width:1rem;"></div>
         <div class="ds-step" data-step="4">4</div>
-        <div class="ds-divider" style="width:1.5rem;"></div>
+        <div class="ds-divider" style="width:1rem;"></div>
         <div class="ds-step" data-step="5">5</div>
+        <div class="ds-divider" style="width:1rem;"></div>
+        <div class="ds-step" data-step="6">6</div>
       </div>
 
-      <!-- Step 1: Name + Class Level -->
-      <div class="step-content" data-step="1">
-        <h2 class="ds-heading-section" style="font-size:var(--ds-text-xl);margin:0 0 0.25rem;">Tell us about yourself</h2>
-        <p class="ds-caption" style="margin:0 0 var(--ds-space-5);">Your name and current education level.</p>
+      <!-- Welcome Screen (Step 0) -->
+      <div class="step-content" data-step="0">
+        <div style="text-align:center;padding:var(--ds-space-4) 0;">
+          <div style="font-size:3rem;margin-bottom:var(--ds-space-4);">🎓</div>
+          <h2 class="ds-heading-section" style="font-size:var(--ds-text-xl);margin:0 0 var(--ds-space-2);">
+            {isUpdate ? "Let's refresh your profile!" : 'Let\'s set up your study workspace'}
+          </h2>
+          <p class="ds-body-sm" style="color:var(--ds-text-muted);margin:0 0 var(--ds-space-2);">
+            {isUpdate
+              ? "Your goals may have changed — let's update what we know about you."
+              : "Answer a few questions and I'll configure everything for you."}
+          </p>
+          <div style="display:flex;align-items:center;justify-content:center;gap:var(--ds-space-2);margin-top:var(--ds-space-1);">
+            <span style="font-size:var(--ds-text-xs);color:var(--ds-text-tertiary);">⏱️ About 1-2 minutes</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1: Name + Class -->
+      <div class="step-content ds-hidden" data-step="1">
+        <p class="ds-caption" style="margin:0 0 var(--ds-space-1);color:var(--ds-accent-400);font-size:var(--ds-text-xs);">Step 1 of 6</p>
+        <h2 class="ds-heading-section" style="font-size:var(--ds-text-xl);margin:0 0 0.25rem;">Nice to meet you! 👋</h2>
+        <p class="ds-caption" style="margin:0 0 var(--ds-space-5);">First, what's your name, and what class are you in right now?</p>
         <div style="display:flex;flex-direction:column;gap:var(--ds-space-3);">
-          <input type="text" id="onboarding-name" class="ds-input" placeholder="Your name" value={user.name !== 'Guest' ? user.name : ''} required />
+          <input type="text" id="onboarding-name" class="ds-input" placeholder="Your name (e.g. Aarav, Priya...)" value={existingProfile?.name || (user.name !== 'Guest' ? user.name : '')} required />
           <select id="onboarding-classlevel" class="ds-input">
-            <option value="">Select your class level</option>
+            <option value="">Select your current class level</option>
             {CLASS_LEVELS.map(cl => (
-              <option value={cl.value}>{cl.label}</option>
+              <option value={cl.value} selected={existingProfile?.classLevel === cl.value}>{cl.label}</option>
             ))}
           </select>
         </div>
@@ -55,8 +98,9 @@ const CLASS_LEVELS = [
 
       <!-- Step 2: Stream -->
       <div class="step-content ds-hidden" data-step="2">
-        <h2 class="ds-heading-section" style="font-size:var(--ds-text-xl);margin:0 0 0.25rem;">Choose your stream</h2>
-        <p class="ds-caption" style="margin:0 0 var(--ds-space-5);">This helps us recommend the right exams and subjects.</p>
+        <p class="ds-caption" style="margin:0 0 var(--ds-space-1);color:var(--ds-accent-400);font-size:var(--ds-text-xs);">Step 2 of 6</p>
+        <h2 class="ds-heading-section" style="font-size:var(--ds-text-xl);margin:0 0 0.25rem;">Which stream are you studying? 📚</h2>
+        <p class="ds-caption" style="margin:0 0 var(--ds-space-5);">This helps me recommend the right exams and subjects for you.</p>
         <div style="display:flex;flex-direction:column;gap:var(--ds-space-2-5);">
           {Object.entries(STREAMS).map(([key, stream]) => (
             <button type="button" class="stream-card" data-stream={key} style="display:flex;align-items:center;gap:var(--ds-space-3);padding:var(--ds-space-3-5) var(--ds-space-4);border-radius:var(--ds-radius-lg);border:1px solid var(--ds-border-subtle);background:var(--ds-surface-900);transition:all 0.15s;cursor:pointer;text-align:left;">
@@ -68,13 +112,14 @@ const CLASS_LEVELS = [
             </button>
           ))}
         </div>
-        <input type="hidden" id="onboarding-stream" />
+        <input type="hidden" id="onboarding-stream" value={existingProfile?.stream || ''} />
       </div>
 
       <!-- Step 3: Exams -->
       <div class="step-content ds-hidden" data-step="3">
-        <h2 class="ds-heading-section" style="font-size:var(--ds-text-xl);margin:0 0 0.25rem;">Select your exams</h2>
-        <p class="ds-caption" style="margin:0 0 var(--ds-space-5);">Choose one or more exams. Subjects auto-configure.</p>
+        <p class="ds-caption" style="margin:0 0 var(--ds-space-1);color:var(--ds-accent-400);font-size:var(--ds-text-xs);">Step 3 of 6</p>
+        <h2 class="ds-heading-section" style="font-size:var(--ds-text-xl);margin:0 0 0.25rem;">Which exams are you preparing for? 🎯</h2>
+        <p class="ds-caption" style="margin:0 0 var(--ds-space-5);">Pick one or more. Your subjects will auto-configure based on your selection.</p>
         <div class="exam-grid" id="exam-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:var(--ds-space-2);">
           {EXAM_DEFINITIONS.map(exam => (
             <button type="button"
@@ -92,56 +137,138 @@ const CLASS_LEVELS = [
         <input type="hidden" id="onboarding-exams" />
       </div>
 
-      <!-- Step 4: Target hours + days -->
+      <!-- Step 4: Coaching + Weak Subjects -->
       <div class="step-content ds-hidden" data-step="4">
-        <h2 class="ds-heading-section" style="font-size:var(--ds-text-xl);margin:0 0 0.25rem;">Set your weekly target</h2>
-        <p class="ds-caption" style="margin:0 0 var(--ds-space-5);">How many hours and days per week?</p>
-        <div style="display:flex;flex-direction:column;gap:var(--ds-space-4);">
-          <div style="display:flex;align-items:center;gap:var(--ds-space-3);">
-            <input type="number" id="onboarding-hours" class="ds-input" min="1" max="168" value="35" style="width:5rem;text-align:center;font-size:var(--ds-text-lg);" />
-            <span class="ds-body-sm">hours / week</span>
+        <p class="ds-caption" style="margin:0 0 var(--ds-space-1);color:var(--ds-accent-400);font-size:var(--ds-text-xs);">Step 4 of 6</p>
+        <h2 class="ds-heading-section" style="font-size:var(--ds-text-xl);margin:0 0 0.25rem;">Tell me about your study setup 💪</h2>
+        <p class="ds-caption" style="margin:0 0 var(--ds-space-5);">Do you attend coaching? And which subjects challenge you the most?</p>
+
+        <label class="ds-label-form" style="margin-bottom:var(--ds-space-2);">Coaching attendance</label>
+        <div style="display:flex;flex-direction:column;gap:var(--ds-space-2);margin-bottom:var(--ds-space-5);">
+          {[
+            { value: 'both', label: 'Yes, I attend coaching + self-study', icon: '📚' },
+            { value: 'coaching_only', label: 'I only attend coaching', icon: '🏫' },
+            { value: 'self_study', label: 'I\'m self-studying only', icon: '💻' },
+          ].map(({ value, label, icon }) => (
+            <button type="button"
+              class="coaching-option"
+              data-coaching={value}
+              style="display:flex;align-items:center;gap:var(--ds-space-3);padding:var(--ds-space-2-5) var(--ds-space-3-5);border-radius:var(--ds-radius-lg);border:1px solid var(--ds-border-subtle);background:var(--ds-surface-900);cursor:pointer;text-align:left;transition:all 0.15s;">
+              <span style="font-size:1.2rem;">{icon}</span>
+              <span style="font-size:var(--ds-text-sm);color:var(--ds-text-primary);">{label}</span>
+            </button>
+          ))}
+        </div>
+        <input type="hidden" id="onboarding-coaching" value={existingProfile?.coaching || ''} />
+
+        <label class="ds-label-form" style="margin-bottom:var(--ds-space-2);">Subjects that need extra attention (select all that apply)</label>
+        <div class="weak-subjects-grid" id="weak-subjects-grid" style="display:flex;flex-wrap:wrap;gap:var(--ds-space-2);"></div>
+        <p class="ds-caption" style="margin-top:var(--ds-space-1);" id="weak-count">Pick any subjects you find tough</p>
+      </div>
+
+      <!-- Step 5: Target Score/Rank -->
+      <div class="step-content ds-hidden" data-step="5">
+        <p class="ds-caption" style="margin:0 0 var(--ds-space-1);color:var(--ds-accent-400);font-size:var(--ds-text-xs);">Step 5 of 6</p>
+        <h2 class="ds-heading-section" style="font-size:var(--ds-text-xl);margin:0 0 0.25rem;">What's your goal? 🌟</h2>
+        <p class="ds-caption" style="margin:0 0 var(--ds-space-5);">What score, rank, or outcome are you aiming for? This helps me personalize your study plan.</p>
+        <textarea id="onboarding-target" class="ds-input" rows="2" placeholder="e.g. Top 100 in JEE Advanced, 95% in CBSE Boards, or just want to stay consistent..." style="resize:vertical;min-height:60px;font-family:var(--ds-font-body);">{existingProfile?.targetRank || ''}</textarea>
+        <div style="margin-top:var(--ds-space-3);">
+          <p class="ds-caption" style="margin:0 0 var(--ds-space-1-5);color:var(--ds-text-tertiary);font-size:var(--ds-text-xs);">Some examples:</p>
+          <div style="display:flex;flex-wrap:wrap;gap:var(--ds-space-1-5);">
+            {['Top 1000 in JEE', '90%+ in Boards', 'Rank under 5000', 'Just stay consistent', 'Top of my class'].map(ex => (
+              <button type="button" class="target-suggestion" style="padding:var(--ds-space-1) var(--ds-space-2-5);border-radius:999px;border:1px solid var(--ds-border-subtle);background:var(--ds-surface-900);cursor:pointer;font-size:var(--ds-text-xs);color:var(--ds-text-tertiary);transition:all 0.15s;">{ex}</button>
+            ))}
           </div>
-          <div style="display:flex;align-items:center;gap:var(--ds-space-3);">
-            <input type="number" id="onboarding-days" class="ds-input" min="1" max="7" value="5" style="width:5rem;text-align:center;font-size:var(--ds-text-lg);" />
-            <span class="ds-body-sm">days / week</span>
-          </div>
-          <p class="ds-caption" style="margin:0;" id="daily-average-display">≈ 7 hours per study day</p>
         </div>
       </div>
 
-      <!-- Step 5: Review -->
-      <div class="step-content ds-hidden" data-step="5">
-        <h2 class="ds-heading-section" style="font-size:var(--ds-text-xl);margin:0 0 0.25rem;">Review your setup</h2>
-        <p class="ds-caption" style="margin:0 0 var(--ds-space-5);">Everything look right?</p>
+      <!-- Step 6: Hours + Days -->
+      <div class="step-content ds-hidden" data-step="6">
+        <p class="ds-caption" style="margin:0 0 var(--ds-space-1);color:var(--ds-accent-400);font-size:var(--ds-text-xs);">Last step!</p>
+        <h2 class="ds-heading-section" style="font-size:var(--ds-text-xl);margin:0 0 0.25rem;">How much time can you realistically commit? ⏰</h2>
+        <p class="ds-caption" style="margin:0 0 var(--ds-space-5);">Be honest — it's better to set a sustainable goal than an impossible one.</p>
+        <div style="display:flex;flex-direction:column;gap:var(--ds-space-4);">
+          <div style="display:flex;align-items:center;gap:var(--ds-space-3);">
+            <input type="number" id="onboarding-hours" class="ds-input" min="1" max="168" value={existingProfile?.targetHours || '35'} style="width:5rem;text-align:center;font-size:var(--ds-text-lg);" />
+            <span class="ds-body-sm">hours / week</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:var(--ds-space-3);">
+            <input type="number" id="onboarding-days" class="ds-input" min="1" max="7" value={existingProfile?.studyDays || '5'} style="width:5rem;text-align:center;font-size:var(--ds-text-lg);" />
+            <span class="ds-body-sm">days / week</span>
+          </div>
+          <p class="ds-caption" style="margin:0;" id="daily-average-display">
+            ≈ {computeDailyAverage(existingProfile?.targetHours || 35, existingProfile?.studyDays || 5)} hours per study day
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 7: Review -->
+      <div class="step-content ds-hidden" data-step="7">
+        <p class="ds-caption" style="margin:0 0 var(--ds-space-1);color:var(--ds-accent-400);font-size:var(--ds-text-xs);">Almost done!</p>
+        <h2 class="ds-heading-section" style="font-size:var(--ds-text-xl);margin:0 0 0.25rem;">Here's your study profile 📋</h2>
+        <p class="ds-caption" style="margin:0 0 var(--ds-space-5);">Everything look right? I'll set up your workspace based on this.</p>
         <div id="review-summary" style="display:flex;flex-direction:column;gap:var(--ds-space-3);padding:var(--ds-space-4);border-radius:var(--ds-radius-lg);background:var(--ds-surface-900);border:1px solid var(--ds-border-subtle);">
           <div class="review-row"><span class="review-label">Name</span><span class="review-value" id="review-name"></span></div>
           <div class="review-row"><span class="review-label">Class</span><span class="review-value" id="review-class"></span></div>
           <div class="review-row"><span class="review-label">Stream</span><span class="review-value" id="review-stream"></span></div>
           <div class="review-row"><span class="review-label">Exams</span><span class="review-value" id="review-exams"></span></div>
+          <div class="review-row"><span class="review-label">Coaching</span><span class="review-value" id="review-coaching"></span></div>
+          <div class="review-row"><span class="review-label">Weak Subjects</span><span class="review-value" id="review-weak"></span></div>
           <div class="review-row"><span class="review-label">Target</span><span class="review-value" id="review-target"></span></div>
+          <div class="review-row"><span class="review-label">Commitment</span><span class="review-value" id="review-commitment"></span></div>
         </div>
       </div>
 
       <div id="form-error" class="ds-error-text ds-hidden" style="margin-top:var(--ds-space-3);padding:var(--ds-space-1-5) var(--ds-space-3);background:var(--ds-danger-bg);border:1px solid var(--ds-danger-border);border-radius:var(--ds-radius-md);"></div>
 
       <div style="display:flex;gap:var(--ds-space-3);margin-top:var(--ds-space-6);">
-        <button id="prev-btn" class="ds-btn ds-btn-ghost ds-hidden" style="flex-shrink:0;">Back</button>
-        <button id="next-btn" class="ds-btn ds-btn-primary" style="flex:1;">Continue</button>
+        <button id="prev-btn" class="ds-btn ds-btn-ghost ds-hidden" style="flex-shrink:0;">← Back</button>
+        <button id="next-btn" class="ds-btn ds-btn-primary" style="flex:1;">Get Started</button>
       </div>
     </div>
   </main>
 </BaseLayout>
+
+<script is:inline>
+  window.__EXAM_SUBJECTS = {
+    {EXAM_DEFINITIONS.map(e => `${JSON.stringify(e.key)}: ${JSON.stringify(e.subjects)}`).join(',\n    ')}
+  };
+  window.__PRE_FILL = {
+    selectedExams: {JSON.stringify(existingProfile?.selectedExams || [])},
+    stream: {JSON.stringify(existingProfile?.stream || '')},
+    weakSubjects: {JSON.stringify(existingProfile?.weakSubjects || [])},
+  };
+</script>
 
 <script>
   const CLASS_LEVEL_LABELS = {
     class_9: 'Class 9', class_10: 'Class 10', class_11: 'Class 11', class_12: 'Class 12',
     dropper: 'Dropper', college: 'College', other: 'Other',
   };
+  const COACHING_LABELS = {
+    both: 'Coaching + Self-study',
+    coaching_only: 'Coaching only',
+    self_study: 'Self-studying',
+  };
   const STREAM_LABELS = { science: 'Science', commerce: 'Commerce', humanities: 'Humanities' };
 
-  const steps = [1, 2, 3, 4, 5];
-  let currentStep = 1;
-  let selectedExams = [];
+  const COACHING_SUBTEXT = {
+    coaching_only: "I'll focus on coaching-based recommendations.",
+    self_study: "No problem — I'll build a complete self-study plan for you.",
+    both: "Great! I'll integrate both coaching and your self-study time.",
+  };
+
+  const ENCOURAGEMENTS = [
+    'Great, thanks {name}!',
+    'Excellent choice!',
+    'Perfect — that helps a lot!',
+    'Awesome! Almost there...',
+    "You're doing great!",
+  ];
+
+  const steps = [0, 1, 2, 3, 4, 5, 6, 7];
+  let currentStep = 0;
+  let errorTimer = null;
 
   const indicators = document.querySelectorAll('.step');
   const stepContents = document.querySelectorAll('.step-content');
@@ -156,13 +283,27 @@ const CLASS_LEVELS = [
     currentStep = step;
     hideError();
     stepContents.forEach(el => el.classList.toggle('hidden', parseInt(el.dataset.step) !== step));
+
+    // Step indicator: show/hide based on step
+    const isWelcome = step === 0;
+    document.getElementById('step-indicator').classList.toggle('ds-hidden', isWelcome);
+
     indicators.forEach(el => {
       const s = parseInt(el.dataset.step);
       el.classList.toggle('active', s === step);
       el.classList.toggle('completed', s < step);
     });
-    prevBtn.classList.toggle('hidden', step === 1);
-    nextBtn.textContent = step === steps.length ? 'Finish Setup' : 'Continue';
+    prevBtn.classList.toggle('hidden', step <= 1);
+    nextBtn.classList.toggle('ds-hidden', isWelcome);
+    if (isWelcome) {
+      prevBtn.classList.add('hidden');
+    }
+
+    if (step === steps.length - 1) {
+      nextBtn.textContent = '🎯 Generate My Workspace';
+    } else {
+      nextBtn.textContent = 'Continue →';
+    }
   }
 
   function getStepData(step) {
@@ -170,13 +311,13 @@ const CLASS_LEVELS = [
       case 1: {
         const name = document.getElementById('onboarding-name').value.trim();
         const classLevel = document.getElementById('onboarding-classlevel').value;
-        if (!name) return { valid: false, msg: 'Please enter your name.' };
+        if (!name) return { valid: false, msg: 'Please enter your name so I know who I\'m talking to!' };
         if (!classLevel) return { valid: false, msg: 'Please select your class level.' };
         return { valid: true, data: { name, classLevel } };
       }
       case 2: {
         const stream = document.getElementById('onboarding-stream').value;
-        if (!stream) return { valid: false, msg: 'Please select a stream.' };
+        if (!stream) return { valid: false, msg: 'Please select a stream to continue.' };
         return { valid: true, data: { stream } };
       }
       case 3: {
@@ -185,20 +326,81 @@ const CLASS_LEVELS = [
         return { valid: true, data: { exams: Array.from(selected).map(c => c.dataset.exam) } };
       }
       case 4: {
+        const coaching = document.getElementById('onboarding-coaching').value;
+        if (!coaching) return { valid: false, msg: 'Please tell me about your coaching setup.' };
+        const weakSubjects = Array.from(document.querySelectorAll('#weak-subjects-grid .weak-subject-chip.selected')).map(c => c.dataset.subject);
+        return { valid: true, data: { coaching, weakSubjects } };
+      }
+      case 5: {
+        const target = document.getElementById('onboarding-target').value.trim();
+        return { valid: true, data: { targetRank: target } };
+      }
+      case 6: {
         const hours = parseInt(document.getElementById('onboarding-hours').value);
         const days = parseInt(document.getElementById('onboarding-days').value);
         if (isNaN(hours) || hours < 1 || hours > 168) return { valid: false, msg: 'Hours must be between 1 and 168.' };
         if (isNaN(days) || days < 1 || days > 7) return { valid: false, msg: 'Days must be between 1 and 7.' };
         return { valid: true, data: { targetHours: hours, studyDays: days } };
       }
-      case 5:
+      case 7:
         return { valid: true };
     }
     return { valid: true };
   }
 
+  function showEncouragement(step) {
+    const name = document.getElementById('onboarding-name').value.trim() || 'there';
+    const msgs = {
+      1: `Great, thanks ${name}! Let's move on.`,
+      2: 'Excellent choice! Let me find the right exams for you.',
+      3: 'Perfect — that helps a lot! Now let me understand your study habits.',
+      4: 'Got it! Now, what are you working toward?',
+      5: 'Awesome — that gives me something to aim for!',
+      6: "Almost there! Let's review everything.",
+    };
+    // Show a brief flash message
+    const msg = msgs[step];
+    if (msg) {
+      const existing = document.querySelector('.encouragement-toast');
+      if (existing) existing.remove();
+      const toast = document.createElement('div');
+      toast.className = 'encouragement-toast';
+      toast.textContent = msg;
+      document.querySelector('.ds-onboarding-card').appendChild(toast);
+      setTimeout(() => toast.classList.add('show'), 10);
+      setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 1800);
+    }
+  }
+
+  function loadWeakSubjects(subjects) {
+    const grid = document.getElementById('weak-subjects-grid');
+    grid.innerHTML = '';
+    const preFill = window.__PRE_FILL?.weakSubjects || [];
+    subjects.forEach(subject => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'weak-subject-chip' + (preFill.includes(subject) ? ' selected' : '');
+      chip.dataset.subject = subject;
+      chip.textContent = subject;
+      chip.addEventListener('click', () => {
+        chip.classList.toggle('selected');
+        updateWeakCount();
+      });
+      grid.appendChild(chip);
+    });
+    updateWeakCount();
+  }
+
+  function updateWeakCount() {
+    const count = document.querySelectorAll('#weak-subjects-grid .weak-subject-chip.selected').length;
+    const total = document.querySelectorAll('#weak-subjects-grid .weak-subject-chip').length;
+    document.getElementById('weak-count').textContent = count > 0
+      ? `${count} subject${count !== 1 ? 's' : ''} flagged for extra attention`
+      : 'Pick any subjects you find tough (optional)';
+  }
+
   prevBtn.addEventListener('click', () => {
-    if (currentStep > 1) updateStep(currentStep - 1);
+    if (currentStep > 0) updateStep(currentStep - 1);
   });
 
   nextBtn.addEventListener('click', async () => {
@@ -208,65 +410,95 @@ const CLASS_LEVELS = [
       return;
     }
 
+    // Step-specific actions
     if (currentStep === 1) {
-      // Name + class done — store for review later
+      // Name + class done
     }
 
     if (currentStep === 2) {
       // Filter exams by stream
       const stream = document.getElementById('onboarding-stream').value;
+      const preFillExams = window.__PRE_FILL?.selectedExams || [];
       document.querySelectorAll('#exam-grid .exam-card').forEach(card => {
         const groups = JSON.parse(card.dataset.groups || '[]');
         if (groups.includes(stream)) {
           card.classList.remove('hidden');
+          if (preFillExams.includes(card.dataset.exam)) {
+            card.classList.add('selected');
+            card.style.borderColor = 'var(--ds-accent-500)';
+          }
         } else {
           card.classList.add('hidden');
           card.classList.remove('selected');
         }
       });
       const visibleCards = document.querySelectorAll('#exam-grid .exam-card:not(.hidden)');
-      if (visibleCards.length === 1) {
+      if (visibleCards.length === 1 && preFillExams.length === 0) {
         visibleCards[0].classList.add('selected');
       }
       updateExamCount();
     }
 
-    if (currentStep === 4) {
-      // Update daily average display
+    if (currentStep === 3) {
+      // After exams selected, populate weak subjects grid
+      const selectedExams = Array.from(document.querySelectorAll('#exam-grid .exam-card.selected')).map(c => c.dataset.exam);
+      const EXAMS = window.__EXAM_SUBJECTS || {};
+      const subjects = new Set();
+      selectedExams.forEach(key => {
+        if (EXAMS[key]) EXAMS[key].forEach(s => subjects.add(s));
+      });
+      loadWeakSubjects([...subjects]);
+    }
+
+    if (currentStep === 6) {
       updateDailyAverage();
     }
 
-    if (currentStep === 5) {
+    if (currentStep === 7) {
       // Populate review summary
-      document.getElementById('review-name').textContent = document.getElementById('onboarding-name').value.trim();
+      const name = document.getElementById('onboarding-name').value.trim();
+      document.getElementById('review-name').textContent = name;
       document.getElementById('review-class').textContent = CLASS_LEVEL_LABELS[document.getElementById('onboarding-classlevel').value] || '';
       document.getElementById('review-stream').textContent = STREAM_LABELS[document.getElementById('onboarding-stream').value] || '';
       const exams = Array.from(document.querySelectorAll('#exam-grid .exam-card.selected')).map(c => c.textContent.trim().split('\n')[0].trim());
       document.getElementById('review-exams').textContent = exams.join(', ') || 'None';
+      const coachingVal = document.getElementById('onboarding-coaching').value;
+      document.getElementById('review-coaching').textContent = COACHING_LABELS[coachingVal] || 'Not specified';
+      const weak = Array.from(document.querySelectorAll('#weak-subjects-grid .weak-subject-chip.selected')).map(c => c.dataset.subject);
+      document.getElementById('review-weak').textContent = weak.length > 0 ? weak.join(', ') : 'None specified';
+      document.getElementById('review-target').textContent = document.getElementById('onboarding-target').value.trim() || 'Not specified';
       const hours = document.getElementById('onboarding-hours').value;
       const days = document.getElementById('onboarding-days').value;
-      document.getElementById('review-target').textContent = `${hours} hrs / ${days} days (≈${Math.round(hours/days * 10) / 10} hrs/day)`;
+      document.getElementById('review-commitment').textContent = `${hours} hrs / ${days} days (≈${Math.round(hours/days * 10) / 10} hrs/day)`;
     }
 
-    if (currentStep < steps.length) {
+    if (currentStep < steps.length - 1) {
+      showEncouragement(currentStep);
       updateStep(currentStep + 1);
-    } else {
+    } else if (currentStep === steps.length - 1) {
       // Submit
       nextBtn.disabled = true;
-      nextBtn.textContent = 'Saving...';
+      nextBtn.textContent = 'Setting up your workspace...';
 
       try {
         const name = document.getElementById('onboarding-name').value.trim();
         const classLevel = document.getElementById('onboarding-classlevel').value;
         const stream = document.getElementById('onboarding-stream').value;
         const exams = Array.from(document.querySelectorAll('#exam-grid .exam-card.selected')).map(c => c.dataset.exam);
+        const coaching = document.getElementById('onboarding-coaching').value;
+        const weakSubjects = Array.from(document.querySelectorAll('#weak-subjects-grid .weak-subject-chip.selected')).map(c => c.dataset.subject);
+        const targetRank = document.getElementById('onboarding-target').value.trim();
         const targetHours = document.getElementById('onboarding-hours').value;
         const studyDays = document.getElementById('onboarding-days').value;
 
         const res = await fetch('/api/onboarding', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, classLevel, stream, selectedExams: exams, targetHours, studyDaysPerWeek: studyDays }),
+          body: JSON.stringify({
+            name, classLevel, stream, selectedExams: exams,
+            coaching, weakSubjects, targetRank,
+            targetHours, studyDaysPerWeek: studyDays,
+          }),
         });
 
         if (!res.ok) {
@@ -278,7 +510,7 @@ const CLASS_LEVELS = [
       } catch (err) {
         showError(err instanceof Error ? err.message : 'Something went wrong');
         nextBtn.disabled = false;
-        nextBtn.textContent = 'Finish Setup';
+        nextBtn.textContent = '🎯 Generate My Workspace';
       }
     }
   });
@@ -295,7 +527,7 @@ const CLASS_LEVELS = [
     document.getElementById('daily-average-display').textContent = `≈ ${avg} hours per study day`;
   }
 
-  // Stream selection
+  // ── Stream selection ──
   document.querySelectorAll('.stream-card').forEach(card => {
     card.addEventListener('click', () => {
       document.querySelectorAll('.stream-card').forEach(c => c.style.borderColor = 'var(--ds-border-subtle)');
@@ -305,7 +537,7 @@ const CLASS_LEVELS = [
     });
   });
 
-  // Exam selection (multi-select)
+  // ── Exam selection ──
   document.getElementById('exam-grid').addEventListener('click', (e) => {
     const card = e.target.closest('.exam-card');
     if (!card || card.classList.contains('hidden')) return;
@@ -319,21 +551,103 @@ const CLASS_LEVELS = [
     hideError();
   });
 
-  // Live daily average updates
+  // ── Coaching selection ──
+  document.querySelectorAll('.coaching-option').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.coaching-option').forEach(b => {
+        b.style.borderColor = 'var(--ds-border-subtle)';
+        b.style.background = 'var(--ds-surface-900)';
+      });
+      btn.style.borderColor = 'var(--ds-accent-500)';
+      btn.style.background = 'var(--ds-accent-bg)';
+      document.getElementById('onboarding-coaching').value = btn.dataset.coaching;
+      hideError();
+    });
+  });
+
+  // ── Target suggestions ──
+  document.querySelectorAll('.target-suggestion').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('onboarding-target').value = btn.textContent;
+      hideError();
+    });
+  });
+
+  // ── Live daily average ──
   document.getElementById('onboarding-hours').addEventListener('input', updateDailyAverage);
   document.getElementById('onboarding-days').addEventListener('input', updateDailyAverage);
 
-  // Enter key advances
+  // ── Enter key ──
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') nextBtn.click();
+    if (e.key === 'Enter' && currentStep > 0) nextBtn.click();
   });
+
+  // ── Init: pre-fill exams on step 3 if updating ──
+  const preFillStream = window.__PRE_FILL?.stream;
+  if (preFillStream) {
+    document.querySelectorAll('.stream-card').forEach(card => {
+      if (card.dataset.stream === preFillStream) {
+        card.style.borderColor = 'var(--ds-accent-500)';
+      }
+    });
+  }
+
+  // Show welcome screen initially
+  updateStep(0);
 </script>
 
 <style>
   .hidden { display: none !important; }
+  .ds-hidden { display: none !important; }
   .review-row { display: flex; justify-content: space-between; align-items: center; padding: 0.25rem 0; }
   .review-label { font-size: var(--ds-text-sm); color: var(--ds-text-muted); }
   .review-value { font-size: var(--ds-text-sm); color: var(--ds-text-primary); font-weight: var(--ds-weight-medium); text-align: right; }
+
+  .weak-subject-chip {
+    padding: 0.35rem 0.85rem;
+    border: 1px solid var(--ds-border);
+    border-radius: 999px;
+    background: var(--ds-surface-900);
+    color: var(--ds-text-tertiary);
+    cursor: pointer;
+    font-size: var(--ds-text-xs);
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .weak-subject-chip:hover {
+    border-color: var(--ds-border-hover);
+    color: var(--ds-text-primary);
+  }
+  .weak-subject-chip.selected {
+    background: var(--ds-warning-bg, rgba(251, 191, 36, 0.15));
+    border-color: var(--ds-warning-500, #f59e0b);
+    color: var(--ds-warning-400, #fbbf24);
+  }
+
+  /* Encouragement toast */
+  .encouragement-toast {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    background: var(--ds-surface-800);
+    border: 1px solid var(--ds-accent-500);
+    color: var(--ds-text-primary);
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--ds-radius-lg);
+    font-size: var(--ds-text-sm);
+    font-weight: var(--ds-weight-medium);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 10;
+    white-space: nowrap;
+  }
+  .encouragement-toast.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
   @media (max-width: 480px) {
     .exam-grid { grid-template-columns: 1fr !important; }
   }

@@ -33,6 +33,7 @@ export interface MentorContext {
   syllabusProgress: string;
   weakChapters: string;
   settings: string;
+  userProfile: string;
 }
 
 export interface ChatMessage {

@@ -14,7 +14,7 @@ const isGuest = user?.userType === 'guest';
 
 // Determine user's stream from settings or first exam
 const defaultExams = settings.selectedExams?.length ? settings.selectedExams : ['JEE'];
-const userStream = settings.stream || 'science';
+const userStream = user?.stream || 'science';
 ---
 
 <BaseLayout title="Settings">
@@ -43,23 +43,90 @@ const userStream = settings.stream || 'science';
         )}
       </div>
 
+      <!-- Study Profile -->
+      <div class="ds-card">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:var(--ds-space-3);">
+          <div>
+            <h2 class="ds-heading-section" style="margin-bottom:0.1rem;">Study Profile</h2>
+            <p class="ds-caption">Your current study profile used by the AI Mentor.</p>
+          </div>
+          <a href="/onboarding?update=1" class="ds-btn ds-btn-secondary ds-btn-sm" style="white-space:nowrap;flex-shrink:0;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:0.25rem;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Update Study Profile
+          </a>
+        </div>
+        <div class="profile-summary" style="display:flex;flex-wrap:wrap;gap:var(--ds-space-2);margin-top:var(--ds-space-3);">
+          {user?.classLevel && (
+            <div class="ps-chip">
+              <span class="ps-chip-icon">📚</span>
+              <span>Class {user.classLevel.replace('class_', '')}</span>
+            </div>
+          )}
+          {user?.stream && (
+            <div class="ps-chip">
+              <span class="ps-chip-icon">{user.stream === 'science' ? '🔬' : user.stream === 'commerce' ? '📊' : '📖'}</span>
+              <span>{user.stream.charAt(0).toUpperCase() + user.stream.slice(1)}</span>
+            </div>
+          )}
+          {(user as any)?.coaching && (
+            <div class="ps-chip">
+              <span class="ps-chip-icon">🎯</span>
+              <span>{{coaching_only: 'Coaching only', self_study: 'Self-study', both: 'Coaching + Self-study'}[(user as any).coaching] || (user as any).coaching}</span>
+            </div>
+          )}
+          {(user as any)?.targetRank && (
+            <div class="ps-chip ps-chip-goal">
+              <span class="ps-chip-icon">🌟</span>
+              <span>Goal: {(user as any).targetRank}</span>
+            </div>
+          )}
+        </div>
+        {(user as any)?.weakSubjects?.length > 0 && (
+          <div style="margin-top:var(--ds-space-2-5);">
+            <p class="ds-caption" style="margin:0 0 var(--ds-space-1);">Focus areas (subjects needing extra attention):</p>
+            <div style="display:flex;flex-wrap:wrap;gap:var(--ds-space-1-5);">
+              {(user as any).weakSubjects.map((s: string) => (
+                <span class="ps-weak-chip">{s}</span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
       <!-- Target Hours -->
       <div class="ds-card">
         <h2 class="ds-heading-section">Weekly Target</h2>
-        <p class="ds-caption">Your goal for total study hours per week.</p>
-        <div style="display:flex;align-items:center;gap:var(--ds-space-3);margin-top:var(--ds-space-3);">
-          <input
-            type="number"
-            id="target-hours"
-            name="targetHoursPerWeek"
-            min="1"
-            max="168"
-            step="1"
-            value={settings.targetHoursPerWeek}
-            class="ds-input"
-            style="width:5rem;text-align:center;font-family:var(--ds-font-mono);"
-          />
-          <span class="ds-caption">hours per week</span>
+        <p class="ds-caption">Your goal for total study hours and days per week.</p>
+        <div style="display:flex;align-items:center;gap:var(--ds-space-4);margin-top:var(--ds-space-3);flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:var(--ds-space-2);">
+            <input
+              type="number"
+              id="target-hours"
+              name="targetHoursPerWeek"
+              min="1"
+              max="168"
+              step="1"
+              value={settings.targetHoursPerWeek}
+              class="ds-input"
+              style="width:5rem;text-align:center;font-family:var(--ds-font-mono);"
+            />
+            <span class="ds-caption">hours / week</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:var(--ds-space-2);">
+            <input
+              type="number"
+              id="study-days"
+              name="studyDaysPerWeek"
+              min="1"
+              max="7"
+              step="1"
+              value={settings.studyDaysPerWeek}
+              class="ds-input"
+              style="width:4rem;text-align:center;font-family:var(--ds-font-mono);"
+            />
+            <span class="ds-caption">days / week</span>
+          </div>
+          <span class="ds-caption" style="color:var(--ds-text-tertiary);">≈ {Math.round(settings.targetHoursPerWeek / (settings.studyDaysPerWeek || 5) * 10) / 10} hrs/day</span>
         </div>
       </div>
 
@@ -93,7 +160,7 @@ const userStream = settings.stream || 'science';
                 class:list={{ 'settings-chip': true, 'settings-chip--exam-selected': isSelected, 'settings-chip--item': true }}
                 data-exam={exam.key}
                 data-selected={isSelected ? '1' : '0'}
-                data-groups={JSON.stringify(exam.groups)}
+                data-groups={exam.groups.join(',')}
               >
                 <span class="settings-chip-label">{exam.label}</span>
                 <span class="settings-chip-sub">{exam.subjects.length} subjects</span>
@@ -254,6 +321,8 @@ const userStream = settings.stream || 'science';
       selectedExams.push(chip.dataset.exam);
     });
     const examDate = document.getElementById('exam-date').value || null;
+    const stream = document.querySelector('#stream-grid .settings-chip[data-selected="1"]')?.dataset?.stream || '';
+    const studyDays = parseInt(document.getElementById('study-days')?.value) || 5;
 
     if (selectedExams.length === 0) {
       errorDiv.textContent = 'Select at least one exam.';
@@ -268,7 +337,7 @@ const userStream = settings.stream || 'science';
       const res = await fetch('/api/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetHoursPerWeek: targetHours, selectedExams, examDate }),
+        body: JSON.stringify({ targetHoursPerWeek: targetHours, selectedExams, examDate, stream, studyDaysPerWeek: studyDays }),
       });
       if (!res.ok) throw new Error('Failed to save');
       successDiv.hidden = false;
@@ -340,6 +409,41 @@ const userStream = settings.stream || 'science';
   .settings-chip-sub {
     font-size: var(--ds-text-2xs);
     opacity: 0.6;
+  }
+
+  /* ── Profile summary chips ── */
+  .profile-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ds-space-2);
+  }
+  .ps-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.3rem 0.7rem;
+    background: var(--ds-surface-900);
+    border: 1px solid var(--ds-border);
+    border-radius: 999px;
+    font-size: var(--ds-text-xs);
+    color: var(--ds-text-primary);
+  }
+  .ps-chip-icon {
+    font-size: 0.85rem;
+  }
+  .ps-chip-goal {
+    background: rgba(251, 191, 36, 0.1);
+    border-color: rgba(251, 191, 36, 0.3);
+    color: #fbbf24;
+  }
+  .ps-weak-chip {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 999px;
+    font-size: var(--ds-text-2xs);
+    color: #fca5a5;
   }
 
   /* ── Account card ── */

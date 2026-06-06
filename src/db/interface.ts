@@ -54,7 +54,7 @@ export interface Database {
   createUser(data: CreateUserData): User;
   getUserByEmail(email: string): User | null;
   getUserById(id: string): User | null;
-  updateUser(id: string, data: Partial<Pick<User, 'name' | 'stream' | 'goal' | 'userType' | 'classLevel' | 'weeklyStudyGoal' | 'studyDaysPerWeek'>>): User | null;
+  updateUser(id: string, data: Partial<Pick<User, 'name' | 'stream' | 'goal' | 'userType' | 'classLevel' | 'weakSubjects' | 'coaching' | 'targetRank' | 'weeklyStudyGoal' | 'studyDaysPerWeek'>>): User | null;
   createSession(userId: string, token: string, expiresAt: string): Session;
   getSessionByToken(token: string): Session | null;
   deleteSession(token: string): boolean;

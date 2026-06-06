@@ -2,6 +2,8 @@ import type { StreamKey } from '../utils/stream-map';
 
 export type ClassLevel = 'class_9' | 'class_10' | 'class_11' | 'class_12' | 'dropper' | 'college' | 'other';
 
+export type CoachingType = 'coaching_only' | 'self_study' | 'both';
+
 export interface UserProfile {
   /** The user's current education level */
   classLevel: ClassLevel | null;
@@ -17,6 +19,12 @@ export interface UserProfile {
   studyDaysPerWeek: number;
   /** Computed: weeklyStudyGoal / studyDaysPerWeek */
   recommendedDailyAverage: number;
+  /** Coaching attendance */
+  coaching: CoachingType | null;
+  /** Subjects the user finds weakest */
+  weakSubjects: string[];
+  /** Target rank or score goal */
+  targetRank: string;
 }
 
 export function computeDailyAverage(hours: number, days: number): number {
@@ -33,5 +41,8 @@ export function createDefaultProfile(): UserProfile {
     weeklyStudyGoal: 35,
     studyDaysPerWeek: 5,
     recommendedDailyAverage: 7,
+    coaching: null,
+    weakSubjects: [],
+    targetRank: '',
   };
 }

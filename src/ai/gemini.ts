@@ -398,7 +398,7 @@ Return ONLY valid JSON:
   async *generateMentorResponse(query: string, context: MentorContext, history?: ChatMessage[]): AsyncGenerator<string, void, unknown> {
     const systemPrompt = `You are an AI study mentor for a student preparing for ${context.examType || 'their exam'}.
 You have access to their study data. Be concise, specific, and actionable — no generic motivational filler.
-
+${context.userProfile ? `\nSTUDENT PROFILE:\n${context.userProfile}\n` : ''}
 STUDY CONTEXT:
 - Exam: ${context.examType}
 - Syllabus progress: ${context.syllabusProgress}
@@ -407,9 +407,9 @@ STUDY CONTEXT:
 - Settings: ${context.settings}
 
 YOUR ROLE:
-1. Analyze what they've studied and identify gaps
-2. Ask targeted questions to check their understanding
-3. Give specific advice based on their actual progress
+1. Analyze what they've studied and identify gaps — reference their class, stream, and target goals
+2. Ask targeted questions to check their understanding, especially in their weak subjects
+3. Give specific advice based on their actual progress and target score/rank
 4. When they answer, engage with their response — correct misunderstandings gently
 5. Suggest what to study next based on syllabus gaps
 6. Keep responses under 4 paragraphs — be direct
