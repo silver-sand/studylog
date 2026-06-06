@@ -2,7 +2,6 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import SyllabusCard from '../components/SyllabusCard.astro';
 import ChapterList from '../components/ChapterList.astro';
-import TourTooltip from '../components/TourTooltip.astro';
 import { getDb } from '../db';
 import { EXAM_DEFINITIONS } from '../utils/exam-map';
 import { scopeDbToUser } from '../services/user-scope';
@@ -21,7 +20,7 @@ interface ExamData {
   overallPercent: number;
 }
 
-// Use unique syllabus keys for exam display
+// Deduplicate by syllabus key
 const seen = new Set<string>();
 const examList = EXAM_DEFINITIONS.filter(e => {
   if (seen.has(e.syllabusKey)) return false;
@@ -53,94 +52,107 @@ const defaultKey = defaultExam?.key;
 // Filter to user's selected exams
 const settings = db.getSettings();
 const selectedExams = settings.selectedExams?.length ? settings.selectedExams : ['JEE'];
-const filteredExams = exams.filter(e => selectedExams.some(s => s.includes(e.key) || e.key.includes(s)));
+const filteredExams = exams.filter(e =>
+  selectedExams.some(s => e.key.includes(s) || s.includes(e.key))
+);
+
+// Subject color helper (used for the subject badge icon)
+function subjectColor(s: string): string {
+  const name = s.toLowerCase();
+  if (name.includes('physics')) return '#3b82f6';
+  if (name.includes('chemistry')) return '#22c55e';
+  if (name.includes('math')) return '#f59e0b';
+  if (name.includes('biology')) return '#ec4899';
+  return '#64748b';
+}
 ---
 
 <BaseLayout title="Syllabus Tracker">
-  <div class="max-w-4xl mx-auto">
+  <div class="syllabus-page">
+
     <!-- Header -->
-    <div class="mb-8">
-      <h1 class="ds-heading-page" style="margin-bottom:0.25rem;">Syllabus Tracker</h1>
-      <p class="ds-body-sm" style="margin:0;">Track your syllabus completion across subjects and chapters</p>
+    <div class="ds-page-header">
+      <h1 class="ds-heading-page">Syllabus Tracker</h1>
+      <p class="ds-body-sm">Track your syllabus completion across subjects and chapters</p>
     </div>
 
-    <!-- Exam Tabs -->
-    <div class="ds-tabs" role="tablist" style="margin-bottom:var(--ds-space-6);overflow-x:auto;">
-      {filteredExams.map((exam) => (
-        <button
-          class:list={{ 'ds-tab': true, active: exam.key === defaultKey }}
-          data-exam={exam.key}
-          role="tab"
-          aria-selected={exam.key === defaultKey}
-        >
-          {exam.label}
-          <span style="font-size:var(--ds-text-2xs);font-family:var(--ds-font-mono);opacity:0.7;">{exam.overallPercent}%</span>
-        </button>
-      ))}
-    </div>
-
-    <!-- Per-Exam Content -->
-    {filteredExams.map((exam) => (
-      <div
-        class:list={{ 'exam-content': true, hidden: exam.key !== defaultKey }}
-        data-exam-content={exam.key}
-      >
-        <!-- Overall progress summary -->
-        <div class="ds-card ds-card-compact" style="margin-bottom:var(--ds-space-6);">
-          <div class="ds-flex-between ds-mb-4">
-            <span style="font-size:var(--ds-text-sm);color:var(--ds-text-secondary);">Overall Progress</span>
-            <span style="font-family:var(--ds-font-mono);font-size:var(--ds-text-xs);color:var(--ds-text-tertiary);" id={`progress-text-${exam.key}`}>{exam.completedChapters}/{exam.totalChapters} chapters ({exam.overallPercent}%)</span>
-          </div>
-          <div class="ds-progress">
-            <div class="ds-progress-bar" id={`progress-fill-${exam.key}`} style={`width: ${exam.overallPercent}%`}></div>
-          </div>
-        </div>
-
-        <!-- Subject Cards Grid -->
-        <div class="subject-grid">
-          {exam.progress.map((p) => {
-            const subjectChapters = exam.chapters.filter(
-              (ch) => ch.subject === p.subject
-            );
-            return (
-              <div class="subject-block">
-                <div
-                  class="syllabus-card-wrap"
-                  data-subject={p.subject}
-                  data-exam={exam.key}
-                  role="button"
-                  tabindex="0"
-                >
-                  <SyllabusCard subject={p.subject} progress={p} isExpanded={false} onToggle="" />
-                </div>
-                <div
-                  class="chapter-list-wrap hidden"
-                  data-chapters={p.subject}
-                  data-exam-chapters={exam.key}
-                  data-subject-chapters={p.subject}
-                >
-                  <ChapterList chapters={subjectChapters} subject={p.subject} />
-                </div>
-              </div>
-            );
-          })}
+    <!-- No exams configured -->
+    {filteredExams.length === 0 && (
+      <div class="ds-card" style="text-align:center;padding:var(--ds-space-5);">
+        <div class="ds-empty">
+          <div class="ds-empty-icon">📋</div>
+          <p class="ds-empty-title">No exams configured</p>
+          <p class="ds-empty-desc">Select your exams in Study Profile to start tracking syllabus progress.</p>
+          <a href="/settings" class="ds-btn ds-btn-primary ds-empty-action">Go to Study Profile</a>
         </div>
       </div>
-    ))}
-  </div>
+    )}
 
-  <TourTooltip
-    tourId="syllabus-tabs"
-    title="📋 Syllabus Tracker"
-    description="Switch between exams to track progress. Click a subject card to expand chapters, then click the status buttons to update your progress."
-    selector=".exam-tabs"
-    position="bottom"
-  />
+    <!-- Exam Tabs -->
+    {filteredExams.length > 0 && (
+      <>
+      <div class="exam-tabs" style="display:flex;gap:var(--ds-space-1);margin-bottom:var(--ds-space-3);overflow-x:auto;padding-bottom:2px;">
+        {filteredExams.map((exam) => (
+          <button
+            class:list={{ 'exam-tab': true, active: exam.key === defaultKey }}
+            data-exam={exam.key}
+          >
+            <span class="exam-tab-label">{exam.label}</span>
+            <span class="exam-tab-pct"
+              style={exam.overallPercent >= 80 ? 'color:#22c55e' : exam.overallPercent >= 40 ? 'color:#f59e0b' : ''}
+            >{exam.overallPercent}%</span>
+          </button>
+        ))}
+      </div>
+
+      <!-- Per-Exam Content -->
+      {filteredExams.map((exam) => (
+        <div
+          class:list={{ 'exam-content': true, hidden: exam.key !== defaultKey }}
+          data-exam-content={exam.key}
+        >
+          <!-- Overall progress bar -->
+          <div class="ds-card" style="margin-bottom:var(--ds-space-3);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--ds-space-1);">
+              <span style="font-size:var(--ds-text-sm);color:var(--ds-text-secondary);">Overall Progress</span>
+              <span style="font-family:var(--ds-font-mono);font-size:var(--ds-text-xs);color:var(--ds-text-tertiary);"
+                id={`progress-text-${exam.key}`}
+              >{exam.completedChapters}/{exam.totalChapters} chapters ({exam.overallPercent}%)</span>
+            </div>
+            <div class="ds-progress">
+              <div class="ds-progress-bar" id={`progress-fill-${exam.key}`}
+                style={`width: ${exam.overallPercent}%;`}
+              ></div>
+            </div>
+          </div>
+
+          <!-- Subject sections: each card followed by its chapter list -->
+          <div style="display:flex;flex-direction:column;gap:var(--ds-space-2);">
+            {exam.progress.map((p) => {
+              const subjectChapters = exam.chapters.filter(
+                (ch) => ch.subject === p.subject
+              );
+              const subColor = subjectColor(p.subject);
+              return (
+                <div class="subject-section">
+                  <!-- Subject card (non-clickable, serves as section header) -->
+                  <SyllabusCard subject={p.subject} progress={p} />
+                  <!-- Chapters always visible -->
+                  <ChapterList chapters={subjectChapters} subject={p.subject} />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+      </>
+    )}
+  </div>
 </BaseLayout>
 
 <script>
   // ── Exam tab switching ──
-  const tabs = document.querySelectorAll('.ds-tab');
+  const tabs = document.querySelectorAll('.exam-tab');
   const contents = new Map();
   document.querySelectorAll('.exam-content').forEach((el) => {
     contents.set(el.dataset.examContent, el);
@@ -149,45 +161,11 @@ const filteredExams = exams.filter(e => selectedExams.some(s => s.includes(e.key
   tabs.forEach((tab) => {
     tab.addEventListener('click', () => {
       const exam = tab.dataset.exam;
-      tabs.forEach((t) => {
-        t.classList.remove('active');
-        t.setAttribute('aria-selected', 'false');
-      });
+      tabs.forEach((t) => t.classList.remove('active'));
       tab.classList.add('active');
-      tab.setAttribute('aria-selected', 'true');
       contents.forEach((content, key) => {
         content.classList.toggle('hidden', key !== exam);
       });
-    });
-  });
-
-  // ── Card expand/collapse (scoped to current exam) ──
-  document.querySelectorAll('.syllabus-card-wrap').forEach((wrap) => {
-    const subject = wrap.dataset.subject;
-
-    function getChapterList() {
-      const examContent = wrap.closest('.exam-content');
-      if (!examContent) return null;
-      return examContent.querySelector(`[data-chapters="${CSS.escape(subject)}"]`);
-    }
-
-    function toggle() {
-      const chapterList = getChapterList();
-      if (!chapterList) return;
-      const isHidden = chapterList.classList.toggle('hidden');
-      wrap.classList.toggle('expanded', !isHidden);
-    }
-
-    wrap.addEventListener('click', (e) => {
-      if (e.target.closest('.chapter-row') || e.target.closest('.status-btn')) return;
-      toggle();
-    });
-
-    wrap.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        toggle();
-      }
     });
   });
 
@@ -196,7 +174,6 @@ const filteredExams = exams.filter(e => selectedExams.some(s => s.includes(e.key
     const { examType } = e.detail;
     if (!examType) return;
 
-    // Fetch fresh progress for this exam
     try {
       const res = await fetch(`/api/syllabus?exam=${encodeURIComponent(examType)}`);
       if (!res.ok) return;
@@ -207,17 +184,22 @@ const filteredExams = exams.filter(e => selectedExams.some(s => s.includes(e.key
       if (!examContent) return;
 
       const progressData = data.progress;
-      const cards = examContent.querySelectorAll('.syllabus-card-wrap');
-      cards.forEach(card => {
+
+      // Update each subject card
+      examContent.querySelectorAll('.syllabus-card').forEach(card => {
         const subj = card.dataset.subject;
+        if (!subj) return;
         const p = progressData.find((pd) => pd.subject === subj);
         if (!p) return;
 
         const percentEl = card.querySelector('.percent-text');
         if (percentEl) {
-          const colors = { blue: '#93c5fd', green: '#86efac', amber: '#fcd34d', pink: '#f9a8d4', gray: '#94a3b8' };
           const sl = subj.toLowerCase();
-          const ck = sl.includes('physics') ? 'blue' : sl.includes('chemistry') ? 'green' : sl.includes('math') ? 'amber' : sl.includes('biology') ? 'pink' : 'gray';
+          const colors = {
+            blue: '#93c5fd', green: '#86efac', amber: '#fcd34d', pink: '#f9a8d4', gray: '#94a3b8'
+          };
+          const ck = sl.includes('physics') ? 'blue' : sl.includes('chemistry') ? 'green'
+            : sl.includes('math') ? 'amber' : sl.includes('biology') ? 'pink' : 'gray';
           percentEl.textContent = `${p.weightedPercent}%`;
           percentEl.style.color = colors[ck];
         }
@@ -229,13 +211,13 @@ const filteredExams = exams.filter(e => selectedExams.some(s => s.includes(e.key
         if (countEl) countEl.textContent = `${p.completed}/${p.total} chapters`;
       });
 
-      // Update overall progress (weighted)
+      // Update overall progress
       const totalChapters = progressData.reduce((s, p) => s + p.total, 0);
       const weightedSum = progressData.reduce((s, p) => s + p.weightedPercent * p.total, 0);
       const overallPercent = totalChapters > 0 ? Math.round(weightedSum / totalChapters) : 0;
 
       const progressText = document.getElementById(`progress-text-${examType}`);
-      if (progressText) progressText.textContent = `${overallPercent}% complete (${totalChapters} chapters)`;
+      if (progressText) progressText.textContent = `${overallPercent}% (${totalChapters} chapters)`;
 
       const progressFill = document.getElementById(`progress-fill-${examType}`);
       if (progressFill) progressFill.style.width = `${overallPercent}%`;
@@ -243,35 +225,75 @@ const filteredExams = exams.filter(e => selectedExams.some(s => s.includes(e.key
       // Update tab percentage
       tabs.forEach(tab => {
         if (tab.dataset.exam === examType) {
-          const countEl = tab.querySelector('.exam-tab-count');
-          if (countEl) countEl.textContent = `${overallPercent}%`;
+          const pctEl = tab.querySelector('.exam-tab-pct');
+          if (pctEl) {
+            pctEl.textContent = `${overallPercent}%`;
+            pctEl.style.color = overallPercent >= 80 ? '#22c55e' : overallPercent >= 40 ? '#f59e0b' : '';
+          }
         }
       });
 
-      // Track for getting-started checklist
+      // Track for checklist
       try { localStorage.setItem('sl-checklist-syllabus', '1'); } catch(e) {}
     } catch (err) {
-      // Silently fail — the individual button already updated
+      // Silently fail
     }
   });
 </script>
 
 <style>
-  .subject-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--ds-space-2);
+  .syllabus-page {
+    max-width: 56rem;
+    margin: 0 auto;
   }
-  @media (min-width: 640px) {
-    .subject-grid { grid-template-columns: repeat(2, 1fr); }
+
+  /* ── Exam tabs ── */
+  .exam-tabs {
+    display: flex;
+    gap: var(--ds-space-1);
+    border-bottom: 1px solid var(--ds-border-default);
   }
-  .syllabus-card-wrap { cursor: pointer; user-select: none; }
-  .syllabus-card-wrap:focus-visible {
-    outline: 2px solid var(--ds-accent-500);
-    outline-offset: 2px;
-    border-radius: var(--ds-radius-lg);
+  .exam-tab {
+    display: flex;
+    align-items: center;
+    gap: var(--ds-space-1);
+    padding: var(--ds-space-1) var(--ds-space-2);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--ds-text-tertiary);
+    font-size: var(--ds-text-sm);
+    font-family: var(--ds-font-sans);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
   }
-  .chapter-list-wrap { overflow: hidden; transition: max-height 0.3s ease; }
+  .exam-tab:hover {
+    color: var(--ds-text-secondary);
+  }
+  .exam-tab.active {
+    color: var(--ds-text-primary);
+    border-bottom-color: var(--ds-accent-500);
+  }
+  .exam-tab-label {
+    font-weight: var(--ds-weight-medium);
+  }
+  .exam-tab-pct {
+    font-size: var(--ds-text-2xs);
+    font-family: var(--ds-font-mono);
+    color: var(--ds-text-muted);
+  }
+
+  /* ── Subject sections ── */
+  .subject-section {
+    display: flex;
+    flex-direction: column;
+  }
+  .subject-section > .syllabus-card {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom: none;
+  }
+
   .hidden { display: none; }
-  .exam-tab-count { font-size: var(--ds-text-2xs); font-family: var(--ds-font-mono); opacity: 0.7; }
 </style>

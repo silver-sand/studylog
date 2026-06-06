@@ -14,8 +14,8 @@ const isAuthenticated = !!user && !isGuest;
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#020617" />
-  <meta name="description" content="StudyLog — AI-powered daily micro-log and auto-review for competitive exam prep. Track what you study, get weekly reviews." />
-  <title>StudyLog — AI-Powered Study Tracker</title>
+  <meta name="description" content="StudyLog — AI-powered study tracker for competitive exam prep. Daily micro-logs, syllabus tracking, weekly reviews, and an AI mentor in one place." />
+  <title>StudyLog — Your Study Operating System</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -23,23 +23,23 @@ const isAuthenticated = !!user && !isGuest;
 </head>
 <body style="background:var(--ds-bg-base);color:var(--ds-text-secondary);font-family:var(--ds-font-sans);-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden;">
   <!-- ── Navigation ── -->
-  <header class="ds-landing-header">
-    <div style="max-width:72rem;margin:0 auto;padding:0 var(--ds-space-6);height:4rem;display:flex;align-items:center;justify-content:space-between;">
-      <a href="/" style="display:flex;align-items:center;gap:var(--ds-space-2-5);text-decoration:none;">
-        <div style="width:2rem;height:2rem;border-radius:var(--ds-radius-lg);background:var(--ds-accent-600);display:flex;align-items:center;justify-content:center;">
-          <span style="color:white;font-size:var(--ds-text-xs);font-weight:var(--ds-weight-bold);">SL</span>
+  <header class="lp-header">
+    <div class="lp-header-inner">
+      <a href="/" class="lp-logo">
+        <div class="lp-logo-icon">
+          <span>SL</span>
         </div>
-        <span style="font-size:var(--ds-text-lg);font-weight:var(--ds-weight-semibold);color:white;letter-spacing:var(--ds-tracking-tight);">StudyLog</span>
+        <span class="lp-logo-text">StudyLog</span>
       </a>
-      <nav style="display:flex;align-items:center;gap:var(--ds-space-4);">
-        <a href="#features" style="font-size:var(--ds-text-sm);color:var(--ds-text-tertiary);text-decoration:none;transition:color var(--ds-transition-base);display:none;">Features</a>
-        <a href="#how-it-works" style="font-size:var(--ds-text-sm);color:var(--ds-text-tertiary);text-decoration:none;transition:color var(--ds-transition-base);display:none;">How It Works</a>
+      <nav class="lp-nav">
+        <a href="#features" class="lp-nav-link">Features</a>
+        <a href="#how-it-works" class="lp-nav-link">How It Works</a>
         {isAuthenticated ? (
           <a href="/daily" class="ds-btn ds-btn-primary ds-btn-sm">Dashboard</a>
         ) : (
           <>
             <button onclick="window.openAuthPopup('login')" class="ds-btn ds-btn-ghost ds-btn-sm">Log In</button>
-            <button onclick="window.openAuthPopup('signup')" class="ds-btn ds-btn-primary ds-btn-sm">Get Started Free</button>
+            <button onclick="window.openAuthPopup('signup')" class="ds-btn ds-btn-primary ds-btn-sm">Get Started</button>
           </>
         )}
       </nav>
@@ -47,28 +47,29 @@ const isAuthenticated = !!user && !isGuest;
   </header>
 
   <!-- ── Hero ── -->
-  <section class="ds-landing-hero">
-    <div style="max-width:48rem;margin:0 auto;text-align:center;">
-      <div style="display:inline-flex;align-items:center;gap:var(--ds-space-1-5);padding:var(--ds-space-1) var(--ds-space-3);border-radius:var(--ds-radius-full);background:var(--ds-accent-bg);border:1px solid var(--ds-accent-border);color:var(--ds-accent-400);font-size:var(--ds-text-xs);font-weight:var(--ds-weight-medium);margin-bottom:var(--ds-space-8);">
-        <span style="width:0.5rem;height:0.5rem;border-radius:50%;background:var(--ds-accent-400);"></span>
-        AI-Powered Study Analytics
+  <section class="lp-hero">
+    <div class="lp-hero-inner">
+      <div class="lp-badge">
+        <span class="lp-badge-dot"></span>
+        AI-Powered Study OS
       </div>
-      <h1 style="font-size:var(--ds-text-4xl);font-weight:var(--ds-weight-extrabold);color:white;line-height:var(--ds-leading-tight);letter-spacing:var(--ds-tracking-tight);margin:0 0 var(--ds-space-6);">
-        Your study journey,<br />
-        <span style="background:linear-gradient(to right,var(--ds-accent-400),#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">intelligently tracked</span>
+      <h1 class="lp-hero-title">
+        Know exactly<br />
+        <span class="lp-gradient">what to study next</span>
       </h1>
-      <p style="font-size:var(--ds-text-lg);color:var(--ds-text-tertiary);max-width:36rem;margin:0 auto var(--ds-space-10);line-height:var(--ds-leading-relaxed);">
-        Micro-log your daily study sessions, get AI-powered weekly reviews, track syllabus progress across multiple exams, and stay on pace — all in one place.
+      <p class="lp-hero-sub">
+        Micro-log your daily sessions in seconds. Track syllabus progress across exams.
+        Get AI reviews and a mentor that knows your weak spots — all in one place.
       </p>
-      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--ds-space-4);">
+      <div class="lp-hero-actions">
         {isAuthenticated ? (
-          <a href="/daily" class="ds-btn ds-btn-primary ds-btn-lg" style="gap:var(--ds-space-2);">
+          <a href="/daily" class="ds-btn ds-btn-primary ds-btn-lg lp-cta-btn">
             Go to Dashboard
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </a>
         ) : (
           <>
-            <button id="start-guest-btn" class="ds-btn ds-btn-primary ds-btn-lg" style="gap:var(--ds-space-2);">
+            <button id="start-guest-btn" class="ds-btn ds-btn-primary ds-btn-lg lp-cta-btn">
               Start Tracking Free
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </button>
@@ -76,120 +77,114 @@ const isAuthenticated = !!user && !isGuest;
           </>
         )}
       </div>
-      <p style="font-size:var(--ds-text-xs);color:var(--ds-text-muted);margin-top:var(--ds-space-6);">No credit card. Start instantly.</p>
+      <p class="lp-hero-footnote">No credit card. No commitment. Start instantly.</p>
     </div>
   </section>
 
   <!-- ── Features ── -->
-  <section id="features" class="ds-landing-section">
-    <div style="max-width:64rem;margin:0 auto;">
-      <div style="text-align:center;margin-bottom:var(--ds-space-14);">
-        <h2 style="font-size:var(--ds-text-3xl);font-weight:var(--ds-weight-bold);color:white;margin:0 0 var(--ds-space-4);letter-spacing:var(--ds-tracking-tight);">Everything you need to stay on track</h2>
-        <p style="color:var(--ds-text-tertiary);max-width:24rem;margin:0 auto;">Designed for competitive exam prep. Built for consistency, not complexity.</p>
+  <section id="features" class="lp-section">
+    <div class="lp-section-inner">
+      <div class="lp-section-header">
+        <h2 class="lp-section-title">Everything you need, nothing you don't</h2>
+        <p class="lp-section-sub">Built for competitive exam prep. Focused on consistency, not complexity.</p>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(18rem,1fr));gap:var(--ds-space-6);">
-        <!-- Feature 1 -->
-        <div class="ds-feature-card">
-          <div class="ds-feature-icon" style="background:var(--ds-accent-bg);border:1px solid var(--ds-accent-border);">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+      <div class="lp-features-grid">
+        <div class="lp-feature-card">
+          <div class="lp-feature-icon" style="background:var(--ds-accent-bg);border-color:var(--ds-accent-border);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--ds-accent-400);"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
           </div>
-          <h3 style="font-size:var(--ds-text-lg);font-weight:var(--ds-weight-semibold);color:white;margin:0 0 var(--ds-space-2);">Micro Daily Log</h3>
-          <p style="font-size:var(--ds-text-sm);color:var(--ds-text-tertiary);line-height:var(--ds-leading-relaxed);margin:0;">Log what you studied in seconds. Track hours, subjects, chapters, and focus level. No complex journaling required.</p>
+          <h3 class="lp-feature-title">30-Second Daily Log</h3>
+          <p class="lp-feature-desc">Log what you studied, hours, and focus level in seconds. No complex journaling — just the signal.</p>
         </div>
 
-        <!-- Feature 2 -->
-        <div class="ds-feature-card">
-          <div class="ds-feature-icon" style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.25);">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        <div class="lp-feature-card">
+          <div class="lp-feature-icon" style="background:rgba(52,211,153,0.1);border-color:rgba(52,211,153,0.25);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#34d399;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
           </div>
-          <h3 style="font-size:var(--ds-text-lg);font-weight:var(--ds-weight-semibold);color:white;margin:0 0 var(--ds-space-2);">AI Weekly Reviews</h3>
-          <p style="font-size:var(--ds-text-sm);color:var(--ds-text-tertiary);line-height:var(--ds-leading-relaxed);margin:0;">Get insightful AI-generated weekly reviews. Spot patterns, track consistency, and discover what's working.</p>
+          <h3 class="lp-feature-title">AI Weekly Reviews</h3>
+          <p class="lp-feature-desc">Automated weekly analysis of your study patterns. Strengths, weaknesses, and what to adjust — generated by AI.</p>
         </div>
 
-        <!-- Feature 3 -->
-        <div class="ds-feature-card">
-          <div class="ds-feature-icon" style="background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.25);">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect width="6" height="4" x="9" y="3" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
+        <div class="lp-feature-card">
+          <div class="lp-feature-icon" style="background:rgba(251,191,36,0.1);border-color:rgba(251,191,36,0.25);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#fbbf24;"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect width="6" height="4" x="9" y="3" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
           </div>
-          <h3 style="font-size:var(--ds-text-lg);font-weight:var(--ds-weight-semibold);color:white;margin:0 0 var(--ds-space-2);">Syllabus Progress</h3>
-          <p style="font-size:var(--ds-text-sm);color:var(--ds-text-tertiary);line-height:var(--ds-leading-relaxed);margin:0;">Track your syllabus chapter by chapter. See completion percentages, revision status, and weak areas per subject.</p>
+          <h3 class="lp-feature-title">Chapter-by-Chapter Syllabus</h3>
+          <p class="lp-feature-desc">Track progress at the chapter level. See completion %, revision cycles, and subject weak spots at a glance.</p>
         </div>
 
-        <!-- Feature 4 -->
-        <div class="ds-feature-card">
-          <div class="ds-feature-icon" style="background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.25);">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <div class="lp-feature-card">
+          <div class="lp-feature-icon" style="background:rgba(167,139,250,0.1);border-color:rgba(167,139,250,0.25);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#a78bfa;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
           </div>
-          <h3 style="font-size:var(--ds-text-lg);font-weight:var(--ds-weight-semibold);color:white;margin:0 0 var(--ds-space-2);">Multi-Exam Support</h3>
-          <p style="font-size:var(--ds-text-sm);color:var(--ds-text-tertiary);line-height:var(--ds-leading-relaxed);margin:0;">Prepare for JEE, NEET, CBSE, CUET, CAT, UPSC, and more. Switch between exams without losing data.</p>
+          <h3 class="lp-feature-title">Multi-Exam Ready</h3>
+          <p class="lp-feature-desc">JEE, NEET, CBSE, CUET, CAT, UPSC — switch between exams anytime. Your data stays organized per exam.</p>
         </div>
 
-        <!-- Feature 5 -->
-        <div class="ds-feature-card">
-          <div class="ds-feature-icon" style="background:rgba(251,113,133,0.1);border:1px solid rgba(251,113,133,0.25);">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fb7185" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <div class="lp-feature-card">
+          <div class="lp-feature-icon" style="background:rgba(251,113,133,0.1);border-color:rgba(251,113,133,0.25);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#fb7185;"><path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><path d="M16 14H8a4 4 0 0 0-4 4v2h16v-2a4 4 0 0 0-4-4z"/></svg>
           </div>
-          <h3 style="font-size:var(--ds-text-lg);font-weight:var(--ds-weight-semibold);color:white;margin:0 0 var(--ds-space-2);">Pace Prediction</h3>
-          <p style="font-size:var(--ds-text-sm);color:var(--ds-text-tertiary);line-height:var(--ds-leading-relaxed);margin:0;">Know if you're on track. See projected completion dates and get early warnings when you're falling behind.</p>
+          <h3 class="lp-feature-title">Personal AI Mentor</h3>
+          <p class="lp-feature-desc">Ask anything: "What should I study today?", "Quiz me on Physics", or "Explain this concept." It knows your history.</p>
         </div>
 
-        <!-- Feature 6 -->
-        <div class="ds-feature-card">
-          <div class="ds-feature-icon" style="background:rgba(34,211,238,0.1);border:1px solid rgba(34,211,238,0.25);">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><path d="M16 14H8a4 4 0 0 0-4 4v2h16v-2a4 4 0 0 0-4-4z"/></svg>
+        <div class="lp-feature-card">
+          <div class="lp-feature-icon" style="background:rgba(34,211,238,0.1);border-color:rgba(34,211,238,0.25);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#22d3ee;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           </div>
-          <h3 style="font-size:var(--ds-text-lg);font-weight:var(--ds-weight-semibold);color:white;margin:0 0 var(--ds-space-2);">AI Mentor</h3>
-          <p style="font-size:var(--ds-text-sm);color:var(--ds-text-tertiary);line-height:var(--ds-leading-relaxed);margin:0;">Ask your personal AI mentor anything. Get study advice, concept explanations, and syllabus guidance in real-time.</p>
+          <h3 class="lp-feature-title">Streak & Pace Tracking</h3>
+          <p class="lp-feature-desc">Know if you're on track. Daily streaks, weekly progress, and pace predictions keep you accountable.</p>
         </div>
       </div>
     </div>
   </section>
 
   <!-- ── How It Works ── -->
-  <section id="how-it-works" class="ds-landing-section">
-    <div style="max-width:56rem;margin:0 auto;">
-      <div style="text-align:center;margin-bottom:var(--ds-space-14);">
-        <h2 style="font-size:var(--ds-text-3xl);font-weight:var(--ds-weight-bold);color:white;margin:0 0 var(--ds-space-4);letter-spacing:var(--ds-tracking-tight);">How it works</h2>
-        <p style="color:var(--ds-text-tertiary);max-width:24rem;margin:0 auto;">Three simple steps to transform your study tracking.</p>
+  <section id="how-it-works" class="lp-section">
+    <div class="lp-section-inner">
+      <div class="lp-section-header">
+        <h2 class="lp-section-title">Three steps to stay on track</h2>
+        <p class="lp-section-sub">No onboarding labyrinth. Just start.</p>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--ds-space-8);">
-        <div style="text-align:center;">
-          <div style="width:3.5rem;height:3.5rem;border-radius:50%;background:rgba(37,99,235,0.2);border:1px solid rgba(59,130,246,0.3);display:flex;align-items:center;justify-content:center;margin:0 auto var(--ds-space-4);">
-            <span style="font-size:var(--ds-text-2xl);font-weight:var(--ds-weight-bold);color:var(--ds-accent-400);">1</span>
-          </div>
-          <h3 style="font-size:var(--ds-text-lg);font-weight:var(--ds-weight-semibold);color:white;margin:0 0 var(--ds-space-2);">Log Daily</h3>
-          <p style="font-size:var(--ds-text-sm);color:var(--ds-text-tertiary);line-height:var(--ds-leading-relaxed);margin:0;">Spend 30 seconds logging what you studied, for how long, and your focus level.</p>
+      <div class="lp-steps">
+        <div class="lp-step">
+          <div class="lp-step-num" style="background:var(--ds-accent-bg);border-color:var(--ds-accent-border);color:var(--ds-accent-400);">1</div>
+          <h3 class="lp-step-title">Log your session</h3>
+          <p class="lp-step-desc">Open the app, type what you studied, enter the hours. Takes 30 seconds. That's it.</p>
         </div>
-        <div style="text-align:center;">
-          <div style="width:3.5rem;height:3.5rem;border-radius:50%;background:rgba(34,197,94,0.2);border:1px solid rgba(34,197,94,0.3);display:flex;align-items:center;justify-content:center;margin:0 auto var(--ds-space-4);">
-            <span style="font-size:var(--ds-text-2xl);font-weight:var(--ds-weight-bold);color:var(--ds-success-text);">2</span>
-          </div>
-          <h3 style="font-size:var(--ds-text-lg);font-weight:var(--ds-weight-semibold);color:white;margin:0 0 var(--ds-space-2);">Get Insights</h3>
-          <p style="font-size:var(--ds-text-sm);color:var(--ds-text-tertiary);line-height:var(--ds-leading-relaxed);margin:0;">AI analyzes your entries and generates weekly reviews with strengths, weaknesses, and recommendations.</p>
+        <div class="lp-step-arrow">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--ds-text-muted);"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </div>
-        <div style="text-align:center;">
-          <div style="width:3.5rem;height:3.5rem;border-radius:50%;background:rgba(139,92,246,0.2);border:1px solid rgba(139,92,246,0.3);display:flex;align-items:center;justify-content:center;margin:0 auto var(--ds-space-4);">
-            <span style="font-size:var(--ds-text-2xl);font-weight:var(--ds-weight-bold);color:#a78bfa;">3</span>
-          </div>
-          <h3 style="font-size:var(--ds-text-lg);font-weight:var(--ds-weight-semibold);color:white;margin:0 0 var(--ds-space-2);">Stay on Track</h3>
-          <p style="font-size:var(--ds-text-sm);color:var(--ds-text-tertiary);line-height:var(--ds-leading-relaxed);margin:0;">Monitor syllabus progress, pace predictions, and chapter health. Adjust your plan before it's too late.</p>
+        <div class="lp-step">
+          <div class="lp-step-num" style="background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.3);color:#22c55e;">2</div>
+          <h3 class="lp-step-title">Review automatically</h3>
+          <p class="lp-step-desc">Every week, AI generates a review of your patterns — what's working, what's not, what to focus on.</p>
+        </div>
+        <div class="lp-step-arrow">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--ds-text-muted);"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </div>
+        <div class="lp-step">
+          <div class="lp-step-num" style="background:rgba(139,92,246,0.15);border-color:rgba(139,92,246,0.3);color:#a78bfa;">3</div>
+          <h3 class="lp-step-title">Adjust and improve</h3>
+          <p class="lp-step-desc">Use syllabus tracking, pace predictions, and the AI mentor to stay ahead. Never fall behind without knowing.</p>
         </div>
       </div>
     </div>
   </section>
 
   <!-- ── CTA ── -->
-  <section class="ds-landing-section">
-    <div style="max-width:32rem;margin:0 auto;text-align:center;">
-      <h2 style="font-size:var(--ds-text-3xl);font-weight:var(--ds-weight-bold);color:white;margin:0 0 var(--ds-space-4);letter-spacing:var(--ds-tracking-tight);">Ready to study smarter?</h2>
-      <p style="font-size:var(--ds-text-lg);color:var(--ds-text-tertiary);margin:0 0 var(--ds-space-8);">Start tracking your study sessions today. No account required to begin.</p>
+  <section class="lp-section lp-section-last">
+    <div class="lp-cta">
+      <h2 class="lp-cta-title">Ready to study smarter?</h2>
+      <p class="lp-cta-desc">Start tracking your study sessions today. No account required.</p>
       {isAuthenticated ? (
-        <a href="/daily" class="ds-btn ds-btn-primary ds-btn-lg" style="gap:var(--ds-space-2);">
+        <a href="/daily" class="ds-btn ds-btn-primary ds-btn-lg lp-cta-btn" style="gap:var(--ds-space-2);">
           Go to Dashboard
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </a>
       ) : (
-        <button id="cta-guest-btn" class="ds-btn ds-btn-primary ds-btn-lg" style="gap:var(--ds-space-2);">
+        <button id="cta-guest-btn" class="ds-btn ds-btn-primary ds-btn-lg lp-cta-btn" style="gap:var(--ds-space-2);">
           Start Tracking Free
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </button>
@@ -198,12 +193,11 @@ const isAuthenticated = !!user && !isGuest;
   </section>
 
   <!-- ── Footer ── -->
-  <footer style="padding:var(--ds-space-8) var(--ds-space-6);border-top:1px solid var(--ds-border-subtle);">
-    <div style="max-width:64rem;margin:0 auto;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:var(--ds-space-4);">
-      <div style="display:flex;align-items:center;gap:var(--ds-space-2);font-size:var(--ds-text-sm);color:var(--ds-text-muted);">
+  <footer class="lp-footer">
+    <div class="lp-footer-inner">
+      <div class="lp-footer-text">
         <span>© 2026 StudyLog</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:var(--ds-space-6);font-size:var(--ds-text-xs);color:var(--ds-text-muted);">
+        <span class="lp-dot">·</span>
         <span>Built for students who mean business.</span>
       </div>
     </div>
@@ -215,12 +209,7 @@ const isAuthenticated = !!user && !isGuest;
     async function createGuestSession() {
       try {
         const res = await fetch('/api/auth/guest', { method: 'POST' });
-        if (res.ok) {
-          window.location.href = '/daily';
-        } else {
-          // Fallback: go to daily anyway
-          window.location.href = '/daily';
-        }
+        window.location.href = '/daily';
       } catch {
         window.location.href = '/daily';
       }
@@ -237,10 +226,323 @@ const isAuthenticated = !!user && !isGuest;
     });
   </script>
 
-  <style>
+  <style is:global>
     html { scroll-behavior: smooth; }
+
+    /* ── Header ── */
+    .lp-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 50;
+      background: rgba(2, 6, 23, 0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--ds-border-subtle);
+    }
+    .lp-header-inner {
+      max-width: 72rem;
+      margin: 0 auto;
+      padding: 0 var(--ds-space-3);
+      height: 3.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .lp-logo {
+      display: flex;
+      align-items: center;
+      gap: var(--ds-space-1);
+      text-decoration: none;
+    }
+    .lp-logo-icon {
+      width: 1.75rem;
+      height: 1.75rem;
+      border-radius: var(--ds-radius-md);
+      background: var(--ds-accent-600);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .lp-logo-icon span {
+      color: white;
+      font-size: var(--ds-text-xs);
+      font-weight: var(--ds-weight-bold);
+    }
+    .lp-logo-text {
+      font-size: var(--ds-text-md);
+      font-weight: var(--ds-weight-semibold);
+      color: white;
+      letter-spacing: var(--ds-tracking-tight);
+    }
+    .lp-nav {
+      display: flex;
+      align-items: center;
+      gap: var(--ds-space-3);
+    }
+    .lp-nav-link {
+      font-size: var(--ds-text-sm);
+      color: var(--ds-text-tertiary);
+      text-decoration: none;
+      transition: color var(--ds-transition-base);
+    }
+    .lp-nav-link:hover {
+      color: var(--ds-text-secondary);
+    }
+    @media (max-width: 640px) {
+      .lp-nav-link { display: none; }
+    }
+
+    /* ── Hero ── */
+    .lp-hero {
+      padding: 8rem var(--ds-space-3) 4rem;
+      max-width: 48rem;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .lp-hero-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .lp-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--ds-space-1);
+      padding: 4px 16px;
+      border-radius: 999px;
+      background: var(--ds-accent-bg);
+      border: 1px solid var(--ds-accent-border);
+      color: var(--ds-accent-400);
+      font-size: var(--ds-text-xs);
+      font-weight: var(--ds-weight-medium);
+      margin-bottom: var(--ds-space-5);
+    }
+    .lp-badge-dot {
+      width: 0.4rem;
+      height: 0.4rem;
+      border-radius: 50%;
+      background: var(--ds-accent-400);
+    }
+    .lp-hero-title {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: var(--ds-weight-extrabold);
+      color: white;
+      line-height: 1.1;
+      letter-spacing: var(--ds-tracking-tight);
+      margin: 0 0 var(--ds-space-3);
+    }
+    .lp-gradient {
+      background: linear-gradient(to right, var(--ds-accent-400), #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .lp-hero-sub {
+      font-size: var(--ds-text-lg);
+      color: var(--ds-text-tertiary);
+      max-width: 36rem;
+      margin: 0 auto var(--ds-space-4);
+      line-height: 1.7;
+    }
+    .lp-hero-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--ds-space-2);
+    }
+    @media (min-width: 480px) {
+      .lp-hero-actions {
+        flex-direction: row;
+      }
+    }
+    .lp-cta-btn {
+      gap: var(--ds-space-2);
+    }
+    .lp-hero-footnote {
+      font-size: var(--ds-text-xs);
+      color: var(--ds-text-muted);
+      margin-top: var(--ds-space-3);
+    }
+
+    /* ── Sections ── */
+    .lp-section {
+      padding: var(--ds-space-5) var(--ds-space-3);
+    }
+    .lp-section-last {
+      padding-bottom: var(--ds-space-5);
+    }
+    .lp-section-inner {
+      max-width: 64rem;
+      margin: 0 auto;
+    }
+    .lp-section-header {
+      text-align: center;
+      margin-bottom: var(--ds-space-5);
+    }
+    .lp-section-title {
+      font-size: clamp(1.5rem, 3vw, 2.25rem);
+      font-weight: var(--ds-weight-bold);
+      color: white;
+      margin: 0 0 var(--ds-space-2);
+      letter-spacing: var(--ds-tracking-tight);
+    }
+    .lp-section-sub {
+      color: var(--ds-text-tertiary);
+      font-size: var(--ds-text-md);
+      margin: 0;
+    }
+
+    /* ── Features Grid ── */
+    .lp-features-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--ds-space-2);
+    }
     @media (min-width: 640px) {
-      a[href="#features"], a[href="#how-it-works"] { display: block !important; }
+      .lp-features-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (min-width: 1024px) {
+      .lp-features-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    .lp-feature-card {
+      padding: var(--ds-space-3);
+      background: var(--ds-bg-elevated);
+      border: 1px solid var(--ds-border-subtle);
+      border-radius: var(--ds-radius-lg);
+      transition: border-color 0.15s;
+    }
+    .lp-feature-card:hover {
+      border-color: var(--ds-border-default);
+    }
+    .lp-feature-icon {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: var(--ds-radius-md);
+      border: 1px solid;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: var(--ds-space-2);
+    }
+    .lp-feature-title {
+      font-size: var(--ds-text-md);
+      font-weight: var(--ds-weight-semibold);
+      color: white;
+      margin: 0 0 var(--ds-space-1);
+    }
+    .lp-feature-desc {
+      font-size: var(--ds-text-sm);
+      color: var(--ds-text-tertiary);
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    /* ── How It Works │ Steps ── */
+    .lp-steps {
+      display: flex;
+      flex-direction: column;
+      gap: var(--ds-space-3);
+      align-items: center;
+      max-width: 40rem;
+      margin: 0 auto;
+    }
+    @media (min-width: 768px) {
+      .lp-steps {
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 0;
+        max-width: 100%;
+      }
+      .lp-step-arrow {
+        padding-top: 2rem;
+      }
+    }
+    .lp-step {
+      text-align: center;
+      flex: 1;
+      padding: 0 var(--ds-space-2);
+    }
+    .lp-step-num {
+      width: 3rem;
+      height: 3rem;
+      border-radius: 50%;
+      border: 1px solid;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--ds-text-xl);
+      font-weight: var(--ds-weight-bold);
+      margin: 0 auto var(--ds-space-2);
+    }
+    .lp-step-title {
+      font-size: var(--ds-text-md);
+      font-weight: var(--ds-weight-semibold);
+      color: white;
+      margin: 0 0 var(--ds-space-1);
+    }
+    .lp-step-desc {
+      font-size: var(--ds-text-sm);
+      color: var(--ds-text-tertiary);
+      line-height: 1.6;
+      margin: 0;
+    }
+    .lp-step-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform: rotate(90deg);
+    }
+    @media (min-width: 768px) {
+      .lp-step-arrow {
+        transform: rotate(0deg);
+      }
+    }
+
+    /* ── CTA ── */
+    .lp-cta {
+      max-width: 32rem;
+      margin: 0 auto;
+      text-align: center;
+      padding: var(--ds-space-4);
+      background: var(--ds-bg-surface);
+      border: 1px solid var(--ds-border-subtle);
+      border-radius: var(--ds-radius-xl);
+    }
+    .lp-cta-title {
+      font-size: var(--ds-text-3xl);
+      font-weight: var(--ds-weight-bold);
+      color: white;
+      margin: 0 0 var(--ds-space-2);
+      letter-spacing: var(--ds-tracking-tight);
+    }
+    .lp-cta-desc {
+      font-size: var(--ds-text-md);
+      color: var(--ds-text-tertiary);
+      margin: 0 0 var(--ds-space-3);
+    }
+
+    /* ── Footer ── */
+    .lp-footer {
+      padding: var(--ds-space-3);
+      border-top: 1px solid var(--ds-border-subtle);
+    }
+    .lp-footer-inner {
+      max-width: 64rem;
+      margin: 0 auto;
+      display: flex;
+      justify-content: center;
+    }
+    .lp-footer-text {
+      display: flex;
+      align-items: center;
+      gap: var(--ds-space-1);
+      font-size: var(--ds-text-sm);
+      color: var(--ds-text-muted);
+    }
+    .lp-dot {
+      color: var(--ds-border-default);
     }
   </style>
 </body>

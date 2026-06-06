@@ -9,7 +9,7 @@ const { title = 'AI Mentor' } = Astro.props;
 <div class="mentor-chat" id="mentor-chat">
   <div class="chat-header">
     <div class="chat-title-row">
-      <div class="chat-avatar" style="background:var(--ds-accent-bg);border:1px solid var(--ds-accent-border);color:var(--ds-accent-400);width:2.25rem;height:2.25rem;border-radius:var(--ds-radius-lg);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+      <div class="chat-avatar">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><path d="M16 14H8a4 4 0 0 0-4 4v2h16v-2a4 4 0 0 0-4-4z"/></svg>
       </div>
       <div>
@@ -17,39 +17,25 @@ const { title = 'AI Mentor' } = Astro.props;
         <p class="ds-caption" style="margin:0.1rem 0 0;">Your AI study partner</p>
       </div>
     </div>
-    <div class="chat-diagnostics" id="chat-diagnostics">
-      <span class="diag-item" id="diag-provider">—</span>
-      <span class="diag-sep">·</span>
-      <span class="diag-item" id="diag-latency">—</span>
-    </div>
   </div>
 
   <div class="messages-area" id="messages-area">
-    <div class="message mentor welcome">
-      <div class="msg-content">
-        <p>Hi! I'm your AI study mentor. I can see your study history and syllabus progress.</p>
-        <p>Try asking me:</p>
-        <ul class="suggestion-list">
-          <li>"What should I study today?"</li>
-          <li>"Quiz me on Physics"</li>
-          <li>"I'm stuck on [topic], help me understand"</li>
-          <li>"What are my weak areas?"</li>
-        </ul>
-      </div>
-    </div>
+    <!-- Welcome message is injected by JS for personalization -->
   </div>
 
   <div class="input-area">
     <div class="chips" id="chips">
-      <button class="ds-chip" data-prompt="What should I study today?" style="font-size:var(--ds-text-xs);padding:var(--ds-space-1-5) var(--ds-space-2-5);">What to study?</button>
-      <button class="ds-chip" data-prompt="Quiz me on something I studied recently" style="font-size:var(--ds-text-xs);padding:var(--ds-space-1-5) var(--ds-space-2-5);">Quiz me</button>
-      <button class="ds-chip" data-prompt="What are my weak areas?" style="font-size:var(--ds-text-xs);padding:var(--ds-space-1-5) var(--ds-space-2-5);">Weak areas</button>
+      <button class="ds-chip" data-prompt="What should I study today?" style="font-size:var(--ds-text-xs);padding:4px 12px;">What to study?</button>
+      <button class="ds-chip" data-prompt="Quiz me on something I studied recently" style="font-size:var(--ds-text-xs);padding:4px 12px;">Quiz me</button>
+      <button class="ds-chip" data-prompt="I'm stuck, help me figure out what to do" style="font-size:var(--ds-text-xs);padding:4px 12px;">I'm stuck</button>
+      <button class="ds-chip" data-prompt="What are my weak areas?" style="font-size:var(--ds-text-xs);padding:4px 12px;">Weak areas</button>
+      <button class="ds-chip" data-prompt="Make me a study plan for this week" style="font-size:var(--ds-text-xs);padding:4px 12px;">Study plan</button>
     </div>
     <div class="input-row">
       <textarea
         id="mentor-input"
         class="ds-input"
-        placeholder="Ask your mentor..."
+        placeholder="Ask your mentor anything..."
         rows="1"
         style="flex:1;resize:none;max-height:120px;"
       ></textarea>
@@ -63,18 +49,87 @@ const { title = 'AI Mentor' } = Astro.props;
 </div>
 
 <script>
+  const CHAT_STORAGE_KEY = 'sl-mentor-history';
   const messagesArea = document.getElementById('messages-area');
-  const input = document.getElementById('mentor-input') as HTMLTextAreaElement;
-  const sendBtn = document.getElementById('send-btn') as HTMLButtonElement;
-  const diagProvider = document.getElementById('diag-provider');
-  const diagLatency = document.getElementById('diag-latency');
+  const input = document.getElementById('mentor-input');
+  const sendBtn = document.getElementById('send-btn');
+  const chipsContainer = document.getElementById('chips');
 
   let isStreaming = false;
-  let history: { role: string; content: string }[] = [];
-  let lastQueryText = '';
-  let lastError = '';
+  let history = [];
 
-  // Send button click handler
+  // ── Load persisted history ──
+  function loadHistory() {
+    try {
+      const saved = localStorage.getItem(CHAT_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          history = parsed.slice(-20); // cap at last 20 messages
+          return true;
+        }
+      }
+    } catch (e) {}
+    return false;
+  }
+
+  // ── Save history ──
+  function saveHistory() {
+    try {
+      localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(history.slice(-20)));
+    } catch (e) {}
+  }
+
+  // ── Render persisted messages ──
+  function renderHistory() {
+    messagesArea.innerHTML = '';
+    for (const msg of history) {
+      const div = document.createElement('div');
+      div.className = `message ${msg.role}`;
+      const inner = document.createElement('div');
+      inner.className = 'msg-content';
+      if (msg.role === 'user') {
+        inner.innerHTML = `<p>${escapeHtml(msg.content)}</p>`;
+      } else {
+        inner.innerHTML = renderMarkdown(msg.content);
+      }
+      div.appendChild(inner);
+      messagesArea.appendChild(div);
+    }
+    messagesArea.scrollTop = messagesArea.scrollHeight;
+  }
+
+  // ── Show welcome message (personalized) ──
+  function showWelcome() {
+    const greetings = [
+      "Hi! I'm your AI study mentor. I can see your study history and syllabus progress.",
+      "Try asking me:",
+    ];
+    const suggestions = [
+      '"What should I study today?"',
+      '"Quiz me on Physics"',
+      '"I\'m stuck on [topic], help me understand"',
+      '"What are my weak areas?"',
+    ];
+
+    const div = document.createElement('div');
+    div.className = 'message mentor welcome';
+    const inner = document.createElement('div');
+    inner.className = 'msg-content';
+    inner.innerHTML = `<p>${greetings[0]}</p><p>${greetings[1]}</p><ul class="suggestion-list">${suggestions.map(s => `<li>${s}</li>`).join('')}</ul>`;
+    div.appendChild(inner);
+    messagesArea.appendChild(div);
+  }
+
+  // ── Init ──
+  const hasHistory = loadHistory();
+  if (hasHistory) {
+    renderHistory();
+  } else {
+    showWelcome();
+  }
+
+  // ── Send button ──
   sendBtn.addEventListener('click', sendMessage);
 
   function autoResize() {
@@ -94,20 +149,20 @@ const { title = 'AI Mentor' } = Astro.props;
     sendBtn.disabled = input.value.trim().length === 0 || isStreaming;
   });
 
-  // Chip buttons
-  document.querySelectorAll('.ds-chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      const prompt = chip.dataset.prompt;
-      if (prompt && !isStreaming) {
-        input.value = prompt;
-        autoResize();
-        sendBtn.disabled = false;
-        sendMessage();
-      }
-    });
+  // ── Chip buttons ──
+  chipsContainer.addEventListener('click', (e) => {
+    const chip = e.target.closest('.ds-chip');
+    if (!chip) return;
+    const prompt = chip.dataset.prompt;
+    if (prompt && !isStreaming) {
+      input.value = prompt;
+      autoResize();
+      sendBtn.disabled = false;
+      sendMessage();
+    }
   });
 
-  function addMessage(role: string, content: string, isStreaming_ = false) {
+  function addMessage(role, content, isStreaming_ = false) {
     const div = document.createElement('div');
     div.className = `message ${role}`;
     if (isStreaming_) div.classList.add('streaming');
@@ -127,72 +182,36 @@ const { title = 'AI Mentor' } = Astro.props;
     return inner;
   }
 
-  function getLastMentorContent(): HTMLElement | null {
+  function getLastMentorContent() {
     const msgs = messagesArea.querySelectorAll('.message.mentor.streaming');
     if (msgs.length > 0) {
-      const el = msgs[msgs.length - 1].querySelector('.msg-content') as HTMLElement;
-      return el;
+      return msgs[msgs.length - 1].querySelector('.msg-content');
     }
     return null;
   }
 
-  function escapeHtml(text: string): string {
+  function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
   }
 
-  function renderMarkdown(text: string): string {
-    // Simple markdown rendering
+  function renderMarkdown(text) {
     let html = escapeHtml(text);
-
-    // Code blocks
     html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
-
-    // Inline code
     html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-
-    // Bold
     html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-
-    // Italic
     html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-
-    // Blockquotes
     html = html.replace(/^>\s*(.+)$/gm, '<blockquote>$1</blockquote>');
-
-    // Unordered lists
     html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
     html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>');
-
-    // Ordered lists
     html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
-
-    // Paragraphs (double newlines)
     html = html.replace(/\n\n/g, '</p><p>');
-
-    // Single newlines within paragraphs
     html = html.replace(/([^>])\n(?!\n)/g, '$1<br>');
-
     return `<p>${html}</p>`;
   }
 
-  function updateDiagnostics(provider: string, model: string, latencyMs?: number) {
-    const parts: string[] = [];
-    if (provider && provider !== 'unknown') {
-      parts.push(model ? `${provider} · ${model}` : provider);
-    }
-    if (diagProvider) {
-      diagProvider.textContent = parts.length > 0 ? parts[0] : '—';
-    }
-    if (diagLatency && latencyMs !== undefined) {
-      const secs = (latencyMs / 1000).toFixed(1);
-      diagLatency.textContent = `${secs}s`;
-    }
-  }
-
-  function showRetryButton(mentorEl: HTMLElement) {
-    // Remove any existing retry button
+  function showRetryButton(mentorEl) {
     const existing = mentorEl.querySelector('.retry-btn');
     if (existing) existing.remove();
 
@@ -200,20 +219,20 @@ const { title = 'AI Mentor' } = Astro.props;
     retry.className = 'retry-btn';
     retry.textContent = '🔄 Retry';
     retry.addEventListener('click', () => {
-      // Remove the failed message
       const msgEl = mentorEl.closest('.message');
       if (msgEl) msgEl.remove();
-      // Remove the user's last message from history
       if (history.length > 0 && history[history.length - 1].role === 'user') {
         history.pop();
       }
-      // Re-send
+      saveHistory();
       sendMessageWithText(lastQueryText);
     });
     mentorEl.appendChild(retry);
   }
 
-  async function sendMessageWithText(text: string) {
+  let lastQueryText = '';
+
+  async function sendMessageWithText(text) {
     if (!text || isStreaming) return;
 
     input.value = '';
@@ -223,6 +242,7 @@ const { title = 'AI Mentor' } = Astro.props;
     // Add user message
     addMessage('user', text);
     history.push({ role: 'user', content: text });
+    saveHistory();
 
     // Track for getting-started checklist
     try { localStorage.setItem('sl-checklist-mentor', '1'); } catch(e) {}
@@ -230,13 +250,12 @@ const { title = 'AI Mentor' } = Astro.props;
     // Add placeholder mentor message
     addMessage('mentor', '▊', true);
     isStreaming = true;
-    lastError = '';
 
     try {
       const res = await fetch('/api/mentor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: text, history: history.slice(-6) }), // last 3 exchanges
+        body: JSON.stringify({ query: text, history: history.slice(-6) }),
       });
 
       if (!res.ok) {
@@ -269,28 +288,19 @@ const { title = 'AI Mentor' } = Astro.props;
           try {
             const data = JSON.parse(line.slice(6));
 
-            if (data.type === 'meta') {
-              updateDiagnostics(data.provider, data.model);
-            } else if (data.type === 'chunk') {
+            if (data.type === 'chunk') {
               fullResponse += data.text;
               const contentEl = getLastMentorContent();
               if (contentEl) {
                 contentEl.innerHTML = renderMarkdown(fullResponse);
               }
               messagesArea.scrollTop = messagesArea.scrollHeight;
-            } else if (data.type === 'done') {
-              updateDiagnostics(
-                (document.getElementById('diag-provider')?.textContent || '').split(' · ')[0] || '',
-                '',
-                data.latency
-              );
-              // Done — finalize below
             } else if (data.type === 'error') {
               hasError = true;
-              lastError = data.text || 'Request failed';
+              const errText = data.text || 'Request failed';
               const contentEl = getLastMentorContent();
               if (contentEl) {
-                contentEl.innerHTML = `<p class="error-msg">Error: ${escapeHtml(lastError)}</p>`;
+                contentEl.innerHTML = `<p class="error-msg">Error: ${escapeHtml(errText)}</p>`;
                 showRetryButton(contentEl);
               }
             }
@@ -298,12 +308,13 @@ const { title = 'AI Mentor' } = Astro.props;
         }
       }
 
-      // Finalize the streaming message
+      // Finalize
       const streamingMsg = messagesArea.querySelector('.message.mentor.streaming');
       if (streamingMsg) {
         streamingMsg.classList.remove('streaming');
         if (fullResponse && !hasError) {
           history.push({ role: 'mentor', content: fullResponse });
+          saveHistory();
         }
       }
 
@@ -337,46 +348,45 @@ const { title = 'AI Mentor' } = Astro.props;
     flex-direction: column;
     height: 70vh;
     max-height: 700px;
-    background: var(--ds-surface-900);
+    background: var(--ds-bg-elevated);
     border: 1px solid var(--ds-border-subtle);
     border-radius: var(--ds-radius-lg);
     overflow: hidden;
   }
+  @media (max-width: 767px) {
+    .mentor-chat { height: calc(100vh - 14rem); max-height: none; border-radius: var(--ds-radius-md); }
+  }
   .chat-header {
-    padding: var(--ds-space-3) var(--ds-space-5);
+    padding: var(--ds-space-2);
     border-bottom: 1px solid var(--ds-border-subtle);
     flex-shrink: 0;
   }
   .chat-title-row {
     display: flex;
     align-items: center;
-    gap: var(--ds-space-2-5);
+    gap: var(--ds-space-1);
   }
-  .chat-diagnostics {
+  .chat-avatar {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: var(--ds-radius-lg);
+    background: var(--ds-accent-bg);
+    border: 1px solid var(--ds-accent-border);
+    color: var(--ds-accent-400);
     display: flex;
     align-items: center;
-    gap: var(--ds-space-1);
-    margin-top: 0.35rem;
-    padding-left: 2.85rem;
-  }
-  .diag-item {
-    font-size: var(--ds-text-2xs);
-    color: var(--ds-text-tertiary);
-    font-family: var(--ds-font-mono);
-  }
-  .diag-sep {
-    font-size: var(--ds-text-2xs);
-    color: var(--ds-border-subtle);
+    justify-content: center;
+    flex-shrink: 0;
   }
 
   /* ── Messages area ── */
   .messages-area {
     flex: 1;
     overflow-y: auto;
-    padding: var(--ds-space-4) var(--ds-space-5);
+    padding: var(--ds-space-2);
     display: flex;
     flex-direction: column;
-    gap: var(--ds-space-3);
+    gap: var(--ds-space-2);
   }
   .message {
     max-width: 88%;
@@ -385,7 +395,7 @@ const { title = 'AI Mentor' } = Astro.props;
   .message.mentor { align-self: flex-start; }
 
   .msg-content {
-    padding: var(--ds-space-2-5) var(--ds-space-3-5);
+    padding: var(--ds-space-1) var(--ds-space-2);
     border-radius: var(--ds-radius-lg);
     font-size: var(--ds-text-sm);
     line-height: 1.6;
@@ -396,7 +406,7 @@ const { title = 'AI Mentor' } = Astro.props;
     color: var(--ds-text-secondary);
   }
   .message.mentor .msg-content {
-    background: var(--ds-surface-800);
+    background: var(--ds-bg-elevated);
     border: 1px solid var(--ds-border-subtle);
     color: var(--ds-text-secondary);
   }
@@ -412,7 +422,7 @@ const { title = 'AI Mentor' } = Astro.props;
   }
   .message.mentor .msg-content li { margin: 0.15rem 0; }
   .message.mentor .msg-content code {
-    background: var(--ds-surface-950);
+    background: var(--ds-bg-base);
     padding: 0.1rem 0.3rem;
     border-radius: var(--ds-radius-sm);
     font-size: var(--ds-text-xs);
@@ -420,7 +430,7 @@ const { title = 'AI Mentor' } = Astro.props;
     color: var(--ds-accent-300);
   }
   .message.mentor .msg-content pre {
-    background: var(--ds-surface-950);
+    background: var(--ds-bg-base);
     padding: var(--ds-space-3);
     border-radius: var(--ds-radius-md);
     overflow-x: auto;
@@ -460,13 +470,13 @@ const { title = 'AI Mentor' } = Astro.props;
   /* ── Input area ── */
   .input-area {
     flex-shrink: 0;
-    padding: var(--ds-space-3) var(--ds-space-5) var(--ds-space-4);
+    padding: var(--ds-space-2);
     border-top: 1px solid var(--ds-border-subtle);
   }
   .chips {
     display: flex;
-    gap: var(--ds-space-1-5);
-    margin-bottom: var(--ds-space-2-5);
+    gap: var(--ds-space-1);
+    margin-bottom: var(--ds-space-1);
     flex-wrap: wrap;
   }
   .input-row {
@@ -479,7 +489,7 @@ const { title = 'AI Mentor' } = Astro.props;
     font-size: var(--ds-text-2xs);
     color: var(--ds-text-tertiary);
     text-align: center;
-    margin: var(--ds-space-1-5) 0 0;
+    margin: var(--ds-space-1) 0 0;
   }
 
   /* ── Error / Retry ── */
@@ -488,7 +498,7 @@ const { title = 'AI Mentor' } = Astro.props;
   }
   .retry-btn {
     display: block;
-    margin-top: var(--ds-space-2-5);
+    margin-top: var(--ds-space-1);
     padding: 0.35rem 0.75rem;
     background: var(--ds-danger-bg);
     border: 1px solid var(--ds-danger-border);

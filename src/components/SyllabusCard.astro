@@ -4,11 +4,9 @@ import type { SyllabusProgress } from '../types/review';
 export interface Props {
   subject: string;
   progress: SyllabusProgress;
-  isExpanded: boolean;
-  onToggle: string;
 }
 
-const { subject, progress, isExpanded } = Astro.props;
+const { subject, progress } = Astro.props;
 
 function subjectColor(s: string): string {
   const name = s.toLowerCase();
@@ -21,21 +19,21 @@ function subjectColor(s: string): string {
 
 const color = subjectColor(subject);
 
-const colorMap: Record<string, { bg: string; border: string; text: string; bar: string; glow: string }> = {
-  blue: { bg: 'rgba(59, 130, 246, 0.08)', border: 'rgba(59, 130, 246, 0.25)', text: '#93c5fd', bar: '#3b82f6', glow: 'rgba(59, 130, 246, 0.3)' },
-  green: { bg: 'rgba(34, 197, 94, 0.08)', border: 'rgba(34, 197, 94, 0.25)', text: '#86efac', bar: '#22c55e', glow: 'rgba(34, 197, 94, 0.3)' },
-  amber: { bg: 'rgba(245, 158, 11, 0.08)', border: 'rgba(245, 158, 11, 0.25)', text: '#fcd34d', bar: '#f59e0b', glow: 'rgba(245, 158, 11, 0.3)' },
-  pink: { bg: 'rgba(236, 72, 153, 0.08)', border: 'rgba(236, 72, 153, 0.25)', text: '#f9a8d4', bar: '#ec4899', glow: 'rgba(236, 72, 153, 0.3)' },
-  gray: { bg: 'rgba(100, 116, 139, 0.08)', border: 'rgba(100, 116, 139, 0.25)', text: '#94a3b8', bar: '#64748b', glow: 'rgba(100, 116, 139, 0.3)' },
+const colorMap: Record<string, { border: string; bar: string }> = {
+  blue: { border: 'rgba(59, 130, 246, 0.3)', bar: '#3b82f6' },
+  green: { border: 'rgba(34, 197, 94, 0.3)', bar: '#22c55e' },
+  amber: { border: 'rgba(245, 158, 11, 0.3)', bar: '#f59e0b' },
+  pink: { border: 'rgba(236, 72, 153, 0.3)', bar: '#ec4899' },
+  gray: { border: 'rgba(100, 116, 139, 0.3)', bar: '#64748b' },
 };
 
 const c = colorMap[color];
 ---
 
-<div class="syllabus-card" id={`card-${subject.replace(/\s+/g, '-')}`}>
+<div class="syllabus-card" id={`card-${subject.replace(/\s+/g, '-')}`} data-subject={subject}>
   <div class="card-header">
     <div class="subject-info">
-      <div class="subject-icon" style={`background: ${c.bg}; color: ${c.text}`}>
+      <div class="subject-icon" style={`border-color: ${c.border}; color: var(--ds-text-primary);`}>
         {subject[0]}
       </div>
       <div>
@@ -44,77 +42,76 @@ const c = colorMap[color];
       </div>
     </div>
     <div class="percent-wrap">
-      <span class="percent-text" style={`color: ${c.text}`}>{progress.weightedPercent}%</span>
+      <span class="percent-text" style={`color: ${c.bar}`}>{progress.weightedPercent}%</span>
     </div>
   </div>
 
   <div class="syllabus-bar-bg">
     <div
       class="syllabus-bar-fill"
-      style={`width: ${progress.weightedPercent}%; background: ${c.bar}; box-shadow: 0 0 8px ${c.glow}`}
+      style={`width: ${progress.weightedPercent}%; background: ${c.bar}`}
     />
   </div>
 </div>
 
 <style>
   .syllabus-card {
-    background: rgba(15, 23, 42, 0.8);
-    border: 1px solid rgba(51, 65, 85, 0.4);
-    border-radius: 0.75rem;
-    padding: 1.25rem;
-    cursor: pointer;
+    background: var(--ds-bg-surface);
+    border: 1px solid var(--ds-border-default);
+    border-radius: var(--ds-radius-lg);
+    padding: var(--ds-space-2) var(--ds-space-3);
     transition: border-color 0.15s, transform 0.15s;
   }
   .syllabus-card:hover {
-    border-color: rgba(71, 85, 105, 0.7);
-    transform: translateY(-1px);
+    border-color: var(--ds-border-hover);
   }
   .card-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 0.75rem;
+    margin-bottom: var(--ds-space-1);
   }
   .subject-info {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: var(--ds-space-1);
   }
   .subject-icon {
-    width: 2.25rem;
-    height: 2.25rem;
-    border-radius: 0.5rem;
+    width: 2rem;
+    height: 2rem;
+    border-radius: var(--ds-radius-md);
+    border: 1px solid var(--ds-border-subtle);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 700;
   }
   .subject-name {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: #e2e8f0;
+    font-size: var(--ds-text-sm);
+    font-weight: var(--ds-weight-semibold);
+    color: var(--ds-text-primary);
     margin: 0;
   }
   .subject-count {
-    font-size: 0.75rem;
-    color: #64748b;
-    margin: 0.1rem 0 0 0;
-    font-family: 'JetBrains Mono', monospace;
+    font-size: var(--ds-text-2xs);
+    color: var(--ds-text-muted);
+    margin: 0;
+    font-family: var(--ds-font-mono);
   }
   .percent-wrap {
     display: flex;
     align-items: center;
   }
   .percent-text {
-    font-size: 1.1rem;
-    font-weight: 700;
-    font-family: 'JetBrains Mono', monospace;
+    font-size: var(--ds-text-lg);
+    font-weight: var(--ds-weight-bold);
+    font-family: var(--ds-font-mono);
   }
   .syllabus-bar-bg {
     width: 100%;
-    height: 0.4rem;
-    background: rgba(51, 65, 85, 0.5);
+    height: 0.35rem;
+    background: var(--ds-bg-elevated);
     border-radius: 999px;
     overflow: hidden;
   }

@@ -26,7 +26,7 @@ const hasEntriesToday = recentEntries.some(e => e.date === today);
 <BaseLayout title="Daily Log">
   <div class="ds-page">
     <!-- Header -->
-    <div class="ds-page-header ds-page-header--compact">
+    <div class="ds-page-header">
       <h1 class="ds-heading-page" style="margin-bottom:0.25rem;">Daily Study Log</h1>
       <p class="ds-body-sm" style="margin:0;">
         {todayEntry ? 'Update today\'s entry' : 'What did you study today?'}
@@ -37,7 +37,7 @@ const hasEntriesToday = recentEntries.some(e => e.date === today);
     </div>
 
     <!-- Entry Form -->
-    <div style="margin-bottom:var(--ds-space-8);">
+    <div style="margin-bottom:var(--ds-space-4);">
       <EntryForm todayEntry={todayEntry ? {
         id: todayEntry.id,
         date: todayEntry.date,
@@ -51,12 +51,12 @@ const hasEntriesToday = recentEntries.some(e => e.date === today);
 
     <!-- Daily Review -->
     {hasEntriesToday && (
-      <div style="margin-bottom:var(--ds-space-8);" id="daily-review-section">
+      <div style="margin-bottom:var(--ds-space-4);" id="daily-review-section">
         <div style="display:flex;flex-direction:column;">
           {todayReview ? (
             <DailyReviewCard review={todayReview} />
           ) : (
-            <div class="ds-card" style="text-align:center;padding:var(--ds-space-6);">
+            <div class="ds-card" style="text-align:center;padding:var(--ds-space-3);">
               <p style="font-size:var(--ds-text-sm);color:var(--ds-text-tertiary);margin-bottom:var(--ds-space-4);line-height:1.5;">
                 You have entries for today. Generate an AI-powered daily review to summarize your progress.
               </p>

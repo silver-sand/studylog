@@ -1,23 +1,15 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import MentorChat from '../components/MentorChat.astro';
-import TourTooltip from '../components/TourTooltip.astro';
 ---
 
 <BaseLayout title="AI Mentor">
   <div class="ds-page">
-    <div class="ds-page-header ds-page-header--compact">
-      <h1 class="ds-heading-page" style="margin-bottom:0.25rem;">AI Mentor</h1>
-      <p class="ds-body-sm" style="margin:0;">Your AI study partner — ask questions, get quizzed, or just talk through what you're learning.</p>
+    <div class="ds-page-header">
+      <h1 class="ds-heading-page">AI Mentor</h1>
+      <p class="ds-body-sm" style="margin-bottom:var(--ds-space-3);">Your AI study partner — ask questions, get quizzed, or talk through what you're learning. Chat history is saved locally.</p>
     </div>
 
     <MentorChat />
   </div>
-
-  <TourTooltip
-    tourId="mentor-intro"
-    title="AI Mentor"
-    description="I have access to your study history and syllabus progress. Ask me anything — 'What should I study today?', 'Quiz me on Physics', or 'What are my weak areas?'"
-    position="bottom"
-  />
 </BaseLayout>

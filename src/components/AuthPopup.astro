@@ -1,36 +1,43 @@
 <div class="ds-overlay hidden" id="auth-popup">
-  <div class="ds-modal ds-modal-sm" style="position:relative;">
+  <div class="ds-modal ds-modal-sm" style="position:relative;padding-bottom:var(--ds-space-3);">
 
     <!-- Close button -->
-    <button id="auth-popup-close" style="position:absolute;top:var(--ds-space-3);right:var(--ds-space-3);background:none;border:none;color:var(--ds-text-muted);font-size:1.25rem;cursor:pointer;line-height:1;padding:var(--ds-space-1);border-radius:var(--ds-radius-sm);" aria-label="Close">&times;</button>
+    <button id="auth-popup-close" style="position:absolute;top:0.75rem;right:0.75rem;background:none;border:none;color:var(--ds-text-muted);font-size:1.25rem;cursor:pointer;line-height:1;width:2rem;height:2rem;display:flex;align-items:center;justify-content:center;border-radius:var(--ds-radius-md);transition:background var(--ds-transition-fast);" aria-label="Close">&times;</button>
+
+    <!-- Header -->
+    <div style="text-align:center;margin-bottom:var(--ds-space-3);padding-top:var(--ds-space-1);">
+      <h2 class="ds-heading-section" id="auth-popup-title" style="margin:0 0 0.25rem;font-size:var(--ds-text-lg);">Welcome back</h2>
+      <p class="ds-caption" id="auth-popup-sub" style="margin:0;">Log in to continue your study journey</p>
+    </div>
 
     <!-- Tabs -->
-    <div class="ds-tabs" style="margin-bottom:var(--ds-space-5);">
+    <div class="ds-tabs" style="margin-bottom:var(--ds-space-2);">
       <button class="ds-tab active" data-tab="login" id="tab-login">Log In</button>
       <button class="ds-tab" data-tab="signup" id="tab-signup">Sign Up</button>
     </div>
 
-    <div style="text-align:center;margin-bottom:var(--ds-space-5);">
-      <h2 class="ds-heading-section" id="auth-popup-title" style="margin:0 0 0.25rem;">Welcome back</h2>
-      <p class="ds-caption" id="auth-popup-sub" style="margin:0;">Log in to continue your study journey</p>
-    </div>
-
     <!-- Login form -->
-    <form id="login-form" style="display:flex;flex-direction:column;gap:var(--ds-space-3-5);">
+    <form id="login-form" style="display:flex;flex-direction:column;gap:var(--ds-space-2);">
       <div style="display:flex;flex-direction:column;gap:var(--ds-space-1);">
         <label for="popup-email" class="ds-label-form">Email</label>
         <input type="email" id="popup-email" class="ds-input" placeholder="you@example.com" required autocomplete="email" />
       </div>
       <div style="display:flex;flex-direction:column;gap:var(--ds-space-1);">
         <label for="popup-password" class="ds-label-form">Password</label>
-        <input type="password" id="popup-password" class="ds-input" placeholder="At least 6 characters" required minlength="6" autocomplete="current-password" />
+        <div style="position:relative;">
+          <input type="password" id="popup-password" class="ds-input" placeholder="At least 6 characters" required minlength="6" autocomplete="current-password" style="padding-right:2.5rem;" />
+          <button type="button" id="popup-password-toggle" style="position:absolute;right:0.5rem;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--ds-text-muted);cursor:pointer;padding:0.25rem;line-height:1;border-radius:var(--ds-radius-sm);" aria-label="Toggle password visibility">
+            <svg id="popup-pw-eye" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg id="popup-pw-eye-off" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          </button>
+        </div>
       </div>
-      <div class="ds-error-text hidden" id="popup-error" style="padding:var(--ds-space-1-5) var(--ds-space-3);background:var(--ds-danger-bg);border:1px solid var(--ds-danger-border);border-radius:var(--ds-radius-md);"></div>
-      <button type="submit" class="ds-btn ds-btn-primary" id="popup-submit-btn" style="width:100%;">Log in</button>
+      <div class="ds-error-text hidden" id="popup-error" style="padding:var(--ds-space-1) var(--ds-space-2);background:var(--ds-danger-bg);border:1px solid var(--ds-danger-border);border-radius:var(--ds-radius-md);"></div>
+      <button type="submit" class="ds-btn ds-btn-primary" id="popup-submit-btn" style="width:100%;margin-top:var(--ds-space-1);">Log in</button>
     </form>
 
     <!-- Signup form -->
-    <form id="signup-form" class="hidden" style="display:flex;flex-direction:column;gap:var(--ds-space-3-5);">
+    <form id="signup-form" class="hidden" style="display:flex;flex-direction:column;gap:var(--ds-space-2);">
       <div style="display:flex;flex-direction:column;gap:var(--ds-space-1);">
         <label for="popup-name" class="ds-label-form">Name</label>
         <input type="text" id="popup-name" class="ds-input" placeholder="Your name" required autocomplete="name" />
@@ -41,16 +48,23 @@
       </div>
       <div style="display:flex;flex-direction:column;gap:var(--ds-space-1);">
         <label for="popup-signup-password" class="ds-label-form">Password</label>
-        <input type="password" id="popup-signup-password" class="ds-input" placeholder="At least 6 characters" required minlength="6" autocomplete="new-password" />
+        <div style="position:relative;">
+          <input type="password" id="popup-signup-password" class="ds-input" placeholder="At least 6 characters" required minlength="6" autocomplete="new-password" style="padding-right:2.5rem;" />
+          <button type="button" id="popup-signup-password-toggle" style="position:absolute;right:0.5rem;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--ds-text-muted);cursor:pointer;padding:0.25rem;line-height:1;border-radius:var(--ds-radius-sm);" aria-label="Toggle password visibility">
+            <svg id="signup-pw-eye" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg id="signup-pw-eye-off" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          </button>
+        </div>
       </div>
-      <div class="ds-error-text hidden" id="popup-signup-error" style="padding:var(--ds-space-1-5) var(--ds-space-3);background:var(--ds-danger-bg);border:1px solid var(--ds-danger-border);border-radius:var(--ds-radius-md);"></div>
-      <button type="submit" class="ds-btn ds-btn-primary" id="popup-signup-btn" style="width:100%;">Create account</button>
+      <div class="ds-error-text hidden" id="popup-signup-error" style="padding:var(--ds-space-1) var(--ds-space-2);background:var(--ds-danger-bg);border:1px solid var(--ds-danger-border);border-radius:var(--ds-radius-md);"></div>
+      <button type="submit" class="ds-btn ds-btn-primary" id="popup-signup-btn" style="width:100%;margin-top:var(--ds-space-1);">Create account</button>
     </form>
 
-    <!-- Footer links -->
-    <div style="margin-top:var(--ds-space-4);display:flex;flex-direction:column;align-items:center;gap:var(--ds-space-2);">
+    <!-- Footer -->
+    <div style="margin-top:var(--ds-space-2);display:flex;flex-direction:column;align-items:center;gap:var(--ds-space-1);">
       <a href="/daily" id="auth-popup-guest" class="ds-link" style="font-size:var(--ds-text-sm);">Continue as Guest</a>
-      <a href="/" id="auth-popup-home" class="ds-link" style="font-size:var(--ds-text-xs);color:var(--ds-text-muted);">Back to Home</a>
+      <p style="font-size:var(--ds-text-2xs);color:var(--ds-text-muted);margin:0;">No distractions. Just your study journey.</p>
+      <a href="/" id="auth-popup-home" class="ds-link" style="font-size:var(--ds-text-2xs);color:var(--ds-text-muted);">Back to Home</a>
     </div>
   </div>
 </div>
@@ -78,7 +92,24 @@
   const signupError = document.getElementById('popup-signup-error');
   const signupBtn = document.getElementById('popup-signup-btn');
 
-  // ── Global open function (called from sidebar buttons) ──
+  // ── Password visibility toggles ──
+  function setupPasswordToggle(inputId, eyeId, eyeOffId, toggleId) {
+    const input = document.getElementById(inputId);
+    const eye = document.getElementById(eyeId);
+    const eyeOff = document.getElementById(eyeOffId);
+    const toggle = document.getElementById(toggleId);
+    if (!input || !toggle) return;
+    toggle.addEventListener('click', () => {
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      eye.classList.toggle('hidden', !show);
+      eyeOff.classList.toggle('hidden', show);
+    });
+  }
+  setupPasswordToggle('popup-password', 'popup-pw-eye', 'popup-pw-eye-off', 'popup-password-toggle');
+  setupPasswordToggle('popup-signup-password', 'signup-pw-eye', 'signup-pw-eye-off', 'popup-signup-password-toggle');
+
+  // ── Global open function ──
   window.openAuthPopup = function (tab) {
     popup.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
@@ -140,7 +171,7 @@
     }
   });
 
-  // ── Signup submit (converts guest to authenticated) ──
+  // ── Signup submit ──
   signupForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     signupError.classList.add('hidden');
@@ -190,5 +221,5 @@
 
 <style>
   .hidden { display: none !important; }
+  #auth-popup-close:hover { background: var(--ds-bg-hover); color: var(--ds-text-primary); }
 </style>
-

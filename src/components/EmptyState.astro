@@ -2,19 +2,31 @@
 export interface Props {
   title?: string;
   description?: string;
+  icon?: string;
+  actionLabel?: string;
+  actionHref?: string;
 }
 
-const { title, description } = Astro.props;
+const { title, description, icon, actionLabel, actionHref } = Astro.props;
 ---
 
 <div class="empty-state">
-  <div class="empty-icon">
-    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <line x1="12" x2="12" y1="8" y2="16"/><line x1="8" x2="16" y1="12" y2="12"/>
-    </svg>
-  </div>
-  {title && <p class="empty-title">{title}</p>}
-  {description && <p class="empty-desc">{description}</p>}
+  {icon && <div class="ds-empty-icon">{icon}</div>}
+  {!icon && (
+    <div class="ds-empty-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" x2="12" y1="8" y2="16"/><line x1="8" x2="16" y1="12" y2="12"/>
+      </svg>
+    </div>
+  )}
+  {title && <p class="ds-empty-title">{title}</p>}
+  {description && <p class="ds-empty-desc">{description}</p>}
+  {actionLabel && actionHref && (
+    <a href={actionHref} class="ds-btn ds-btn-primary ds-empty-action">{actionLabel}</a>
+  )}
+  {actionLabel && !actionHref && (
+    <button class="ds-btn ds-btn-primary ds-empty-action" id="empty-state-action">{actionLabel}</button>
+  )}
 </div>
 
 <style>
@@ -23,24 +35,8 @@ const { title, description } = Astro.props;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 2.5rem 1.5rem;
-    border: 1px dashed rgba(51, 65, 85, 0.6);
-    border-radius: 0.75rem;
+    padding: var(--ds-space-5) var(--ds-space-3);
     text-align: center;
-  }
-  .empty-icon {
-    color: #334155;
-    margin-bottom: 0.75rem;
-  }
-  .empty-title {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #94a3b8;
-    margin-bottom: 0.25rem;
-  }
-  .empty-desc {
-    font-size: 0.8rem;
-    color: #64748b;
-    max-width: 20rem;
+    gap: var(--ds-space-1);
   }
 </style>
