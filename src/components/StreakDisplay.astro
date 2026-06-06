@@ -7,68 +7,137 @@ export interface Props {
 }
 
 const { streak, weekDays = [], entriesThisWeek = 0, studyDaysPerWeek = 5 } = Astro.props;
+
+const dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+// Use weekDays from props if provided, otherwise build from dayLabels
+const days = weekDays.length === 7
+  ? weekDays.map((d, i) => ({ label: d.day.slice(0, 1), completed: d.completed }))
+  : dayLabels.map((label, i) => ({
+      label,
+      completed: i < entriesThisWeek,
+    }));
 ---
 
 <div class="streak-card">
-  <div class="streak-badge">
-    <span class="streak-fire">🔥</span>
-    <span class="streak-count">{streak}</span>
-  </div>
-  <span class="streak-label-text">
-    {streak === 0 ? 'No active streak' :
-     streak === 1 ? '1-day streak' :
-     `${streak}-day streak`}
-  </span>
-
-  <div class="week-strip-wrap">
-    <div class="ds-week-strip">
-      {weekDays.map(d => (
-        <div class="ds-week-day">
-          <div class:list={['ds-week-dot', { 'ds-week-dot--filled': d.completed }]} />
-          <span>{d.day}</span>
-        </div>
-      ))}
+  <div class="streak-top-row">
+    <div class="streak-title-group">
+      <span class="streak-fire-icon material-symbols-outlined">local_fire_department</span>
+      <span class="streak-count-text">{streak}-Day Streak</span>
     </div>
-    <span class="ds-body-sm" style="text-align:center;margin-top:0.125rem;">
-      {entriesThisWeek}/{studyDaysPerWeek} days this week
-    </span>
+    <span class="streak-encouragement">Keep it up!</span>
+  </div>
+
+  <div class="week-strip">
+    {days.map(d => (
+      <div class:list={['day-cell', { 'day-cell--active': d.completed, 'day-cell--inactive': !d.completed }]}>
+        <span class="day-label">{d.label}</span>
+        {d.completed ? (
+          <div class="day-dot day-dot--filled">
+            <span class="day-fire material-symbols-outlined">local_fire_department</span>
+          </div>
+        ) : (
+          <div class="day-dot day-dot--empty">
+            <div class="day-dot-inner"></div>
+          </div>
+        )}
+      </div>
+    ))}
   </div>
 </div>
 
 <style>
   .streak-card {
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(23, 32, 51, 0.8));
-    border: 1px solid rgba(51, 65, 85, 0.4);
-    border-radius: 0.75rem;
-    padding: 1.25rem;
-    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: var(--ds-space-3);
+  }
+
+  .streak-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .streak-title-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .streak-fire-icon {
+    color: var(--ds-secondary);
+    font-size: 1.5rem;
+    filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.5));
+    font-variation-settings: 'FILL' 1;
+  }
+
+  .streak-count-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--ds-text-primary);
+    line-height: 1;
+  }
+
+  .streak-encouragement {
+    font-size: var(--ds-text-sm);
+    font-weight: 500;
+    color: var(--ds-secondary);
+  }
+
+  .week-strip {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 0.25rem;
+  }
+
+  .day-cell {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 0.5rem;
+    transition: opacity 0.2s;
   }
-  .streak-badge {
+
+  .day-cell--inactive {
+    opacity: 0.3;
+  }
+
+  .day-label {
+    font-size: var(--ds-text-sm);
+    font-weight: 500;
+    color: var(--ds-text-tertiary);
+  }
+
+  .day-dot {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
     display: flex;
     align-items: center;
-    gap: 0.375rem;
+    justify-content: center;
   }
-  .streak-fire {
-    font-size: 1.5rem;
-    line-height: 1;
+
+  .day-dot--filled {
+    background: rgba(255, 198, 64, 0.2);
   }
-  .streak-count {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: #f1f5f9;
-    font-family: 'JetBrains Mono', monospace;
-    line-height: 1;
+
+  .day-fire {
+    font-size: 0.875rem;
+    color: var(--ds-secondary);
+    font-variation-settings: 'FILL' 1;
   }
-  .streak-label-text {
-    font-size: 0.8rem;
-    color: #94a3b8;
+
+  .day-dot--empty {
+    background: rgba(255, 255, 255, 0.1);
   }
-  .week-strip-wrap {
-    margin-top: 0.25rem;
-    width: 100%;
+
+  .day-dot-inner {
+    width: 0.375rem;
+    height: 0.375rem;
+    border-radius: 50%;
+    background: var(--ds-text-tertiary);
   }
 </style>

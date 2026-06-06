@@ -139,12 +139,12 @@ const readinessText =
   .readiness-value {
     font-size: 2.25rem;
     font-weight: 800;
-    fill: #f1f5f9;
+    fill: var(--ds-text-primary);
     font-family: 'JetBrains Mono', monospace;
   }
   .readiness-label {
     font-size: 0.75rem;
-    fill: #64748b;
+    fill: var(--ds-text-tertiary);
     text-transform: uppercase;
     letter-spacing: 0.08em;
   }
@@ -161,8 +161,8 @@ const readinessText =
     animation: milestone-pulse 2s ease-in-out 1s 3;
   }
   @keyframes milestone-pulse {
-    0%, 100% { filter: drop-shadow(0 0 4px rgba(99, 102, 241, 0.2)); }
-    50% { filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.5)); }
+    0%, 100% { filter: drop-shadow(0 0 4px rgba(164, 201, 255, 0.2)); }
+    50% { filter: drop-shadow(0 0 20px rgba(164, 201, 255, 0.5)); }
   }
 
   /* Legend */

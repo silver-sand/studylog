@@ -33,84 +33,98 @@ const {
 ---
 
 <div class="right-column">
-  <!-- Summary bar -->
-  <div class="summary-bar">
-    <div class="summary-item">
-      <span class="ds-stat-label">This Week</span>
-      <span class="summary-value">
-        {totalHoursThisWeek}<span class="summary-unit">/{targetHoursPerWeek}h</span>
-      </span>
-      <div class="ds-progress" style="width:100%;margin-top:0.25rem;">
-        <div
-          class="ds-progress-bar"
-          class:list={{
-            'ds-progress-bar--success': weeklyProgressPercent >= 80,
-            'ds-progress-bar--warning': weeklyProgressPercent >= 50 && weeklyProgressPercent < 80,
-          }}
-          style={`width:${weeklyProgressPercent}%`}
-        ></div>
-      </div>
-    </div>
-    <div class="summary-item">
-      <span class="ds-stat-label">Days Done</span>
-      <span class="summary-value">
-        {entriesThisWeek}<span class="summary-unit">/{studyDaysPerWeek}</span>
-      </span>
-      <span class="ds-caption">this week</span>
-    </div>
-  </div>
-
-  <!-- Tab navigation -->
+  <!-- Tab Navigation -->
   <div class="ds-tabs" id="dashboard-tabs">
-    <button class="ds-tab active" data-tab="quests">Quests</button>
+    <button class="ds-tab active" data-tab="quests">Overview</button>
     <button class="ds-tab" data-tab="analytics">Analytics</button>
     <button class="ds-tab" data-tab="calendar">Calendar</button>
   </div>
 
-  <!-- Tab: Quests -->
+  <!-- Tab: Quests / Overview — Stitch layout -->
   <div class="tab-panel" id="panel-quests" data-tab-panel="quests">
-    <DailyActionCard examType={examKey} />
-
-    {hasEntries && <WeakChapters examType={examKey} />}
-
-    <!-- Recent Activity -->
-    <div class="ds-card">
-      <div class="ds-card-header">
-        <h3 class="ds-card-title">Recent Activity</h3>
-        {recentEntries.length > 5 && (
-          <a href="/daily" class="ds-link-accent" style="font-size:var(--ds-text-xs);">View all</a>
-        )}
+    <!-- Today's Quests — Stitch style -->
+    <div class="glass-card rounded-xl p-card-padding">
+      <div class="quests-header">
+        <span class="quests-header-icon material-symbols-outlined">task_alt</span>
+        <h2 class="quests-header-title">Today's Quests</h2>
       </div>
-      {recentEntries.length ? (
-        <div style="display:flex;flex-direction:column;gap:0.25rem;">
-          {recentEntries.slice(0, 5).map(entry => (
-            <div class="ds-list-item" style="align-items:center;">
-              <span class="ds-chip-subject" style="border-color:var(--ds-border-default);font-size:var(--ds-text-2xs);color:var(--ds-text-tertiary);">
-                {entry.subject}
-              </span>
-              <span style="flex:1;font-size:var(--ds-text-sm);color:var(--ds-text-secondary);" class="ds-truncate">{entry.content}</span>
-              <span class="ds-mono" style="font-size:var(--ds-text-xs);color:var(--ds-text-muted);">{entry.hoursStudied}h</span>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div class="ds-empty">
-          <div class="ds-empty-icon">📝</div>
-          <p class="ds-empty-title">No entries yet</p>
-          <p class="ds-empty-desc">Log your first study session to start tracking your progress.</p>
-          <a href="/daily" class="ds-btn ds-btn-primary ds-empty-action">Log your first session</a>
-        </div>
-      )}
+      <div class="quests-list">
+        <DailyActionCard examType={examKey} />
+      </div>
     </div>
 
-    <!-- Focus Session CTA -->
+    <!-- Stats Grid — Stitch style 2-col -->
+    <div class="stats-grid">
+      <!-- This Week -->
+      <div class="glass-card rounded-xl p-card-padding">
+        <div class="stat-card-header">
+          <h3 class="stat-card-label">This Week</h3>
+          <span class="stat-card-icon material-symbols-outlined">query_stats</span>
+        </div>
+        <div class="stat-card-body">
+          <div class="stat-card-value-row">
+            <span class="stat-card-value">{totalHoursThisWeek}</span>
+            <span class="stat-card-divider">/ {targetHoursPerWeek}h</span>
+          </div>
+          <p class="stat-card-subtext">Study Goal Progress</p>
+          <div class="stat-progress-track">
+            <div
+              class="stat-progress-fill"
+              style={`width:${Math.min(weeklyProgressPercent, 100)}%`}
+            ></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Up Next -->
+      <div class="glass-card rounded-xl p-card-padding">
+        <div class="stat-card-header">
+          <h3 class="stat-card-label">Up Next</h3>
+          <span class="stat-card-icon material-symbols-outlined">event</span>
+        </div>
+        {hasEntries && recentEntries.length > 0 ? (
+          <div class="upnext-card">
+            <span class="upnext-badge">Coming Up</span>
+            <h4 class="upnext-title">{recentEntries[0].subject}</h4>
+            <p class="upnext-desc">{recentEntries[0].content}</p>
+          </div>
+        ) : (
+          <div class="upnext-card upnext-empty">
+            <span class="upnext-badge">Get Started</span>
+            <h4 class="upnext-title">Ready to Study?</h4>
+            <p class="upnext-desc">Log your first session to see what's next.</p>
+          </div>
+        )}
+      </div>
+    </div>
+
+    <!-- Weak Chapters (if any) -->
+    {hasEntries && <WeakChapters examType={examKey} />}
+
+    <!-- Weekly Insight — Stitch style -->
     {hasEntries && (
-      <a href="/timer" class="focus-cta">
-        <span class="focus-cta-icon">▶</span>
-        <span class="focus-cta-text">Start Focus Session</span>
-        <span class="focus-cta-arrow">→</span>
-      </a>
+      <div class="glass-card rounded-xl p-card-padding insight-card">
+        <div class="insight-row">
+          <div class="insight-icon-wrap">
+            <span class="insight-icon material-symbols-outlined">lightbulb</span>
+          </div>
+          <div class="insight-text-wrap">
+            <h3 class="insight-label">Weekly Insight</h3>
+            <p class="insight-body">
+              Keep building momentum! Your consistency this week is setting a strong foundation.
+              Focus on your weaker chapters to maximize score gains.
+            </p>
+          </div>
+        </div>
+      </div>
     )}
+
+    <!-- Focus Session CTA — Stitch style gradient -->
+    <a href="/timer" class="focus-cta">
+      <span class="focus-cta-icon material-symbols-outlined">play_arrow</span>
+      <span class="focus-cta-text">START FOCUS SESSION</span>
+    </a>
+    <p class="focus-quote">"Focus is the art of knowing what to ignore."</p>
   </div>
 
   <!-- Tab: Analytics -->
@@ -123,10 +137,12 @@ const {
         focusTrend={focusTrend}
       />
     ) : (
-      <div class="ds-card ds-empty">
-        <div class="ds-empty-icon">📊</div>
-        <p class="ds-empty-title">No data yet</p>
-        <p class="ds-empty-desc">Log your study sessions to unlock analytics and insights.</p>
+      <div class="glass-card rounded-xl p-card-padding">
+        <div class="empty-state">
+          <div class="empty-icon">📊</div>
+          <p class="empty-title">No data yet</p>
+          <p class="empty-desc">Log your study sessions to unlock analytics and insights.</p>
+        </div>
       </div>
     )}
   </div>
@@ -171,72 +187,264 @@ const {
   .right-column {
     display: flex;
     flex-direction: column;
-    gap: var(--ds-space-3);
+    gap: 1.5rem;
   }
 
-  /* Summary bar at top */
-  .summary-bar {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--ds-space-2);
+  /* ── Glass card base ── */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+    transition: all 0.2s ease;
   }
-  .summary-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.125rem;
-    padding: var(--ds-space-2);
-    background: var(--ds-bg-surface);
-    border: 1px solid var(--ds-border-default);
-    border-radius: var(--ds-radius-lg);
-    text-align: center;
-  }
-  .summary-value {
-    font-size: var(--ds-text-xl);
-    font-weight: 700;
-    color: var(--ds-text-primary);
-    font-family: 'JetBrains Mono', monospace;
-    line-height: 1;
-  }
-  .summary-unit {
-    font-size: var(--ds-text-sm);
-    color: var(--ds-text-tertiary);
+  .glass-card:hover {
+    background: rgba(255, 255, 255, 0.09);
+    border: 1px solid rgba(255, 255, 255, 0.15);
   }
 
-  .focus-cta {
+  .p-card-padding {
+    padding: 1.5rem;
+  }
+
+  /* ── Today's Quests ── */
+  .quests-header {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: var(--ds-space-2) var(--ds-space-3);
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(99, 102, 241, 0.05));
-    border: 1px solid var(--ds-accent-border);
-    border-radius: var(--ds-radius-lg);
-    text-decoration: none;
-    transition: all var(--ds-transition-base);
+    margin-bottom: 1.5rem;
   }
-  .focus-cta:hover {
-    background: rgba(99, 102, 241, 0.2);
-    border-color: var(--ds-accent-500);
+  .quests-header-icon {
+    color: var(--ds-accent-400);
+    font-size: 1.5rem;
   }
-  .focus-cta-icon {
-    width: 2.5rem;
-    height: 2.5rem;
+  .quests-header-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--ds-text-primary);
+    margin: 0;
+  }
+  .quests-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  /* ── Stats Grid ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  @media (min-width: 768px) {
+    .stats-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .stat-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+  }
+  .stat-card-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--ds-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0;
+  }
+  .stat-card-icon {
+    color: rgba(193, 199, 211, 0.5);
+    font-size: 1.25rem;
+  }
+
+  .stat-card-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .stat-card-value-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.25rem;
+  }
+  .stat-card-value {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--ds-text-primary);
+    line-height: 1;
+    font-family: var(--ds-font-mono);
+  }
+  .stat-card-divider {
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: var(--ds-text-tertiary);
+  }
+  .stat-card-subtext {
+    font-size: var(--ds-text-sm);
+    color: var(--ds-text-tertiary);
+    margin: 0.25rem 0 0 0;
+  }
+  .stat-progress-track {
+    width: 100%;
+    height: 0.375rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 9999px;
+    margin-top: 1.5rem;
+    overflow: hidden;
+  }
+  .stat-progress-fill {
+    height: 100%;
+    background: var(--ds-accent-400);
+    border-radius: 9999px;
+    transition: width 0.6s ease;
+  }
+
+  /* ── Up Next ── */
+  .upnext-card {
+    padding: 1rem;
+    border-radius: 0.75rem;
+    background: rgba(164, 201, 255, 0.1);
+    border: 1px solid rgba(164, 201, 255, 0.2);
+  }
+  .upnext-empty {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .upnext-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--ds-accent-400);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+  .upnext-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--ds-text-primary);
+    margin: 0 0 0.5rem 0;
+  }
+  .upnext-desc {
+    font-size: var(--ds-text-base);
+    color: var(--ds-text-tertiary);
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  /* ── Weekly Insight ── */
+  .insight-card {
+    border-left: 4px solid rgba(255, 198, 64, 0.5);
+  }
+  .insight-row {
+    display: flex;
+    gap: 1rem;
+  }
+  .insight-icon-wrap {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    background: rgba(255, 198, 64, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--ds-accent-600);
-    border-radius: 50%;
-    color: white;
+    flex-shrink: 0;
+  }
+  .insight-icon {
+    color: var(--ds-secondary);
+    font-size: 1.25rem;
+    font-variation-settings: 'FILL' 1;
+  }
+  .insight-text-wrap {
+    flex: 1;
+  }
+  .insight-label {
     font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--ds-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 0.25rem 0;
+  }
+  .insight-body {
+    font-size: var(--ds-text-base);
+    color: var(--ds-text-primary);
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  /* ── Focus CTA ── */
+  .focus-cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    background: linear-gradient(to right, var(--ds-accent-400), #2563eb);
+    color: #fff;
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+    box-shadow: 0 0 20px rgba(96, 165, 250, 0.3);
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+  }
+  .focus-cta:hover {
+    transform: scale(1.01);
+    box-shadow: 0 0 30px rgba(96, 165, 250, 0.4);
+  }
+  .focus-cta:active {
+    transform: scale(0.98);
+  }
+  .focus-cta-icon {
+    font-size: 1.5rem;
+    font-variation-settings: 'FILL' 1;
   }
   .focus-cta-text {
-    flex: 1;
-    font-size: var(--ds-text-base);
-    font-weight: var(--ds-weight-semibold);
-    color: var(--ds-text-primary);
+    line-height: 1;
   }
-  .focus-cta-arrow {
-    font-size: 1.25rem;
-    color: var(--ds-accent-400);
+
+  .focus-quote {
+    text-align: center;
+    font-size: var(--ds-text-sm);
+    font-weight: 500;
+    color: var(--ds-text-tertiary);
+    margin: 0;
+    opacity: 0.6;
+    font-style: italic;
+  }
+
+  /* ── Empty State ── */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 2rem;
+    text-align: center;
+  }
+  .empty-icon {
+    font-size: 2.5rem;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+  .empty-title {
+    font-size: var(--ds-text-base);
+    font-weight: 600;
+    color: var(--ds-text-primary);
+    margin: 0;
+  }
+  .empty-desc {
+    font-size: var(--ds-text-sm);
+    color: var(--ds-text-tertiary);
+    margin: 0;
   }
 </style>

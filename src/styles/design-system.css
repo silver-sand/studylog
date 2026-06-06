@@ -7,21 +7,21 @@
 /* ── Custom Properties (Design Tokens) ── */
 :root {
   /* ── Color Palette ── */
-  /* Backgrounds (dark → light, 4-tier depth) */
-  --ds-bg-base: #020617;        /* Deepest — page background */
-  --ds-bg-surface: #0f172a;     /* Default card / sidebar */
-  --ds-bg-elevated: #1e293b;    /* Hovered card, modal, popover */
-  --ds-bg-hover: #263548;       /* Hover state on surface */
-  --ds-bg-active: #334155;      /* Active/pressed state */
-  --ds-bg-overlay: rgba(2, 6, 23, 0.7);
+  /* Backgrounds — Stitch Refined Dashboard color scheme */
+  --ds-bg-base: #050b18;        /* Deepest — page background */
+  --ds-bg-surface: #0d1321;     /* Default card / sidebar */
+  --ds-bg-elevated: #19202d;    /* Hovered card, modal, popover */
+  --ds-bg-hover: #232a38;       /* Hover state on surface */
+  --ds-bg-active: #2e3543;      /* Active/pressed state */
+  --ds-bg-overlay: rgba(5, 11, 24, 0.7);
 
   /* Text */
-  --ds-text-primary: #f1f5f9;
-  --ds-text-secondary: #94a3b8;
-  --ds-text-tertiary: #64748b;
-  --ds-text-muted: #475569;
-  --ds-text-inverse: #020617;
-  --ds-text-link: #818cf8;
+  --ds-text-primary: #dce2f5;
+  --ds-text-secondary: #c1c7d3;
+  --ds-text-tertiary: #8b919d;
+  --ds-text-muted: #5f6570;
+  --ds-text-inverse: #050b18;
+  --ds-text-link: #a4c9ff;
 
   /* Borders */
   --ds-border-subtle: rgba(51, 65, 85, 0.3);
@@ -30,25 +30,33 @@
   --ds-border-hover: rgba(71, 85, 105, 0.5);
 
   /* Accent — Indigo (primary action) */
-  --ds-accent-50: #eef2ff;
-  --ds-accent-100: #e0e7ff;
-  --ds-accent-200: #c7d2fe;
-  --ds-accent-300: #a5b4fc;
-  --ds-accent-400: #818cf8;
-  --ds-accent-500: #6366f1;
-  --ds-accent-600: #4f46e5;
-  --ds-accent-700: #4338ca;
-  --ds-accent-800: #3730a3;
-  --ds-accent-bg: rgba(99, 102, 241, 0.1);
-  --ds-accent-border: rgba(99, 102, 241, 0.25);
+  --ds-accent-50: #d4e3ff;
+  --ds-accent-100: #a4c9ff;
+  --ds-accent-200: #93bfff;
+  --ds-accent-300: #7ab0ff;
+  --ds-accent-400: #60a5fa;
+  --ds-accent-500: #3b82f6;
+  --ds-accent-600: #2563eb;
+  --ds-accent-700: #1d4ed8;
+  --ds-accent-800: #1e40af;
+  --ds-accent-bg: rgba(96, 165, 250, 0.1);
+  --ds-accent-border: rgba(96, 165, 250, 0.25);
+
+  /* Secondary — Amber/Gold (Stitch) */
+  --ds-secondary: #ffc640;
+  --ds-secondary-300: #ffd966;
+  --ds-secondary-400: #ffc640;
+  --ds-secondary-500: #f9bd22;
+  --ds-secondary-bg: rgba(255, 198, 64, 0.1);
+  --ds-secondary-border: rgba(255, 198, 64, 0.25);
 
   /* Success — Emerald */
-  --ds-success: #22c55e;
-  --ds-success-400: #4ade80;
-  --ds-success-500: #22c55e;
-  --ds-success-bg: rgba(34, 197, 94, 0.1);
-  --ds-success-border: rgba(34, 197, 94, 0.25);
-  --ds-success-text: #4ade80;
+  --ds-success: #10b981;
+  --ds-success-400: #34d399;
+  --ds-success-500: #10b981;
+  --ds-success-bg: rgba(16, 185, 129, 0.1);
+  --ds-success-border: rgba(16, 185, 129, 0.25);
+  --ds-success-text: #34d399;
 
   /* Warning — Amber */
   --ds-warning: #f59e0b;
@@ -156,13 +164,13 @@
   --ds-z-popover: 600;
   --ds-z-tooltip: 700;
 
-  /* ── Study Rings — Signature Visual ── */
+/* ── Study Rings — Signature Visual ── */
   --ring-coverage: #60a5fa;
-  --ring-consistency: #34d399;
-  --ring-mastery: #a78bfa;
-  --ring-coverage-glow: rgba(96, 165, 250, 0.3);
-  --ring-consistency-glow: rgba(52, 211, 153, 0.3);
-  --ring-mastery-glow: rgba(167, 139, 250, 0.3);
+  --ring-consistency: #ffc640;
+  --ring-mastery: #bcc7de;
+  --ring-coverage-glow: rgba(96, 165, 250, 0.4);
+  --ring-consistency-glow: rgba(255, 198, 64, 0.4);
+  --ring-mastery-glow: rgba(188, 199, 222, 0.3);
   --ring-size: 200px;
 
   /* ── Sizing ── */
@@ -309,6 +317,22 @@ body {
 }
 .ds-card:hover {
   border-color: var(--ds-border-strong);
+}
+
+/* Glass card variant — from Stitch Refined Dashboard */
+.ds-card-glass {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+  border-radius: var(--ds-radius-xl);
+  padding: var(--ds-space-3);
+  transition: all var(--ds-transition-base);
+}
+.ds-card-glass:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .ds-card-interactive {

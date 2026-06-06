@@ -31,8 +31,11 @@ function formatDate(dateStr: string): string {
 ---
 
 <div class="left-column">
-  <!-- Study Rings -->
-  <div class="ds-card rings-card">
+  <!-- Study Rings — Signature Visual -->
+  <div class="ds-card-glass rings-card">
+    <div class="rings-section-header">
+      <span class="rings-section-label">Readiness Score</span>
+    </div>
     <StudyRings
       coveragePercent={coveragePercent}
       consistencyPercent={consistencyPercent}
@@ -42,8 +45,8 @@ function formatDate(dateStr: string): string {
     />
   </div>
 
-  <!-- Week Strip -->
-  <div class="ds-card">
+  <!-- Week Strip — Streak -->
+  <div class="ds-card-glass">
     <StreakDisplay
       streak={streak}
       weekDays={weekDays}
@@ -52,36 +55,36 @@ function formatDate(dateStr: string): string {
     />
   </div>
 
-  <!-- Upcoming Exams -->
+  <!-- Upcoming Exams — Stitch style -->
   {upcomingExams.length > 0 && (
-    <div class="ds-card">
-      <div class="ds-card-header">
-        <h3 class="ds-card-title">Upcoming</h3>
+    <div class="ds-card-glass">
+      <div class="section-header">
+        <h3 class="section-title">Upcoming Tests</h3>
+        <span class="ds-link-accent" style="font-size:var(--ds-text-xs);cursor:pointer;">View Schedule</span>
       </div>
-      <div style="display:flex;flex-direction:column;gap:0.5rem;">
+      <div class="test-list">
         {upcomingExams.map(exam => (
-          <div style="display:flex;align-items:center;gap:0.5rem;">
-            <span style="font-size:1rem;">📅</span>
-            <div style="flex:1;">
-              <div style="font-size:var(--ds-text-sm);color:var(--ds-text-primary);font-weight:500;">{exam.label}</div>
-              <div style="font-size:var(--ds-text-xs);color:var(--ds-text-tertiary);">{formatDate(exam.date)}</div>
+          <div class="test-item">
+            <div class="test-info">
+              <span class="test-name">{exam.label}</span>
+              <span class="test-desc">Exam</span>
+            </div>
+            <div class="test-date">
+              <span class="test-date-value">{formatDate(exam.date)}</span>
             </div>
           </div>
         ))}
       </div>
-      <a href="/syllabus" class="ds-link-accent" style="font-size:var(--ds-text-xs);display:inline-block;margin-top:0.5rem;">
-        View Schedule →
-      </a>
     </div>
   )}
 
-  <!-- Syllabus Progress -->
-  <div class="ds-card">
-    <div class="ds-flex-between">
-      <span class="ds-card-title" style="margin-bottom:0;">Syllabus</span>
-      <span class="ds-mono" style="font-size:var(--ds-text-xs);color:var(--ds-text-muted);">{syllabusPercent}%</span>
+  <!-- Syllabus Progress — Stitch style -->
+  <div class="ds-card-glass">
+    <div class="syllabus-header">
+      <span class="section-title-sm">Overall Syllabus Progress</span>
+      <span class="syllabus-pct">{syllabusPercent}%</span>
     </div>
-    <div class="ds-progress ds-progress-lg" style="margin-top:0.5rem;">
+    <div class="ds-progress ds-progress-lg">
       <div
         class="ds-progress-bar"
         class:list={{
@@ -92,9 +95,6 @@ function formatDate(dateStr: string): string {
         style={`width:${syllabusPercent}%`}
       ></div>
     </div>
-    <a href="/syllabus" class="ds-link-accent" style="font-size:var(--ds-text-xs);display:inline-block;margin-top:0.5rem;">
-      Details →
-    </a>
   </div>
 </div>
 
@@ -106,7 +106,91 @@ function formatDate(dateStr: string): string {
   }
   .rings-card {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
     padding: var(--ds-space-3);
+  }
+  .rings-section-header {
+    width: 100%;
+    margin-bottom: 0.75rem;
+  }
+  .rings-section-label {
+    font-size: var(--ds-text-xs);
+    font-weight: 500;
+    color: var(--ds-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  .section-title {
+    font-size: var(--ds-text-xs);
+    font-weight: 600;
+    color: var(--ds-text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0;
+  }
+  .section-title-sm {
+    font-size: var(--ds-text-xs);
+    color: var(--ds-text-tertiary);
+    font-weight: 500;
+  }
+  .test-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .test-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--ds-radius-lg);
+    transition: background var(--ds-transition-base);
+    cursor: pointer;
+  }
+  .test-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+  .test-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+  .test-name {
+    font-size: var(--ds-text-sm);
+    font-weight: 600;
+    color: var(--ds-text-primary);
+  }
+  .test-desc {
+    font-size: var(--ds-text-xs);
+    color: var(--ds-text-tertiary);
+  }
+  .test-date {
+    text-align: right;
+  }
+  .test-date-value {
+    font-size: var(--ds-text-sm);
+    font-weight: 600;
+    color: var(--ds-accent-400);
+  }
+  .syllabus-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+  }
+  .syllabus-pct {
+    font-size: var(--ds-text-sm);
+    font-weight: 700;
+    color: var(--ds-accent-400);
+    font-family: var(--ds-font-mono);
   }
 </style>
