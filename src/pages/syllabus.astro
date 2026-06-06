@@ -8,7 +8,6 @@ import { scopeDbToUser } from '../services/user-scope';
 
 scopeDbToUser(Astro.request);
 const db = getDb();
-db.seedSyllabusData();
 
 interface ExamData {
   key: string;
@@ -20,24 +19,45 @@ interface ExamData {
   overallPercent: number;
 }
 
-// Deduplicate by syllabus key
-const seen = new Set<string>();
-const examList = EXAM_DEFINITIONS.filter(e => {
-  if (seen.has(e.syllabusKey)) return false;
-  seen.add(e.syllabusKey);
-  return true;
-});
+// Build exam data from user's selected exams
+const settings = db.getSettings();
+const selectedExamKeys: string[] = settings.selectedExams?.length ? settings.selectedExams : ['JEE'];
 
-const exams: ExamData[] = examList.map((exam) => {
-  const progress = db.getSyllabusProgress(exam.syllabusKey);
-  const chapters = db.getSyllabus(exam.syllabusKey);
+// Map selected exam keys to definitions, group by syllabusKey
+const userExamDefs = selectedExamKeys
+  .map(key => EXAM_DEFINITIONS.find(e => e.key === key))
+  .filter((e): e is (typeof EXAM_DEFINITIONS)[number] => !!e);
+
+// Group exams sharing a syllabusKey, merging their subjects
+const syllabusGroups = new Map<string, { primaryLabel: string; examKeys: string[]; subjects: Set<string> }>();
+for (const exam of userExamDefs) {
+  if (!syllabusGroups.has(exam.syllabusKey)) {
+    syllabusGroups.set(exam.syllabusKey, {
+      primaryLabel: exam.label,
+      examKeys: [exam.key],
+      subjects: new Set(exam.subjects),
+    });
+  } else {
+    const g = syllabusGroups.get(exam.syllabusKey)!;
+    g.examKeys.push(exam.key);
+    exam.subjects.forEach(s => g.subjects.add(s));
+  }
+}
+
+// Build ExamData per syllabus group — filtered to only the user's subjects
+const exams: ExamData[] = [...syllabusGroups.entries()].map(([syllabusKey, group]) => {
+  const subjects = [...group.subjects];
+  // Seed ONLY the relevant subjects so commerce users don't get science chapters
+  db.seedSyllabusData(syllabusKey, subjects);
+  const progress = db.getSyllabusProgress(syllabusKey, subjects);
+  const chapters = db.getSyllabus(syllabusKey).filter(ch => subjects.includes(ch.subject));
   const totalChapters = progress.reduce((s, p) => s + p.total, 0);
   const weightedSum = progress.reduce((s, p) => s + p.weightedPercent * p.total, 0);
   const overallPercent = totalChapters > 0 ? Math.round(weightedSum / totalChapters) : 0;
   const completedChapters = progress.reduce((s, p) => s + p.completed, 0);
   return {
-    key: exam.syllabusKey,
-    label: exam.label,
+    key: syllabusKey,
+    label: group.primaryLabel,
     progress,
     chapters,
     totalChapters,
@@ -48,13 +68,7 @@ const exams: ExamData[] = examList.map((exam) => {
 
 const defaultExam = exams[0];
 const defaultKey = defaultExam?.key;
-
-// Filter to user's selected exams
-const settings = db.getSettings();
-const selectedExams = settings.selectedExams?.length ? settings.selectedExams : ['JEE'];
-const filteredExams = exams.filter(e =>
-  selectedExams.some(s => e.key.includes(s) || s.includes(e.key))
-);
+const filteredExams = exams;
 
 // Subject color helper (used for the subject badge icon)
 function subjectColor(s: string): string {

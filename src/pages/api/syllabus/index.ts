@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../../db';
 import { scopeDbToUser } from '../../../services/user-scope';
-import { EXAM_DEFINITIONS } from '../../../utils/exam-map';
+import { EXAM_DEFINITIONS, getSubjectsForExamKeys } from '../../../utils/exam-map';
 
 export const GET: APIRoute = async ({ url, request }) => {
   scopeDbToUser(request);
@@ -10,27 +10,30 @@ export const GET: APIRoute = async ({ url, request }) => {
     const examType = url.searchParams.get('exam') || undefined;
     const subject = url.searchParams.get('subject') || undefined;
 
-    // Seed data if first access
-    db.seedSyllabusData();
+    // Determine relevant subjects from user's selected exams
+    const settings = db.getSettings();
+    const selectedExams = settings.selectedExams?.length ? settings.selectedExams : ['JEE'];
+    const activeSubjects = getSubjectsForExamKeys(selectedExams);
 
     if (examType) {
-      const chapters = db.getSyllabus(examType, subject);
-      const progress = db.getSyllabusProgress(examType, subject ? [subject] : undefined);
+      // Seed only the user's subjects
+      db.seedSyllabusData(examType, activeSubjects);
+      const chapters = db.getSyllabus(examType, subject).filter(ch =>
+        !subject && activeSubjects.length > 0 ? activeSubjects.includes(ch.subject) : true
+      );
+      const progress = db.getSyllabusProgress(examType, subject ? [subject] : activeSubjects);
       return new Response(JSON.stringify({ chapters, progress }));
     }
 
-    // Return all exam progress summaries (unique syllabus keys)
-    const seen = new Set<string>();
-    const exams = EXAM_DEFINITIONS
-      .map(e => e.syllabusKey)
-      .filter(key => {
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
-    const summaries = exams.map(e => ({
+    // Return summaries for unique syllabus keys relevant to user's exams
+    const relevantKeys = new Set(
+      selectedExams
+        .map(key => EXAM_DEFINITIONS.find(e => e.key === key)?.syllabusKey)
+        .filter(Boolean)
+    );
+    const summaries = [...relevantKeys].map(e => ({
       examType: e,
-      progress: db.getSyllabusProgress(e),
+      progress: db.getSyllabusProgress(e, activeSubjects),
     }));
 
     return new Response(JSON.stringify({ exams: summaries }));

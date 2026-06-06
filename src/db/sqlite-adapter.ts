@@ -529,6 +529,22 @@ export class SQLiteAdapter implements DatabaseInterface {
   seedSyllabusData(examType?: string, subjects?: string[]): void {
     const db = this.getDb();
 
+    // Auto-detect subjects from user's settings if not explicitly provided
+    if (!subjects || subjects.length === 0) {
+      try {
+        const stmt = db.prepare(`SELECT selected_exams FROM settings WHERE user_id = ?`);
+        stmt.bind([this.userId]);
+        if (stmt.step()) {
+          const row = stmt.getAsObject() as { selected_exams: string };
+          const selectedExams = parseJSON<string[]>(row.selected_exams, []);
+          if (selectedExams.length > 0) {
+            subjects = getSubjectsForExamKeys(selectedExams);
+          }
+        }
+        stmt.free();
+      } catch { /* fall through — seed all subjects */ }
+    }
+
     let items = examType
       ? EXAM_SYLLABI.filter(item => item.examType === examType)
       : EXAM_SYLLABI;
