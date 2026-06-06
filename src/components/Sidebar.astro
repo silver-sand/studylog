@@ -151,7 +151,7 @@ function isActive(href: string): boolean {
 <script>
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' });
-    window.location.href = '/dashboard';
+    window.location.href = '/';
   }
   async function handleExitGuest() {
     await fetch('/api/auth/logout', { method: 'POST' });

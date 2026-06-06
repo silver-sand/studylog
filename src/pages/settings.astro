@@ -424,7 +424,7 @@ if (settings.examDate) {
     logoutBtn.disabled = true;
     logoutBtn.textContent = 'Logging out...';
     await fetch('/api/auth/logout', { method: 'POST' });
-    window.location.href = '/dashboard';
+    window.location.href = '/';
   });
 
   // ── Form submit ──
