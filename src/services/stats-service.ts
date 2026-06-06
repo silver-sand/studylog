@@ -1,6 +1,8 @@
 import { getDb } from '../db';
 import { getMonday, getSunday, formatDate } from '../utils/date';
 import type { Entry, StudyType } from '../types/entry';
+import { statusWeight, STATUS_WEIGHTS } from '../types/review';
+import { getSyllabusKeyForExam } from '../utils/exam-map';
 
 export function getDashboardStats() {
   const db = getDb();
@@ -27,6 +29,10 @@ export function getDashboardStats() {
   const totalHoursThisWeek = db.getTotalHoursForWeek(weekStart);
   const settings = db.getSettings();
 
+  // Compute exam key for syllabus lookups
+  const selectedExams = settings.selectedExams?.length ? settings.selectedExams : ['JEE'];
+  const examKey = getSyllabusKeyForExam(selectedExams[0]);
+
   // Compute aggregations
   const subjectBreakdown = getSubjectBreakdown(allEntries);
   const dailyTrend = getDailyTrend(14);
@@ -34,8 +40,23 @@ export function getDashboardStats() {
   const focusTrend = getFocusTrend(7);
   const weekComparison = getWeekComparison();
 
+  // Study Rings data
+  const coveragePercent = getCoveragePercent(examKey);
+  const streak = db.getStreak();
+  const consistencyPercent = Math.min(100, Math.round((streak / 365) * 100));
+  const masteryPercent = getMasteryPercent(examKey);
+  const readinessScore = Math.round(
+    coveragePercent * 0.35 +
+    consistencyPercent * 0.25 +
+    masteryPercent * 0.30 +
+    0.10  // testing placeholder (10%)
+  );
+  const readinessLabel =
+    readinessScore >= 70 ? 'on_track' :
+    readinessScore >= 40 ? 'behind' : 'critical';
+
   return {
-    streak: db.getStreak(),
+    streak,
     todayEntry,
     totalHoursThisWeek,
     targetHoursPerWeek: settings.targetHoursPerWeek,
@@ -55,6 +76,14 @@ export function getDashboardStats() {
     typeDistribution,
     focusTrend,
     weekComparison,
+    // Study Rings data
+    coveragePercent,
+    consistencyPercent,
+    masteryPercent,
+    readinessScore,
+    readinessLabel,
+    weekDays: getWeekDays(weekEntries),
+    upcomingExams: getUpcomingExams(settings),
   };
 }
 
@@ -229,4 +258,68 @@ export function getWeekComparison(): WeekComparisonData {
     change,
     changePercent,
   };
+}
+
+// ── Study Rings Helpers ──
+
+export function getWeekDays(weekEntries: Entry[]): { day: string; completed: boolean }[] {
+  const now = new Date();
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const completedDates = new Set(weekEntries.map(e => e.date));
+  const results: { day: string; completed: boolean }[] = [];
+
+  // Get Monday of current week
+  const monday = getMonday(now);
+  const mondayDate = new Date(monday);
+
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(mondayDate);
+    d.setDate(d.getDate() + i);
+    const dateStr = formatDate(d);
+    results.push({
+      day: dayNames[d.getDay()],
+      completed: completedDates.has(dateStr),
+    });
+  }
+
+  return results;
+}
+
+export function getCoveragePercent(examKey: string): number {
+  const db = getDb();
+  const progress = db.getSyllabusProgress(examKey);
+  if (!progress.length) return 0;
+  const total = progress.reduce((s, p) => s + p.weightedPercent, 0);
+  return Math.round(total / progress.length);
+}
+
+export function getMasteryPercent(examKey: string): number {
+  const db = getDb();
+  const chapters = db.getSyllabus(examKey);
+  if (!chapters.length) return 0;
+  const totalWeight = chapters.reduce((s, c) => s + statusWeight(c.status), 0);
+  return Math.round((totalWeight / chapters.length) * 100);
+}
+
+export function getUpcomingExams(settings: { examDate?: string | null; selectedExams?: string[] }): { label: string; date: string }[] {
+  const exams: { label: string; date: string }[] = [];
+  if (settings.examDate) {
+    const label = settings.selectedExams?.[0] || 'Exam';
+    exams.push({ label, date: settings.examDate });
+  }
+  return exams;
+}
+
+export function getMonthlyEntryDates(year: number, month: number): Set<string> {
+  const db = getDb();
+  const entries = db.listEntries();
+  const dates = new Set<string>();
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  const prefix = `${year}-${pad(month)}`;
+  for (const entry of entries) {
+    if (entry.date.startsWith(prefix)) {
+      dates.add(entry.date);
+    }
+  }
+  return dates;
 }

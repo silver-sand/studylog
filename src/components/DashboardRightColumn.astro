@@ -1,0 +1,242 @@
+---
+import DailyActionCard from './DailyActionCard.astro';
+import WeakChapters from './WeakChapters.astro';
+import DashboardAnalytics from './DashboardAnalytics.astro';
+import CalendarWidget from './CalendarWidget.astro';
+import type { DailyTrendItem, WeekComparisonData, FocusTrendItem, SubjectBreakdownItem } from '../services/stats-service';
+
+export interface Props {
+  totalHoursThisWeek: number;
+  targetHoursPerWeek: number;
+  weeklyProgressPercent: number;
+  entriesThisWeek: number;
+  studyDaysPerWeek: number;
+  recentEntries: { subject: string; content: string; hoursStudied: number; date: string }[];
+  examKey: string;
+  hasEntries: boolean;
+  dailyTrend?: DailyTrendItem[];
+  subjectBreakdown?: SubjectBreakdownItem[];
+  weekComparison?: WeekComparisonData;
+  focusTrend?: FocusTrendItem[];
+  monthlyEntryDates?: Set<string>;
+  calendarYear?: number;
+  calendarMonth?: number;
+}
+
+const {
+  totalHoursThisWeek, targetHoursPerWeek, weeklyProgressPercent,
+  entriesThisWeek, studyDaysPerWeek,
+  recentEntries = [], examKey, hasEntries,
+  dailyTrend = [], subjectBreakdown = [], weekComparison, focusTrend = [],
+  monthlyEntryDates = new Set(), calendarYear = 2026, calendarMonth = 6,
+} = Astro.props;
+---
+
+<div class="right-column">
+  <!-- Summary bar -->
+  <div class="summary-bar">
+    <div class="summary-item">
+      <span class="ds-stat-label">This Week</span>
+      <span class="summary-value">
+        {totalHoursThisWeek}<span class="summary-unit">/{targetHoursPerWeek}h</span>
+      </span>
+      <div class="ds-progress" style="width:100%;margin-top:0.25rem;">
+        <div
+          class="ds-progress-bar"
+          class:list={{
+            'ds-progress-bar--success': weeklyProgressPercent >= 80,
+            'ds-progress-bar--warning': weeklyProgressPercent >= 50 && weeklyProgressPercent < 80,
+          }}
+          style={`width:${weeklyProgressPercent}%`}
+        ></div>
+      </div>
+    </div>
+    <div class="summary-item">
+      <span class="ds-stat-label">Days Done</span>
+      <span class="summary-value">
+        {entriesThisWeek}<span class="summary-unit">/{studyDaysPerWeek}</span>
+      </span>
+      <span class="ds-caption">this week</span>
+    </div>
+  </div>
+
+  <!-- Tab navigation -->
+  <div class="ds-tabs" id="dashboard-tabs">
+    <button class="ds-tab active" data-tab="quests">Quests</button>
+    <button class="ds-tab" data-tab="analytics">Analytics</button>
+    <button class="ds-tab" data-tab="calendar">Calendar</button>
+  </div>
+
+  <!-- Tab: Quests -->
+  <div class="tab-panel" id="panel-quests" data-tab-panel="quests">
+    <DailyActionCard examType={examKey} />
+
+    {hasEntries && <WeakChapters examType={examKey} />}
+
+    <!-- Recent Activity -->
+    <div class="ds-card">
+      <div class="ds-card-header">
+        <h3 class="ds-card-title">Recent Activity</h3>
+        {recentEntries.length > 5 && (
+          <a href="/daily" class="ds-link-accent" style="font-size:var(--ds-text-xs);">View all</a>
+        )}
+      </div>
+      {recentEntries.length ? (
+        <div style="display:flex;flex-direction:column;gap:0.25rem;">
+          {recentEntries.slice(0, 5).map(entry => (
+            <div class="ds-list-item" style="align-items:center;">
+              <span class="ds-chip-subject" style="border-color:var(--ds-border-default);font-size:var(--ds-text-2xs);color:var(--ds-text-tertiary);">
+                {entry.subject}
+              </span>
+              <span style="flex:1;font-size:var(--ds-text-sm);color:var(--ds-text-secondary);" class="ds-truncate">{entry.content}</span>
+              <span class="ds-mono" style="font-size:var(--ds-text-xs);color:var(--ds-text-muted);">{entry.hoursStudied}h</span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div class="ds-empty">
+          <div class="ds-empty-icon">📝</div>
+          <p class="ds-empty-title">No entries yet</p>
+          <p class="ds-empty-desc">Log your first study session to start tracking your progress.</p>
+          <a href="/daily" class="ds-btn ds-btn-primary ds-empty-action">Log your first session</a>
+        </div>
+      )}
+    </div>
+
+    <!-- Focus Session CTA -->
+    {hasEntries && (
+      <a href="/timer" class="focus-cta">
+        <span class="focus-cta-icon">▶</span>
+        <span class="focus-cta-text">Start Focus Session</span>
+        <span class="focus-cta-arrow">→</span>
+      </a>
+    )}
+  </div>
+
+  <!-- Tab: Analytics -->
+  <div class="tab-panel" id="panel-analytics" data-tab-panel="analytics" style="display:none;">
+    {dailyTrend.length > 0 ? (
+      <DashboardAnalytics
+        dailyTrend={dailyTrend}
+        subjectBreakdown={subjectBreakdown}
+        weekComparison={weekComparison}
+        focusTrend={focusTrend}
+      />
+    ) : (
+      <div class="ds-card ds-empty">
+        <div class="ds-empty-icon">📊</div>
+        <p class="ds-empty-title">No data yet</p>
+        <p class="ds-empty-desc">Log your study sessions to unlock analytics and insights.</p>
+      </div>
+    )}
+  </div>
+
+  <!-- Tab: Calendar -->
+  <div class="tab-panel" id="panel-calendar" data-tab-panel="calendar" style="display:none;">
+    <CalendarWidget
+      entryDates={monthlyEntryDates}
+      year={calendarYear}
+      month={calendarMonth}
+    />
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const tabs = document.querySelectorAll('#dashboard-tabs .ds-tab');
+    const panels: Record<string, HTMLElement | null> = {};
+
+    tabs.forEach(tab => {
+      const name = tab.getAttribute('data-tab');
+      if (name) panels[name] = document.getElementById(`panel-${name}`);
+    });
+
+    function switchTab(name: string) {
+      tabs.forEach(t => t.classList.toggle('active', t.getAttribute('data-tab') === name));
+      Object.entries(panels).forEach(([key, panel]) => {
+        if (panel) panel.style.display = key === name ? '' : 'none';
+      });
+    }
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const name = tab.getAttribute('data-tab');
+        if (name) switchTab(name);
+      });
+    });
+  });
+</script>
+
+<style>
+  .right-column {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ds-space-3);
+  }
+
+  /* Summary bar at top */
+  .summary-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--ds-space-2);
+  }
+  .summary-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.125rem;
+    padding: var(--ds-space-2);
+    background: var(--ds-bg-surface);
+    border: 1px solid var(--ds-border-default);
+    border-radius: var(--ds-radius-lg);
+    text-align: center;
+  }
+  .summary-value {
+    font-size: var(--ds-text-xl);
+    font-weight: 700;
+    color: var(--ds-text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1;
+  }
+  .summary-unit {
+    font-size: var(--ds-text-sm);
+    color: var(--ds-text-tertiary);
+  }
+
+  .focus-cta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: var(--ds-space-2) var(--ds-space-3);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(99, 102, 241, 0.05));
+    border: 1px solid var(--ds-accent-border);
+    border-radius: var(--ds-radius-lg);
+    text-decoration: none;
+    transition: all var(--ds-transition-base);
+  }
+  .focus-cta:hover {
+    background: rgba(99, 102, 241, 0.2);
+    border-color: var(--ds-accent-500);
+  }
+  .focus-cta-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ds-accent-600);
+    border-radius: 50%;
+    color: white;
+    font-size: 0.875rem;
+  }
+  .focus-cta-text {
+    flex: 1;
+    font-size: var(--ds-text-base);
+    font-weight: var(--ds-weight-semibold);
+    color: var(--ds-text-primary);
+  }
+  .focus-cta-arrow {
+    font-size: 1.25rem;
+    color: var(--ds-accent-400);
+  }
+</style>

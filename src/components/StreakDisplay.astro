@@ -1,31 +1,38 @@
 ---
 export interface Props {
   streak: number;
+  weekDays?: { day: string; completed: boolean }[];
+  entriesThisWeek?: number;
+  studyDaysPerWeek?: number;
 }
 
-const { streak } = Astro.props;
+const { streak, weekDays = [], entriesThisWeek = 0, studyDaysPerWeek = 5 } = Astro.props;
 ---
 
 <div class="streak-card">
-  <div class="streak-header">
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="streak-icon">
-      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-    </svg>
-    <span class="streak-label">Streak</span>
+  <div class="streak-badge">
+    <span class="streak-fire">🔥</span>
+    <span class="streak-count">{streak}</span>
   </div>
-  <div class="streak-value">{streak}</div>
-  <p class="streak-sub">
-    {streak === 0 ? 'No active streak. Start today!' :
-     streak === 1 ? '1 day' :
-     `${streak} days`}
-  </p>
-  {streak > 0 && (
-    <div class="streak-dots">
-      {Array.from({ length: Math.min(streak, 14) }).map(() => (
-        <div class="dot" />
+  <span class="streak-label-text">
+    {streak === 0 ? 'No active streak' :
+     streak === 1 ? '1-day streak' :
+     `${streak}-day streak`}
+  </span>
+
+  <div class="week-strip-wrap">
+    <div class="ds-week-strip">
+      {weekDays.map(d => (
+        <div class="ds-week-day">
+          <div class:list={['ds-week-dot', { 'ds-week-dot--filled': d.completed }]} />
+          <span>{d.day}</span>
+        </div>
       ))}
     </div>
-  )}
+    <span class="ds-body-sm" style="text-align:center;margin-top:0.125rem;">
+      {entriesThisWeek}/{studyDaysPerWeek} days this week
+    </span>
+  </div>
 </div>
 
 <style>
@@ -35,47 +42,33 @@ const { streak } = Astro.props;
     border-radius: 0.75rem;
     padding: 1.25rem;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
   }
-  .streak-header {
+  .streak-badge {
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 0.375rem;
-    margin-bottom: 0.5rem;
   }
-  .streak-icon {
-    color: #3b82f6;
+  .streak-fire {
+    font-size: 1.5rem;
+    line-height: 1;
   }
-  .streak-label {
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: #64748b;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-  .streak-value {
+  .streak-count {
     font-size: 2.5rem;
     font-weight: 700;
     color: #f1f5f9;
     font-family: 'JetBrains Mono', monospace;
     line-height: 1;
-    margin-bottom: 0.25rem;
   }
-  .streak-sub {
+  .streak-label-text {
     font-size: 0.8rem;
-    color: #64748b;
+    color: #94a3b8;
   }
-  .streak-dots {
-    display: flex;
-    justify-content: center;
-    gap: 0.25rem;
-    margin-top: 0.75rem;
-    flex-wrap: wrap;
-  }
-  .dot {
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: 50%;
-    background: #22c55e;
+  .week-strip-wrap {
+    margin-top: 0.25rem;
+    width: 100%;
   }
 </style>

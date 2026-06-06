@@ -1,0 +1,172 @@
+---
+export interface Props {
+  entryDates: Set<string>;
+  year: number;
+  month: number;
+}
+
+const { entryDates, year, month } = Astro.props;
+
+const monthNames = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
+const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+function daysInMonth(y: number, m: number): number {
+  return new Date(y, m, 0).getDate();
+}
+
+function firstDayOfMonth(y: number, m: number): number {
+  return new Date(y, m - 1, 1).getDay();
+}
+
+const totalDays = daysInMonth(year, month);
+const startDay = firstDayOfMonth(year, month);
+const pad = (n: number) => n.toString().padStart(2, '0');
+
+// Build day grid [week][day]
+const weeks: { day: number; date: string; hasEntry: boolean }[][] = [];
+let currentWeek: { day: number; date: string; hasEntry: boolean }[] = [];
+
+// Leading empty cells
+for (let i = 0; i < startDay; i++) {
+  currentWeek.push({ day: 0, date: '', hasEntry: false });
+}
+
+for (let d = 1; d <= totalDays; d++) {
+  const dateStr = `${year}-${pad(month)}-${pad(d)}`;
+  currentWeek.push({
+    day: d,
+    date: dateStr,
+    hasEntry: entryDates.has(dateStr),
+  });
+  if (currentWeek.length === 7) {
+    weeks.push(currentWeek);
+    currentWeek = [];
+  }
+}
+if (currentWeek.length > 0) {
+  while (currentWeek.length < 7) {
+    currentWeek.push({ day: 0, date: '', hasEntry: false });
+  }
+  weeks.push(currentWeek);
+}
+
+const today = new Date();
+const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+const isCurrentMonth = today.getFullYear() === year && today.getMonth() + 1 === month;
+---
+
+<div class="ds-card calendar-card">
+  <div class="calendar-header">
+    <h3 class="ds-card-title">{monthNames[month - 1]} {year}</h3>
+    <div class="calendar-nav">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      <span class="calendar-total">{entryDates.size} study days</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+  </div>
+
+  <div class="calendar-grid">
+    {dayHeaders.map(h => (
+      <span class="cal-day-header">{h}</span>
+    ))}
+    {weeks.flat().map(cell => (
+      cell.day === 0 ? (
+        <span class="cal-day cal-day--empty"></span>
+      ) : (
+        <span
+          class="cal-day"
+          class:list={{
+            'cal-day--today': isCurrentMonth && cell.date === todayStr,
+            'cal-day--active': cell.hasEntry,
+            'cal-day--inactive': !cell.hasEntry && cell.date < todayStr,
+          }}
+        >
+          <span class="cal-day-num">{cell.day}</span>
+          {cell.hasEntry && <span class="cal-day-dot"></span>}
+        </span>
+      )
+    ))}
+  </div>
+</div>
+
+<style>
+  .calendar-card {
+    padding: var(--ds-space-3);
+  }
+  .calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--ds-space-2);
+  }
+  .calendar-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--ds-text-muted);
+  }
+  .calendar-total {
+    font-size: var(--ds-text-xs);
+    color: var(--ds-text-tertiary);
+  }
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.125rem;
+    text-align: center;
+  }
+  .cal-day-header {
+    font-size: var(--ds-text-2xs);
+    color: var(--ds-text-muted);
+    text-transform: uppercase;
+    letter-spacing: var(--ds-tracking-wider);
+    padding: 0.25rem 0;
+    font-weight: var(--ds-weight-medium);
+  }
+  .cal-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.125rem;
+    padding: 0.375rem 0;
+    border-radius: var(--ds-radius-md);
+    font-size: var(--ds-text-xs);
+    color: var(--ds-text-tertiary);
+    position: relative;
+    min-height: 2rem;
+  }
+  .cal-day--active .cal-day-num {
+    color: var(--ds-text-primary);
+    font-weight: var(--ds-weight-semibold);
+  }
+  .cal-day--today .cal-day-num {
+    color: var(--ds-accent-400);
+    font-weight: var(--ds-weight-bold);
+  }
+  .cal-day--today {
+    background: var(--ds-accent-bg);
+  }
+  .cal-day--inactive .cal-day-num {
+    color: var(--ds-text-muted);
+    opacity: 0.5;
+  }
+  .cal-day--empty {
+    visibility: hidden;
+  }
+  .cal-day-dot {
+    width: 0.25rem;
+    height: 0.25rem;
+    border-radius: 50%;
+    background: var(--ds-success);
+    position: absolute;
+    bottom: 0.25rem;
+  }
+  .cal-day-num {
+    position: relative;
+    z-index: 1;
+  }
+</style>

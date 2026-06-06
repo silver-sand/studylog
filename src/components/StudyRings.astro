@@ -1,0 +1,196 @@
+---
+export interface Props {
+  coveragePercent: number;
+  consistencyPercent: number;
+  masteryPercent: number;
+  readinessScore: number;
+  readinessLabel: 'on_track' | 'behind' | 'critical';
+}
+
+const { coveragePercent, consistencyPercent, masteryPercent, readinessScore, readinessLabel } = Astro.props;
+
+const viewBox = 300;
+const center = viewBox / 2;
+
+function circumference(r: number): number {
+  return 2 * Math.PI * r;
+}
+
+const rings = [
+  { name: 'coverage', label: 'Coverage', r: 120, stroke: 'var(--ring-coverage)', percent: coveragePercent },
+  { name: 'consistency', label: 'Consistency', r: 85, stroke: 'var(--ring-consistency)', percent: consistencyPercent },
+  { name: 'mastery', label: 'Mastery', r: 50, stroke: 'var(--ring-mastery)', percent: masteryPercent },
+];
+
+const readinessStatusClass =
+  readinessLabel === 'on_track' ? 'status-on-track' :
+  readinessLabel === 'behind' ? 'status-behind' : 'status-critical';
+
+const readinessText =
+  readinessLabel === 'on_track' ? 'On Track' :
+  readinessLabel === 'behind' ? 'Behind' : 'Critical';
+---
+
+<div class="rings-wrapper" class:list={{ 'rings-milestone': readinessScore >= 80 }}>
+  <svg
+    viewBox="0 0 {viewBox} {viewBox}"
+    class="rings-svg"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <g transform="rotate(-90 {center} {center})">
+      {rings.map((ring, i) => {
+        const circ = Math.round(circumference(ring.r) * 100) / 100;
+        const offset = Math.round(circ * (1 - ring.percent / 100) * 100) / 100;
+        return (
+          <circle
+            cx={center}
+            cy={center}
+            r={ring.r}
+            fill="none"
+            stroke={ring.stroke}
+            stroke-width="18"
+            stroke-linecap="round"
+            stroke-dasharray={circ}
+            style={`--ring-circumference:${circ}; --ring-offset:${offset}; --ring-delay:${i * 0.2}s; --ring-glow-color:${ring.stroke};`}
+            class={`ring-circle ring-${ring.name}`}
+          />
+        );
+      })}
+    </g>
+
+    <!-- Center readiness text -->
+    <text x={center} y={center - 10} text-anchor="middle" class="readiness-value">
+      {readinessScore}%
+    </text>
+    <text x={center} y={center + 14} text-anchor="middle" class="readiness-label">
+      Ready
+    </text>
+    <text x={center} y={center + 34} text-anchor="middle" class={`readiness-status ${readinessStatusClass}`}>
+      {readinessText}
+    </text>
+  </svg>
+
+  <!-- Ring labels below SVG -->
+  <div class="ring-legend">
+    {rings.map(ring => (
+      <div class="ring-legend-item">
+        <span class="ring-legend-dot" style={`background:${ring.stroke};`}></span>
+        <span class="ring-legend-name">{ring.label}</span>
+        <span class="ring-legend-pct">{ring.percent}%</span>
+      </div>
+    ))}
+  </div>
+</div>
+
+<style>
+  .rings-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+
+  .rings-svg {
+    width: var(--ring-size);
+    height: var(--ring-size);
+    display: block;
+    animation: rings-entrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  @media (max-width: 767px) {
+    .rings-svg {
+      width: 200px;
+      height: 200px;
+    }
+    .readiness-value {
+      font-size: 2rem;
+    }
+    .ring-legend {
+      gap: 0.75rem;
+    }
+  }
+
+  .ring-circle {
+    stroke-dashoffset: var(--ring-circumference);
+    transition: stroke-dashoffset 600ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .ring-coverage {
+    animation: draw-ring 600ms cubic-bezier(0.16, 1, 0.3, 1) 0s forwards;
+  }
+  .ring-consistency {
+    animation: draw-ring 600ms cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+  }
+  .ring-mastery {
+    animation: draw-ring 600ms cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards;
+  }
+
+  /* Glow when >= 80% */
+  :global(.ring-coverage[data-glow="true"]) {
+    filter: drop-shadow(0 0 8px var(--ring-coverage-glow));
+  }
+  :global(.ring-consistency[data-glow="true"]) {
+    filter: drop-shadow(0 0 8px var(--ring-consistency-glow));
+  }
+  :global(.ring-mastery[data-glow="true"]) {
+    filter: drop-shadow(0 0 8px var(--ring-mastery-glow));
+  }
+
+  /* Center text */
+  .readiness-value {
+    font-size: 2.75rem;
+    font-weight: 800;
+    fill: #f1f5f9;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .readiness-label {
+    font-size: 0.75rem;
+    fill: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .readiness-status {
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  .status-on-track { fill: #4ade80; }
+  .status-behind { fill: #fbbf24; }
+  .status-critical { fill: #f87171; }
+
+  /* Milestone glow — rings wrapper pulses when readiness >= 80% */
+  .rings-milestone {
+    animation: milestone-pulse 2s ease-in-out 1s 3;
+  }
+  @keyframes milestone-pulse {
+    0%, 100% { filter: drop-shadow(0 0 4px rgba(99, 102, 241, 0.2)); }
+    50% { filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.5)); }
+  }
+
+  /* Legend */
+  .ring-legend {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.75rem;
+  }
+  .ring-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: var(--ds-text-xs);
+    color: var(--ds-text-tertiary);
+  }
+  .ring-legend-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .ring-legend-name {
+    font-weight: var(--ds-weight-medium);
+    color: var(--ds-text-secondary);
+  }
+  .ring-legend-pct {
+    font-family: var(--ds-font-mono);
+    font-size: var(--ds-text-2xs);
+    color: var(--ds-text-muted);
+  }
+</style>

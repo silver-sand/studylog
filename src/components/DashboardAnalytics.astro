@@ -1,0 +1,41 @@
+---
+import StudyTrendChart from './StudyTrendChart.astro';
+import SubjectBreakdown from './SubjectBreakdown.astro';
+import WeekComparison from './WeekComparison.astro';
+import FocusTrend from './FocusTrend.astro';
+import type { DailyTrendItem, WeekComparisonData, FocusTrendItem, SubjectBreakdownItem } from '../services/stats-service';
+
+export interface Props {
+  dailyTrend: DailyTrendItem[];
+  subjectBreakdown: SubjectBreakdownItem[];
+  weekComparison: WeekComparisonData;
+  focusTrend: FocusTrendItem[];
+}
+
+const { dailyTrend, subjectBreakdown, weekComparison, focusTrend } = Astro.props;
+
+const subjectRecord: Record<string, number> = {};
+for (const s of subjectBreakdown) {
+  subjectRecord[s.subject] = s.hours;
+}
+---
+
+<div class="analytics-grid">
+  <StudyTrendChart data={dailyTrend} />
+  <SubjectBreakdown subjects={subjectRecord} />
+  <WeekComparison data={weekComparison} />
+  <FocusTrend data={focusTrend} />
+</div>
+
+<style>
+  .analytics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--ds-space-3);
+  }
+  @media (max-width: 767px) {
+    .analytics-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -1,11 +1,10 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import StreakDisplay from '../components/StreakDisplay.astro';
-import WeeklyProgress from '../components/WeeklyProgress.astro';
-import WeakChapters from '../components/WeakChapters.astro';
-import DailyActionCard from '../components/DailyActionCard.astro';
 import GettingStarted from '../components/GettingStarted.astro';
-import { getDashboardStats } from '../services/stats-service';
+import DashboardLeftColumn from '../components/DashboardLeftColumn.astro';
+import DashboardRightColumn from '../components/DashboardRightColumn.astro';
+import { getDashboardStats, getMonthlyEntryDates } from '../services/stats-service';
 import { getDb } from '../db';
 import { scopeDbToUser } from '../services/user-scope';
 import { getSyllabusKeyForExam } from '../utils/exam-map';
@@ -19,23 +18,23 @@ const examKey = getSyllabusKeyForExam(selectedExams[0]);
 const user = db.getCurrentUser();
 const hasEntries = stats.totalHoursThisWeek > 0 || stats.entriesThisMonth > 0;
 
-// Compute weak chapters from syllabus data
+// Progress for syllabus bar
 const syllProgress = db.getSyllabusProgress(examKey);
 const hasAnyProgress = syllProgress.some(p => p.weightedPercent > 0);
+const syllabusPercent = hasAnyProgress
+  ? Math.round(syllProgress.reduce((s, p) => s + p.weightedPercent, 0) / syllProgress.length)
+  : 0;
+
+// Focus chapter for greeting
 const weakChapters = hasAnyProgress
-  ? syllProgress
-      .filter(p => p.weightedPercent < 50)
-      .slice(0, 5)
-      .map(p => ({
-        subject: p.subject || p.subtopic,
-        name: p.subtopic,
-        percent: p.weightedPercent,
-      }))
+  ? syllProgress.filter(p => p.weightedPercent < 50).slice(0, 5)
   : [];
-const focusChapter = hasAnyProgress ? (weakChapters?.[0] || null) : null;
+const focusChapter = weakChapters?.[0] || null;
+
+const today = new Date();
 
 function formatGreeting(): string {
-  const hour = new Date().getHours();
+  const hour = today.getHours();
   if (hour < 12) return 'Good morning';
   if (hour < 17) return 'Good afternoon';
   return 'Good evening';
@@ -52,7 +51,7 @@ function formatGreeting(): string {
       </h1>
       <p class="ds-body-sm" style="margin:0;">
         {focusChapter
-          ? `Your focus today: <strong>${focusChapter.subject} — ${focusChapter.name}</strong>`
+          ? `Your focus today: <strong>${focusChapter.subject} — ${focusChapter.subtopic || focusChapter.chapter}</strong>`
           : hasEntries
           ? 'Keep the momentum going!'
           : 'Ready to start your study journey?'}
@@ -62,81 +61,41 @@ function formatGreeting(): string {
     <!-- Getting Started (only for new users) -->
     {!hasEntries && <GettingStarted />}
 
-    <!-- Compact stats row -->
-    <div class="ds-grid ds-grid-3" style="margin-bottom:var(--ds-space-3);">
-      <WeeklyProgress
-        currentHours={stats.totalHoursThisWeek}
-        targetHours={stats.targetHoursPerWeek}
-        percent={stats.weeklyProgressPercent}
+    <!-- Two-column dashboard layout -->
+    <div class="ds-dashboard-grid">
+      <DashboardLeftColumn
+        coveragePercent={stats.coveragePercent}
+        consistencyPercent={stats.consistencyPercent}
+        masteryPercent={stats.masteryPercent}
+        readinessScore={stats.readinessScore}
+        readinessLabel={stats.readinessLabel}
+        streak={stats.streak}
+        weekDays={stats.weekDays}
+        entriesThisWeek={stats.entriesThisWeek}
+        studyDaysPerWeek={settings.studyDaysPerWeek || 5}
+        upcomingExams={stats.upcomingExams}
+        syllabusPercent={syllabusPercent}
+        user={user}
       />
-      <StreakDisplay streak={stats.streak} />
-      <div class="ds-card ds-flex-center ds-flex-col" style="gap:0;padding:var(--ds-space-2);text-align:center;">
-        <span class="ds-stat-label" style="margin-bottom:0.25rem;">Days This Week</span>
-        <span class="ds-stat-value" style="font-size:var(--ds-text-xl);">{stats.entriesThisWeek}</span>
-        <span class="ds-caption">of {settings.studyDaysPerWeek || 5} goal</span>
-      </div>
-    </div>
 
-    <!-- Action row: Daily Action + Weak Chapters -->
-    <div class="ds-grid ds-grid-2" style="margin-bottom:var(--ds-space-3);">
-      <DailyActionCard examType={examKey} />
-      <WeakChapters examType={examKey} />
+      <DashboardRightColumn
+        totalHoursThisWeek={stats.totalHoursThisWeek}
+        targetHoursPerWeek={stats.targetHoursPerWeek}
+        weeklyProgressPercent={stats.weeklyProgressPercent}
+        entriesThisWeek={stats.entriesThisWeek}
+        studyDaysPerWeek={settings.studyDaysPerWeek || 5}
+        recentEntries={stats.recentEntries}
+        examKey={examKey}
+        hasEntries={hasEntries}
+        dailyTrend={stats.dailyTrend}
+        subjectBreakdown={stats.subjectBreakdown}
+        weekComparison={stats.weekComparison}
+        focusTrend={stats.focusTrend}
+        monthlyEntryDates={getMonthlyEntryDates(today.getFullYear(), today.getMonth() + 1)}
+        calendarYear={today.getFullYear()}
+        calendarMonth={today.getMonth() + 1}
+      />
     </div>
-
-    <!-- Recent activity (inline, no component) -->
-    <div class="ds-card" style="margin-bottom:var(--ds-space-3);">
-      <div class="ds-card-header">
-        <h3 class="ds-card-title">Recent Activity</h3>
-        {stats.recentEntries?.length > 5 && (
-          <a href="/daily" class="ds-link" style="font-size:var(--ds-text-xs);">View all</a>
-        )}
-      </div>
-      {stats.recentEntries?.length ? (
-        <div style="display:flex;flex-direction:column;gap:0.25rem;">
-          {stats.recentEntries.slice(0, 5).map(entry => (
-            <div class="ds-list-item" style="align-items:center;">
-              <span class="ds-chip-subject" style="border-color:var(--ds-border-default);font-size:var(--ds-text-2xs);color:var(--ds-text-tertiary);">
-                {entry.subject}
-              </span>
-              <span style="flex:1;font-size:var(--ds-text-sm);color:var(--ds-text-secondary);">{entry.content}</span>
-              <span class="ds-mono" style="font-size:var(--ds-text-xs);color:var(--ds-text-muted);">{entry.hoursStudied}h</span>
-              <span class="ds-caption">{entry.date}</span>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div class="ds-empty">
-          <div class="ds-empty-icon">📝</div>
-          <p class="ds-empty-title">No entries yet</p>
-          <p class="ds-empty-desc">Log your first study session to start tracking your progress.</p>
-          <a href="/daily" class="ds-btn ds-btn-primary ds-empty-action">Log your first session</a>
-        </div>
-      )}
-    </div>
-
-    <!-- Weekly hours bar chart (inline) -->
-    {stats.dailyTrend?.length ? (
-      <div class="ds-card">
-        <div class="ds-card-header">
-          <h3 class="ds-card-title">This Week</h3>
-        </div>
-        <div style="display:flex;align-items:flex-end;gap:var(--ds-space-1);height:6rem;padding:var(--ds-space-2) 0;">
-          {stats.dailyTrend.map(day => {
-            const maxHours = Math.max(...stats.dailyTrend.map(d => d.hours), 1);
-            const pct = Math.min(100, (day.hours / maxHours) * 100);
-            return (
-              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:0.25rem;">
-                <span class="ds-mono" style="font-size:var(--ds-text-2xs);color:var(--ds-text-muted);">{day.hours.toFixed(1)}</span>
-                <div style="width:100%;height:5rem;display:flex;align-items:flex-end;border-radius:var(--ds-radius-sm);overflow:hidden;">
-                  <div style="width:100%;height:{pct}%;background:var(--ds-accent-500);border-radius:var(--ds-radius-sm) var(--ds-radius-sm) 0 0;transition:height 0.3s;"></div>
-                </div>
-                <span class="ds-caption">{day.label}</span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    ) : null}
 
   </div>
 </BaseLayout>
