@@ -163,7 +163,7 @@
   --ring-coverage-glow: rgba(96, 165, 250, 0.3);
   --ring-consistency-glow: rgba(52, 211, 153, 0.3);
   --ring-mastery-glow: rgba(167, 139, 250, 0.3);
-  --ring-size: 260px;
+  --ring-size: 200px;
 
   /* ── Sizing ── */
   --ds-sidebar-width: 16rem;

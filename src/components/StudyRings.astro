@@ -9,7 +9,7 @@ export interface Props {
 
 const { coveragePercent, consistencyPercent, masteryPercent, readinessScore, readinessLabel } = Astro.props;
 
-const viewBox = 300;
+const viewBox = 240;
 const center = viewBox / 2;
 
 function circumference(r: number): number {
@@ -17,9 +17,9 @@ function circumference(r: number): number {
 }
 
 const rings = [
-  { name: 'coverage', label: 'Coverage', r: 120, stroke: 'var(--ring-coverage)', percent: coveragePercent },
-  { name: 'consistency', label: 'Consistency', r: 85, stroke: 'var(--ring-consistency)', percent: consistencyPercent },
-  { name: 'mastery', label: 'Mastery', r: 50, stroke: 'var(--ring-mastery)', percent: masteryPercent },
+  { name: 'coverage', label: 'Coverage', r: 95, stroke: 'var(--ring-coverage)', percent: coveragePercent },
+  { name: 'consistency', label: 'Consistency', r: 70, stroke: 'var(--ring-consistency)', percent: consistencyPercent },
+  { name: 'mastery', label: 'Mastery', r: 45, stroke: 'var(--ring-mastery)', percent: masteryPercent },
 ];
 
 const readinessStatusClass =
@@ -48,7 +48,7 @@ const readinessText =
             r={ring.r}
             fill="none"
             stroke={ring.stroke}
-            stroke-width="18"
+            stroke-width="12"
             stroke-linecap="round"
             stroke-dasharray={circ}
             style={`--ring-circumference:${circ}; --ring-offset:${offset}; --ring-delay:${i * 0.2}s; --ring-glow-color:${ring.stroke};`}
@@ -98,11 +98,11 @@ const readinessText =
   }
   @media (max-width: 767px) {
     .rings-svg {
-      width: 200px;
-      height: 200px;
+      width: 160px;
+      height: 160px;
     }
     .readiness-value {
-      font-size: 2rem;
+      font-size: 1.5rem;
     }
     .ring-legend {
       gap: 0.75rem;
@@ -137,7 +137,7 @@ const readinessText =
 
   /* Center text */
   .readiness-value {
-    font-size: 2.75rem;
+    font-size: 2.25rem;
     font-weight: 800;
     fill: #f1f5f9;
     font-family: 'JetBrains Mono', monospace;
