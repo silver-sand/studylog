@@ -2,27 +2,47 @@ export function validateOrigin(request: Request): boolean {
   // Skip validation for GET/HEAD requests
   if (request.method === 'GET' || request.method === 'HEAD') return true;
 
-  const origin = request.headers.get('origin');
-  const referer = request.headers.get('referer');
-
-  // If both are missing, allow through — SameSite cookies handle CSRF.
-  // Some browser contexts (proxies, extensions, privacy modes) don't send
-  // Origin on same-origin POST requests, so rejecting would be too strict.
-  if (!origin && !referer) return true;
-
   // In development, allow all origins
   const isDev = import.meta.env.DEV || process.env.NODE_ENV === 'development';
   if (isDev) return true;
 
-  // Allow same-origin requests
-  const url = new URL(request.url);
-  const allowedOrigins = [
-    `${url.protocol}//${url.host}`,
-    'http://localhost:4321',  // dev server
-  ];
+  const origin = request.headers.get('origin');
+  const referer = request.headers.get('referer');
 
-  if (origin && !allowedOrigins.some(o => origin.startsWith(o))) return false;
-  if (referer && !allowedOrigins.some(o => referer.startsWith(o))) return false;
+  // If neither header is present, trust SameSite cookies for CSRF protection
+  if (!origin && !referer) return true;
+
+  // Derive the expected origin from the Host header, which reliably reflects
+  // the external hostname on all platforms (including Render where request.url
+  // points to an internal address like http://0.0.0.0:10000/).
+  const host = request.headers.get('host');
+  if (!host) return true;
+
+  const expectedHostname = host.split(':')[0];
+
+  // Validate Origin header when present
+  if (origin) {
+    try {
+      const originHostname = new URL(origin).hostname;
+      if (originHostname !== expectedHostname) {
+        return false;
+      }
+    } catch {
+      return false;
+    }
+  }
+
+  // Validate Referer header when present
+  if (referer) {
+    try {
+      const refererHostname = new URL(referer).hostname;
+      if (refererHostname !== expectedHostname) {
+        return false;
+      }
+    } catch {
+      return false;
+    }
+  }
 
   return true;
 }
