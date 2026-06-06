@@ -72,11 +72,16 @@ export const PUT: APIRoute = async ({ request }) => {
       theme: theme !== undefined ? theme : undefined,
     });
 
-    // Seed syllabus for newly selected exams (filtered by subjects to avoid commerce/science mixing)
+    // Seed syllabus for newly selected exams — convert exam keys to syllabus keys
     if (selectedExams !== undefined) {
       const subjectsToSeed = computedSubjects ?? getSubjectsForExamKeys(selectedExams);
+      const seededKeys = new Set<string>();
       for (const examKey of selectedExams) {
-        getDb().seedSyllabusData(examKey, subjectsToSeed);
+        const syllabusKey = getSyllabusKeyForExam(examKey);
+        if (!seededKeys.has(syllabusKey)) {
+          seededKeys.add(syllabusKey);
+          getDb().seedSyllabusData(syllabusKey, subjectsToSeed);
+        }
       }
     }
 

@@ -24,8 +24,9 @@ const hasEntriesToday = recentEntries.some(e => e.date === today);
 ---
 
 <BaseLayout title="Daily Log">
+    <div style="max-width:min(56rem,100%);">
     <!-- Header -->
-    <div class="ds-page-header">
+    <div class="ds-page-header" style="max-width:min(56rem,100%);">
       <h1 class="ds-heading-page" style="margin-bottom:0.25rem;">Daily Study Log</h1>
       <p class="ds-body-sm" style="margin:0;">
         {todayEntry ? 'Update today\'s entry' : 'What did you study today?'}
@@ -78,6 +79,7 @@ const hasEntriesToday = recentEntries.some(e => e.date === today);
       <h2 class="ds-heading-section">Recent Entries</h2>
       <EntryList entries={recentEntries} />
     </div>
+  </div>
 </BaseLayout>
 
 <script>

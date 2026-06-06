@@ -4,10 +4,12 @@ import MentorChat from '../components/MentorChat.astro';
 ---
 
 <BaseLayout title="AI Mentor">
+    <div style="max-width:min(56rem,100%);">
     <div class="ds-page-header">
       <h1 class="ds-heading-page">AI Mentor</h1>
       <p class="ds-body-sm" style="margin-bottom:var(--ds-space-3);">Your AI study partner — ask questions, get quizzed, or talk through what you're learning. Chat history is saved locally.</p>
     </div>
 
     <MentorChat />
+  </div>
 </BaseLayout>
