@@ -17,7 +17,7 @@ export const PUT: APIRoute = async ({ request }) => {
   scopeDbToUser(request);
   try {
     const body = await request.json();
-    const { targetHoursPerWeek, studyDaysPerWeek, selectedExams, subjects, examDate, theme } = body;
+    const { targetHoursPerWeek, studyDaysPerWeek, selectedExams, subjects, examDate, theme, stream } = body;
 
     if (targetHoursPerWeek !== undefined) {
       const h = Number(targetHoursPerWeek);
@@ -52,6 +52,15 @@ export const PUT: APIRoute = async ({ request }) => {
       const subjectsToSeed = computedSubjects ?? getSubjectsForExamKeys(selectedExams);
       for (const examKey of selectedExams) {
         getDb().seedSyllabusData(examKey, subjectsToSeed);
+      }
+    }
+
+    // Persist stream change to user profile
+    if (stream !== undefined && typeof stream === 'string') {
+      const db = getDb();
+      const currentUserId = db.getCurrentUser();
+      if (currentUserId) {
+        db.updateUser(currentUserId, { stream });
       }
     }
 

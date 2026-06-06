@@ -12,9 +12,11 @@ const settings = db.getSettings();
 const user = getSessionUser(getTokenFromCookie(Astro.request));
 const isGuest = user?.userType === 'guest';
 
-// Determine user's stream from settings or first exam
-const defaultExams = settings.selectedExams?.length ? settings.selectedExams : ['JEE'];
+// Determine user's stream and default exams
 const userStream = user?.stream || 'science';
+const defaultExams = settings.selectedExams?.length
+  ? settings.selectedExams
+  : EXAM_DEFINITIONS.filter(e => e.groups.includes(userStream)).map(e => e.key).slice(0, 1);
 ---
 
 <BaseLayout title="Settings">
@@ -153,7 +155,7 @@ const userStream = user?.stream || 'science';
         <h2 class="ds-heading-section">Exams / Entrance</h2>
         <p class="ds-caption">Which exams are you preparing for?</p>
         <div class="settings-chip-grid" id="exam-grid">
-          {EXAM_DEFINITIONS.map(exam => {
+          {EXAM_DEFINITIONS.filter(exam => exam.groups.includes(userStream)).map(exam => {
             const isSelected = defaultExams.includes(exam.key);
             return (
               <div

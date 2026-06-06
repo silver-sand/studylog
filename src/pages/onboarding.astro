@@ -294,13 +294,14 @@ const CLASS_LEVELS = [
       el.classList.toggle('completed', s < step);
     });
     prevBtn.classList.toggle('hidden', step <= 1);
-    nextBtn.classList.toggle('ds-hidden', isWelcome);
     if (isWelcome) {
       prevBtn.classList.add('hidden');
     }
 
     if (step === steps.length - 1) {
       nextBtn.textContent = '🎯 Generate My Workspace';
+    } else if (step === 0) {
+      nextBtn.textContent = 'Get Started';
     } else {
       nextBtn.textContent = 'Continue →';
     }

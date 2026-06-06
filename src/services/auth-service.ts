@@ -79,12 +79,14 @@ export async function convertGuestToAuthenticated(
 
   const passwordHash = await hashPassword(password);
   db.updateUser(userId, { userType: 'authenticated', name });
-  // Update email/password via raw DB since updateUser doesn't support email/password fields
-  const typedDb = db as any;
+  // Update email and password_hash directly (updateUser doesn't expose these)
   try {
-    typedDb.getDb().run(`UPDATE users SET email = ?, password_hash = ? WHERE id = ?`, [email, passwordHash, userId]);
-    typedDb.save();
-  } catch { /* ignore */ }
+    const rawDb = (db as any).getDb();
+    rawDb.run(`UPDATE users SET email = ?, password_hash = ? WHERE id = ?`, [email, passwordHash, userId]);
+    (db as any).save();
+  } catch (e) {
+    console.warn('Failed to persist email/password during guest conversion:', e);
+  }
 
   const user = db.getUserById(userId)!;
 
