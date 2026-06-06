@@ -48,6 +48,7 @@ const isAuthenticated = !!user && !isGuest;
 
   <!-- ── Hero ── -->
   <section class="lp-hero">
+    <div class="lp-hero-bg"></div>
     <div class="lp-hero-inner">
       <div class="lp-badge">
         <span class="lp-badge-dot"></span>
@@ -300,11 +301,22 @@ const isAuthenticated = !!user && !isGuest;
       max-width: 48rem;
       margin: 0 auto;
       text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .lp-hero-bg {
+      position: absolute;
+      inset: -50% -25%;
+      background: radial-gradient(ellipse at 50% 0%, rgba(99, 102, 241, 0.08) 0%, transparent 60%),
+                  radial-gradient(ellipse at 80% 20%, rgba(168, 85, 247, 0.05) 0%, transparent 50%);
+      pointer-events: none;
     }
     .lp-hero-inner {
       display: flex;
       flex-direction: column;
       align-items: center;
+      position: relative;
+      z-index: 1;
     }
     .lp-badge {
       display: inline-flex;
@@ -408,13 +420,16 @@ const isAuthenticated = !!user && !isGuest;
     }
     .lp-feature-card {
       padding: var(--ds-space-3);
-      background: var(--ds-bg-elevated);
+      background: var(--ds-bg-surface);
       border: 1px solid var(--ds-border-subtle);
       border-radius: var(--ds-radius-lg);
-      transition: border-color 0.15s;
+      transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
     }
     .lp-feature-card:hover {
       border-color: var(--ds-border-default);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
     }
     .lp-feature-icon {
       width: 2.5rem;

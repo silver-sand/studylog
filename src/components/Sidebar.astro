@@ -183,7 +183,7 @@ function isActive(href: string): boolean {
 
   /* ── Logo ── */
   .logo-area {
-    padding: var(--ds-space-2) var(--ds-space-2);
+    padding: var(--ds-space-3) var(--ds-space-2) var(--ds-space-2);
     border-bottom: 1px solid var(--ds-border-subtle);
   }
   .logo-link {
@@ -226,21 +226,22 @@ function isActive(href: string): boolean {
     gap: 0.125rem;
   }
   .nav-group-label {
-    padding: var(--ds-space-1) var(--ds-space-1);
+    padding: var(--ds-space-1) var(--ds-space-2) 0.25rem var(--ds-space-2);
     font-size: var(--ds-text-2xs);
     font-weight: var(--ds-weight-semibold);
     color: var(--ds-text-muted);
     text-transform: uppercase;
     letter-spacing: var(--ds-tracking-wider);
-    padding-top: var(--ds-space-1);
   }
   .nav-link {
     display: flex;
     align-items: center;
-    gap: var(--ds-space-1);
-    padding: var(--ds-space-1) var(--ds-space-1);
+    gap: var(--ds-space-2);
+    padding: var(--ds-space-1) var(--ds-space-2);
+    margin: 0 0.25rem;
     border-radius: var(--ds-radius-md);
     font-size: var(--ds-text-sm);
+    font-weight: var(--ds-weight-normal);
     color: var(--ds-text-tertiary);
     transition: all var(--ds-transition-base);
     text-decoration: none;

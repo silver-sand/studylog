@@ -27,6 +27,7 @@
   --ds-border-subtle: rgba(51, 65, 85, 0.3);
   --ds-border-default: rgba(51, 65, 85, 0.5);
   --ds-border-strong: rgba(71, 85, 105, 0.7);
+  --ds-border-hover: rgba(71, 85, 105, 0.5);
 
   /* Accent — Indigo (primary action) */
   --ds-accent-50: #eef2ff;
@@ -43,18 +44,23 @@
 
   /* Success — Emerald */
   --ds-success: #22c55e;
+  --ds-success-400: #4ade80;
+  --ds-success-500: #22c55e;
   --ds-success-bg: rgba(34, 197, 94, 0.1);
   --ds-success-border: rgba(34, 197, 94, 0.25);
   --ds-success-text: #4ade80;
 
   /* Warning — Amber */
   --ds-warning: #f59e0b;
+  --ds-warning-400: #fbbf24;
   --ds-warning-bg: rgba(245, 158, 11, 0.1);
   --ds-warning-border: rgba(245, 158, 11, 0.25);
   --ds-warning-text: #fbbf24;
 
   /* Danger — Red */
   --ds-danger: #ef4444;
+  --ds-danger-400: #f87171;
+  --ds-danger-500: #ef4444;
   --ds-danger-bg: rgba(239, 68, 68, 0.1);
   --ds-danger-border: rgba(239, 68, 68, 0.25);
   --ds-danger-text: #fca5a5;
@@ -252,6 +258,17 @@ body {
 .ds-caption {
   font-size: var(--ds-text-xs);
   color: var(--ds-text-muted);
+}
+
+/* Link accent */
+.ds-link-accent {
+  color: var(--ds-accent-400);
+  text-decoration: underline;
+  text-decoration-color: var(--ds-accent-border);
+  transition: color var(--ds-transition-base);
+}
+.ds-link-accent:hover {
+  color: var(--ds-accent-300);
 }
 
 /* Label (uppercase tag style) */
