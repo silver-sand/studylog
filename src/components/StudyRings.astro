@@ -33,11 +33,11 @@ const readinessText =
 
 <div class="rings-wrapper" class:list={{ 'rings-milestone': readinessScore >= 80 }}>
   <svg
-    viewBox="0 0 {viewBox} {viewBox}"
+    viewBox={`0 0 ${viewBox} ${viewBox}`}
     class="rings-svg"
     xmlns="http://www.w3.org/2000/svg"
   >
-    <g transform="rotate(-90 {center} {center})">
+    <g transform={`rotate(-90 ${center} ${center})`}>
       {rings.map((ring, i) => {
         const circ = Math.round(circumference(ring.r) * 100) / 100;
         const offset = Math.round(circ * (1 - ring.percent / 100) * 100) / 100;
