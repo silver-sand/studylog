@@ -132,17 +132,19 @@ export class SQLiteAdapter implements DatabaseInterface {
     }
 
     const SQL = await initSqlJs();
+    const db: SqlJsDb = fs.existsSync(this.dbPath)
+      ? new SQL.Database(fs.readFileSync(this.dbPath))
+      : new SQL.Database();
 
-    if (fs.existsSync(this.dbPath)) {
-      const buffer = fs.readFileSync(this.dbPath);
-      this.db = new SQL.Database(buffer);
-    } else {
-      this.db = new SQL.Database();
-    }
+    // Split schema into CREATE TABLE (DDL) and CREATE INDEX statements.
+    // Run DDL first, then migrations (ALTER TABLE for legacy columns),
+    // then indexes — this handles old DB files that lack columns added in later phases.
+    const schemaStmts = SCHEMA_SQL.split(';').filter(s => s.trim());
+    const ddlStmts = schemaStmts.filter(s => s.trim().toUpperCase().startsWith('CREATE TABLE'));
+    const idxStmts = schemaStmts.filter(s => s.trim().toUpperCase().startsWith('CREATE INDEX'));
 
-    // Run schema
-    for (const statement of SCHEMA_SQL.split(';').filter(s => s.trim())) {
-      this.db.run(statement + ';');
+    for (const stmt of ddlStmts) {
+      db.run(stmt + ';');
     }
 
     // Migrations for existing DBs
@@ -174,28 +176,34 @@ export class SQLiteAdapter implements DatabaseInterface {
       `ALTER TABLE users ADD COLUMN target_rank TEXT`,
     ];
     for (const sql of migrations) {
-      try { this.db.run(sql); } catch { /* column already exists — ignore */ }
+      try { db.run(sql); } catch { /* column already exists — ignore */ }
     }
 
     // Migration: copy syllabus rows for legacy user '1' if not already indexed per-user
     try {
-      this.db.run(`DROP INDEX IF EXISTS idx_syllabus_unique`);
-      this.db.run(`DROP INDEX IF EXISTS idx_syllabus_exam`);
+      db.run(`DROP INDEX IF EXISTS idx_syllabus_unique`);
+      db.run(`DROP INDEX IF EXISTS idx_syllabus_exam`);
     } catch { /* indices may not exist */ }
     try {
-      this.db.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_syllabus_unique ON syllabus(user_id, exam_type, subject, chapter)`);
-      this.db.run(`CREATE INDEX IF NOT EXISTS idx_syllabus_exam ON syllabus(user_id, exam_type, subject)`);
+      db.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_syllabus_unique ON syllabus(user_id, exam_type, subject, chapter)`);
+      db.run(`CREATE INDEX IF NOT EXISTS idx_syllabus_exam ON syllabus(user_id, exam_type, subject)`);
     } catch { /* index exists */ }
 
     // Create user-specific indexes
     try {
-      this.db.run(`CREATE INDEX IF NOT EXISTS idx_entries_user ON entries(user_id)`);
-      this.db.run(`CREATE INDEX IF NOT EXISTS idx_weekly_user ON weekly_reviews(user_id)`);
-      this.db.run(`CREATE INDEX IF NOT EXISTS idx_daily_user ON daily_reviews(user_id)`);
-      this.db.run(`CREATE INDEX IF NOT EXISTS idx_settings_user ON settings(user_id)`);
-      this.db.run(`CREATE INDEX IF NOT EXISTS idx_mock_tests_user ON mock_tests(user_id)`);
+      db.run(`CREATE INDEX IF NOT EXISTS idx_entries_user ON entries(user_id)`);
+      db.run(`CREATE INDEX IF NOT EXISTS idx_weekly_user ON weekly_reviews(user_id)`);
+      db.run(`CREATE INDEX IF NOT EXISTS idx_daily_user ON daily_reviews(user_id)`);
+      db.run(`CREATE INDEX IF NOT EXISTS idx_settings_user ON settings(user_id)`);
+      db.run(`CREATE INDEX IF NOT EXISTS idx_mock_tests_user ON mock_tests(user_id)`);
     } catch { /* index exists */ }
 
+    // Remaining indexes from schema (date, week_start, session columns — always safe)
+    for (const stmt of idxStmts) {
+      try { db.run(stmt + ';'); } catch { /* index may already exist */ }
+    }
+
+    this.db = db;
     this.save();
   }
 

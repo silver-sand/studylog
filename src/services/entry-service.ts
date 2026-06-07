@@ -37,7 +37,8 @@ export async function reanalyzeEntry(id: string): Promise<Entry | null> {
   const entry = db.getEntry(id);
   if (!entry) return null;
 
-  db.updateEntry(id, { aiStatus: 'processing' });
+  const pending = db.updateEntry(id, { aiStatus: 'processing' });
+  if (!pending) return null;
 
   try {
     const analysis = await getAI().analyzeEntry(entry.content);

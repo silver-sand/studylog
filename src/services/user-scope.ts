@@ -2,11 +2,14 @@ import { getDb } from '../db';
 import type { User } from '../types/auth';
 import { getTokenFromCookie } from './auth-service';
 
+export type SafeUser = Omit<User, 'passwordHash'>;
+
 /**
  * Extract the authenticated user from a request cookie.
  * Returns null if no valid session exists.
+ * The returned user never exposes the passwordHash field.
  */
-export function getSessionUser(request: Request): User | null {
+export function getSessionUser(request: Request): SafeUser | null {
   const token = getTokenFromCookie(request);
   if (!token) return null;
 
@@ -15,7 +18,10 @@ export function getSessionUser(request: Request): User | null {
   if (!session) return null;
 
   const user = db.getUserById(session.userId);
-  return user;
+  if (!user) return null;
+
+  const { passwordHash: _, ...safeUser } = user;
+  return safeUser;
 }
 
 /**

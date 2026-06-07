@@ -12,5 +12,8 @@ export default defineConfig({
         '@': '/src',
       },
     },
+    optimizeDeps: {
+      extensions: ['.js', '.ts', '.jsx', '.tsx'],
+    },
   },
 });

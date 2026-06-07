@@ -61,10 +61,9 @@ export function getDashboardStats() {
     todayEntry,
     totalHoursThisWeek,
     targetHoursPerWeek: settings.targetHoursPerWeek,
-    weeklyProgressPercent: Math.min(
-      100,
-      Math.round((totalHoursThisWeek / settings.targetHoursPerWeek) * 100)
-    ),
+    weeklyProgressPercent: settings.targetHoursPerWeek > 0
+      ? Math.min(100, Math.round((totalHoursThisWeek / settings.targetHoursPerWeek) * 100))
+      : 0,
     entriesThisWeek: weekEntries.length,
     totalEntries: db.getEntryCount(),
     entriesThisMonth: db.getEntryCountForMonth(year, month),
@@ -107,8 +106,10 @@ export interface SubjectBreakdownItem {
 export function getSubjectBreakdown(entries: Entry[]): SubjectBreakdownItem[] {
   const subjectMap = new Map<string, number>();
   for (const entry of entries) {
+    const subCount = entry.subjects.length || 1;
+    const hoursPerSubject = entry.hoursStudied / subCount;
     for (const subject of entry.subjects) {
-      subjectMap.set(subject, (subjectMap.get(subject) || 0) + entry.hoursStudied);
+      subjectMap.set(subject, (subjectMap.get(subject) || 0) + hoursPerSubject);
     }
   }
   const totalHours = Array.from(subjectMap.values()).reduce((a, b) => a + b, 0) || 1;
@@ -224,7 +225,10 @@ export function getFocusTrend(days: number = 7): FocusTrendItem[] {
     d.setDate(d.getDate() - i);
     const dateStr = formatDate(d);
     const ratings = ratingsByDate.get(dateStr);
-    const average = ratings ? Math.round(ratings.reduce((s, r) => s + r, 0) / ratings.length) : 0;
+    const validRatings = ratings ? ratings.filter(r => r > 0) : [];
+    const average = validRatings.length > 0
+      ? Math.round(validRatings.reduce((s, r) => s + r, 0) / validRatings.length)
+      : 0;
 
     const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
 
