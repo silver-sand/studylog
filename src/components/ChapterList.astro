@@ -265,6 +265,7 @@ function daysAgo(dateStr: string | null): string {
     background: var(--ds-bg-hover);
   }
   .slider-btn.active {
+    background: var(--ds-accent-bg);        /* fallback for Firefox (no color-mix) */
     background: color-mix(in srgb, var(--accent) 20%, transparent);
     color: var(--accent);
     font-weight: var(--ds-weight-semibold);

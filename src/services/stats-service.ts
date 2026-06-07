@@ -45,11 +45,12 @@ export function getDashboardStats() {
   const streak = db.getStreak();
   const consistencyPercent = Math.min(100, Math.round((streak / 365) * 100));
   const masteryPercent = getMasteryPercent(examKey);
+  const testingPlaceholderPercent = 0; // actual testing readiness TBD
   const readinessScore = Math.round(
     coveragePercent * 0.35 +
     consistencyPercent * 0.25 +
     masteryPercent * 0.30 +
-    0.10  // testing placeholder (10%)
+    testingPlaceholderPercent * 0.10
   );
   const readinessLabel =
     readinessScore >= 70 ? 'on_track' :
@@ -131,12 +132,21 @@ export function getDailyTrend(days: number = 14): DailyTrendItem[] {
   const now = new Date();
   const results: DailyTrendItem[] = [];
 
+  // Batch-load all entries in range to avoid N+1 queries
+  const startDate = new Date(now);
+  startDate.setDate(startDate.getDate() - (days - 1));
+  const endDate = new Date(now);
+  const entriesInRange = db.listEntries({ from: formatDate(startDate), to: formatDate(endDate) });
+  const hoursByDate = new Map<string, number>();
+  for (const e of entriesInRange) {
+    hoursByDate.set(e.date, (hoursByDate.get(e.date) || 0) + e.hoursStudied);
+  }
+
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date(now);
     d.setDate(d.getDate() - i);
     const dateStr = formatDate(d);
-    const entry = db.getEntryByDate(dateStr);
-    const hours = entry ? entry.hoursStudied : 0;
+    const hours = hoursByDate.get(dateStr) || 0;
 
     const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
     const shortDate = `${d.getMonth() + 1}/${d.getDate()}`;
@@ -198,12 +208,23 @@ export function getFocusTrend(days: number = 7): FocusTrendItem[] {
   const now = new Date();
   const results: FocusTrendItem[] = [];
 
+  // Batch-load all entries in range to avoid N+1 queries
+  const startDate = new Date(now);
+  startDate.setDate(startDate.getDate() - (days - 1));
+  const endDate = new Date(now);
+  const entriesInRange = db.listEntries({ from: formatDate(startDate), to: formatDate(endDate) });
+  const ratingsByDate = new Map<string, number[]>();
+  for (const e of entriesInRange) {
+    if (!ratingsByDate.has(e.date)) ratingsByDate.set(e.date, []);
+    ratingsByDate.get(e.date)!.push(e.focusRating);
+  }
+
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date(now);
     d.setDate(d.getDate() - i);
     const dateStr = formatDate(d);
-    const entry = db.getEntryByDate(dateStr);
-    const average = entry ? entry.focusRating : 0;
+    const ratings = ratingsByDate.get(dateStr);
+    const average = ratings ? Math.round(ratings.reduce((s, r) => s + r, 0) / ratings.length) : 0;
 
     const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
 
@@ -312,14 +333,12 @@ export function getUpcomingExams(settings: { examDate?: string | null; selectedE
 
 export function getMonthlyEntryDates(year: number, month: number): Set<string> {
   const db = getDb();
-  const entries = db.listEntries();
-  const dates = new Set<string>();
   const pad = (n: number) => n.toString().padStart(2, '0');
   const prefix = `${year}-${pad(month)}`;
+  const entries = db.listEntries({ from: `${prefix}-01`, to: `${prefix}-31` });
+  const dates = new Set<string>();
   for (const entry of entries) {
-    if (entry.date.startsWith(prefix)) {
-      dates.add(entry.date);
-    }
+    dates.add(entry.date);
   }
   return dates;
 }

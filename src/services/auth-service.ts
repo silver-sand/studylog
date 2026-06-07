@@ -34,18 +34,50 @@ function generateUUID(): string {
 // ── Password hashing (Web Crypto API) ──
 
 async function hashPassword(password: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
   const c = getCrypto();
-  const hash = await c.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(hash))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
+  const salt = new Uint8Array(16);
+  c.getRandomValues(salt);
+
+  const key = await c.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
+  const hash = await c.subtle.deriveBits(
+    { name: 'PBKDF2', salt, iterations: 100_000, hash: 'SHA-256' },
+    key,
+    256
+  );
+
+  const saltB64 = btoa(String.fromCharCode(...salt));
+  const hashB64 = btoa(String.fromCharCode(...new Uint8Array(hash)));
+  return `${saltB64}:${hashB64}`;
 }
 
-async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  const hashed = await hashPassword(password);
-  return hashed === hash;
+async function verifyPassword(password: string, stored: string): Promise<boolean> {
+  // Legacy: old SHA-256 hex hashes have no ':' separator
+  if (!stored.includes(':')) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const c = getCrypto();
+    const hash = await c.subtle.digest('SHA-256', data);
+    const hex = Array.from(new Uint8Array(hash))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+    return hex === stored;
+  }
+
+  const [saltB64, hashB64] = stored.split(':');
+  const salt = Uint8Array.from(atob(saltB64), (c) => c.charCodeAt(0));
+  const expectedHash = Uint8Array.from(atob(hashB64), (c) => c.charCodeAt(0));
+
+  const c = getCrypto();
+  const key = await c.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
+  const hash = await c.subtle.deriveBits(
+    { name: 'PBKDF2', salt, iterations: 100_000, hash: 'SHA-256' },
+    key,
+    256
+  );
+
+  const actualHash = new Uint8Array(hash);
+  if (actualHash.length !== expectedHash.length) return false;
+  return actualHash.every((b, i) => b === expectedHash[i]);
 }
 
 // ── Session tokens ──

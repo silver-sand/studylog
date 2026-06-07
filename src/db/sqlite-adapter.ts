@@ -117,8 +117,8 @@ export class SQLiteAdapter implements DatabaseInterface {
   private db: SqlJsDb | null = null;
   private ready: Promise<void>;
   private dbPath: string;
-  /** Current user ID for scoping queries. Defaults to '1' for legacy data. */
-  private userId: string = '1';
+  /** Current user ID for scoping queries. Set via setCurrentUser — do NOT rely on defaults. */
+  private userId: string = '';
 
   constructor(dbPath: string) {
     this.dbPath = dbPath;
@@ -206,7 +206,7 @@ export class SQLiteAdapter implements DatabaseInterface {
 
   /** Reset to default user (for cleanup between requests). */
   clearCurrentUser(): void {
-    this.userId = '1';
+    this.userId = '';
   }
 
   /** Get the current user ID. */
@@ -659,13 +659,28 @@ export class SQLiteAdapter implements DatabaseInterface {
 
   batchUpdateSyllabusStatus(updates: { id: string; status: string }[]): number {
     if (updates.length === 0) return 0;
+    const db = this.getDb();
     let count = 0;
-    for (const { id, status } of updates) {
-      try {
-        this.updateSyllabusStatus(id, status);
-        count++;
-      } catch { /* skip failed */ }
+    const now = new Date().toISOString();
+    // Use a single transaction for all updates
+    db.run('BEGIN TRANSACTION');
+    try {
+      const stmt = db.prepare(
+        `UPDATE syllabus SET status = ?, completed_at = ?, last_revised_at = ?, revision_count = revision_count + 1 WHERE id = ? AND user_id = ?`
+      );
+      for (const { id, status } of updates) {
+        const completedAt = status === 'mastered' ? now : null;
+        const lastRevisedAt = (status === 'revision_1' || status === 'revision_2' || status === 'revision_3') ? now : null;
+        stmt.bind([status, completedAt, lastRevisedAt, id, this.userId]);
+        if (stmt.step()) count++;
+        stmt.reset();
+      }
+      stmt.free();
+      db.run('COMMIT');
+    } catch {
+      db.run('ROLLBACK');
     }
+    this.save();
     return count;
   }
 

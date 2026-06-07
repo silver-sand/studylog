@@ -259,8 +259,8 @@ const { subjects = ['Physics', 'Chemistry', 'Mathematics', 'Biology'] } = Astro.
 
 <style>
   .timer-card {
-    background: rgba(15, 23, 42, 0.8);
-    border: 1px solid rgba(51, 65, 85, 0.4);
+    background: var(--ds-bg-elevated);
+    border: 1px solid var(--ds-border-subtle);
     border-radius: 0.75rem;
     padding: 1.5rem;
     display: flex;
@@ -279,14 +279,14 @@ const { subjects = ['Physics', 'Chemistry', 'Mathematics', 'Biology'] } = Astro.
   .timer-title {
     font-size: 1rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--ds-text-primary);
     margin: 0;
   }
   .timer-display {
     font-family: 'JetBrains Mono', monospace;
     font-size: 3rem;
     font-weight: 700;
-    color: #f1f5f9;
+    color: var(--ds-text-primary);
     letter-spacing: 0.05em;
     padding: 0.5rem 0;
   }
@@ -304,7 +304,7 @@ const { subjects = ['Physics', 'Chemistry', 'Mathematics', 'Biology'] } = Astro.
   .timer-label {
     font-size: 0.75rem;
     font-weight: 500;
-    color: #94a3b8;
+    color: var(--ds-text-tertiary);
   }
   .timer-select,
   .timer-input {
@@ -330,7 +330,7 @@ const { subjects = ['Physics', 'Chemistry', 'Mathematics', 'Biology'] } = Astro.
     cursor: not-allowed;
   }
   .timer-select option {
-    background: #1e293b;
+    background: var(--ds-bg-surface);
   }
   .timer-actions {
     display: flex;
@@ -349,47 +349,47 @@ const { subjects = ['Physics', 'Chemistry', 'Mathematics', 'Biology'] } = Astro.
     font-family: 'Inter', sans-serif;
   }
   .timer-btn-start {
-    background: #16a34a;
+    background: var(--ds-success-500);
     color: white;
   }
   .timer-btn-start:hover {
-    background: #22c55e;
+    background: var(--ds-success-400);
   }
   .timer-btn-pause {
-    background: #d97706;
+    background: var(--ds-warning);
     color: white;
   }
   .timer-btn-pause:hover {
-    background: #f59e0b;
+    background: var(--ds-warning-400);
   }
   .timer-btn-resume {
-    background: #2563eb;
+    background: var(--ds-accent-600);
     color: white;
   }
   .timer-btn-resume:hover {
-    background: #3b82f6;
+    background: var(--ds-accent-500);
   }
   .timer-btn-stop {
-    background: #dc2626;
+    background: var(--ds-danger);
     color: white;
   }
   .timer-btn-stop:hover {
-    background: #ef4444;
+    background: var(--ds-danger-500);
   }
   .timer-btn-save {
-    background: #2563eb;
+    background: var(--ds-accent-600);
     color: white;
   }
   .timer-btn-save:hover {
-    background: #3b82f6;
+    background: var(--ds-accent-500);
   }
   .timer-btn-discard {
-    background: rgba(51, 65, 85, 0.4);
-    color: #94a3b8;
+    background: var(--ds-border-default);
+    color: var(--ds-text-tertiary);
   }
   .timer-btn-discard:hover {
-    background: rgba(71, 85, 105, 0.5);
-    color: #e2e8f0;
+    background: var(--ds-border-hover);
+    color: var(--ds-text-primary);
   }
   .timer-summary {
     width: 100%;
@@ -401,12 +401,12 @@ const { subjects = ['Physics', 'Chemistry', 'Mathematics', 'Biology'] } = Astro.
   .summary-divider {
     width: 100%;
     height: 1px;
-    background: rgba(51, 65, 85, 0.4);
+    background: var(--ds-border-subtle);
   }
   .summary-title {
     font-size: 0.9rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--ds-text-primary);
     margin: 0;
   }
   .summary-details {
@@ -417,10 +417,10 @@ const { subjects = ['Physics', 'Chemistry', 'Mathematics', 'Biology'] } = Astro.
   }
   .summary-stat {
     font-size: 0.8rem;
-    color: #94a3b8;
+    color: var(--ds-text-tertiary);
   }
   .summary-stat strong {
-    color: #e2e8f0;
+    color: var(--ds-text-primary);
     font-weight: 600;
   }
   .summary-actions {
