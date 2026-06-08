@@ -8,7 +8,7 @@ scopeDbToUser(Astro.request);
 const db = getDb();
 const settings = db.getSettings();
 const subjects = settings.subjects || ['Physics', 'Chemistry', 'Mathematics', 'Biology'];
-const streak = db.getStreakInfo();
+const streak = db.getStreak();
 ---
 
 <BaseLayout title="Timer">
