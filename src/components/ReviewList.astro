@@ -17,27 +17,34 @@ const { reviews } = Astro.props;
       description="Log some study entries for a week, then generate your first review."
     />
   ) : (
-    <div class="space-y-2">
-      {reviews.map(review => (
+    <div class="review-list animate-stagger" style="--stagger-delay:0.06s;">
+      {reviews.map((review, idx) => (
         <a
           href={`/weekly/${review.weekStart}`}
-          class="review-item"
+          class="review-item ds-card-glass card-lift animate-stagger-item"
+          style="--stagger-index: {idx};"
         >
           <div class="review-top">
-            <span class="review-date">
-              {formatDisplayDate(review.weekStart)} — {formatDisplayDate(review.weekEnd)}
-            </span>
+            <div class="review-date-group">
+              <span class="review-date">{formatDisplayDate(review.weekStart)} — {formatDisplayDate(review.weekEnd)}</span>
+              {review.strengths.length > 0 && (
+                <div class="strength-tags">
+                  {review.strengths.slice(0, 2).map(s => (
+                    <span class="strength-tag">{s.split(':')[0].replace(/^✅\s*/, '')}</span>
+                  ))}
+                </div>
+              )}
+            </div>
             <span class="review-arrow">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
             </span>
           </div>
-          {review.strengths.length > 0 && (
-            <div class="strength-tags">
-              {review.strengths.slice(0, 2).map(s => (
-                <span class="strength-tag">{s.split(':')[0].replace('✅ ', '')}</span>
-              ))}
-            </div>
-          )}
+          <div class="review-meta">
+            <span class="review-meta-stat">{review.entryIds?.length || 0} entries</span>
+            {review.insights?.length > 0 && (
+              <span class="review-meta-stat">{review.insights.length} insights</span>
+            )}
+          </div>
         </a>
       ))}
     </div>
@@ -45,40 +52,62 @@ const { reviews } = Astro.props;
 </div>
 
 <style>
-  .review-item {
-    display: block;
-    background: rgba(15, 23, 42, 0.8);
-    border: 1px solid rgba(51, 65, 85, 0.4);
-    border-radius: 0.5rem;
-    padding: 0.875rem 1rem;
-    transition: border-color 0.15s;
+  .review-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ds-space-1);
   }
-  .review-item:hover {
-    border-color: rgba(51, 65, 85, 0.8);
+  .review-item {
+    padding: var(--ds-space-1) var(--ds-space-2);
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ds-space-1);
   }
   .review-top {
     display: flex;
     align-items: center;
     justify-content: space-between;
   }
+  .review-date-group {
+    display: flex;
+    align-items: center;
+    gap: var(--ds-space-1);
+    flex-wrap: wrap;
+  }
   .review-date {
-    font-size: 0.85rem;
+    font-size: var(--ds-text-sm);
     font-weight: 500;
-    color: #e2e8f0;
+    color: var(--ds-text-primary);
   }
   .review-arrow {
-    color: #475569;
+    color: var(--ds-text-muted);
+    flex-shrink: 0;
+    transition: transform 0.15s;
+  }
+  .review-item:hover .review-arrow {
+    transform: translateX(2px);
+  }
+  .review-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--ds-space-1);
+  }
+  .review-meta-stat {
+    font-size: var(--ds-text-2xs);
+    color: var(--ds-text-muted);
+    font-family: var(--ds-font-mono);
   }
   .strength-tags {
     display: flex;
-    gap: 0.375rem;
-    margin-top: 0.375rem;
+    gap: var(--ds-space-1);
   }
   .strength-tag {
-    font-size: 0.7rem;
-    color: #22c55e;
-    background: rgba(34, 197, 94, 0.1);
-    padding: 0.1rem 0.4rem;
-    border-radius: 0.25rem;
+    font-size: var(--ds-text-2xs);
+    color: var(--ds-success-500, #22c55e);
+    background: color-mix(in srgb, var(--ds-success-500, #22c55e) 12%, transparent);
+    padding: 0.05rem 0.4rem;
+    border-radius: var(--ds-radius-full);
+    font-weight: 500;
   }
 </style>

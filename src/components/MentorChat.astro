@@ -6,7 +6,8 @@ export interface Props {
 const { title = 'AI Mentor' } = Astro.props;
 ---
 
-<div class="mentor-chat" id="mentor-chat">
+<div class="mentor-chat ds-card-glass" id="mentor-chat">
+  <!-- Header -->
   <div class="chat-header">
     <div class="chat-title-row">
       <div class="chat-avatar">
@@ -19,17 +20,17 @@ const { title = 'AI Mentor' } = Astro.props;
     </div>
   </div>
 
-  <div class="messages-area" id="messages-area">
-    <!-- Welcome message is injected by JS for personalization -->
-  </div>
+  <!-- Messages area -->
+  <div class="messages-area" id="messages-area"></div>
 
+  <!-- Input area -->
   <div class="input-area">
     <div class="chips" id="chips">
-      <button class="ds-chip" data-prompt="What should I study today?" style="font-size:var(--ds-text-xs);padding:4px 12px;">What to study?</button>
-      <button class="ds-chip" data-prompt="Quiz me on something I studied recently" style="font-size:var(--ds-text-xs);padding:4px 12px;">Quiz me</button>
-      <button class="ds-chip" data-prompt="I'm stuck, help me figure out what to do" style="font-size:var(--ds-text-xs);padding:4px 12px;">I'm stuck</button>
-      <button class="ds-chip" data-prompt="What are my weak areas?" style="font-size:var(--ds-text-xs);padding:4px 12px;">Weak areas</button>
-      <button class="ds-chip" data-prompt="Make me a study plan for this week" style="font-size:var(--ds-text-xs);padding:4px 12px;">Study plan</button>
+      <button class="suggestion-chip" data-prompt="What should I study today?">What to study?</button>
+      <button class="suggestion-chip" data-prompt="Quiz me on something I studied recently">Quiz me</button>
+      <button class="suggestion-chip" data-prompt="I'm stuck, help me figure out what to do">I'm stuck</button>
+      <button class="suggestion-chip" data-prompt="What are my weak areas?">Weak areas</button>
+      <button class="suggestion-chip" data-prompt="Make me a study plan for this week">Study plan</button>
     </div>
     <div class="input-row">
       <textarea
@@ -39,7 +40,7 @@ const { title = 'AI Mentor' } = Astro.props;
         rows="1"
         style="flex:1;resize:none;max-height:120px;"
       ></textarea>
-      <button id="send-btn" class="ds-btn ds-btn-primary" disabled style="height:2.75rem;flex-shrink:0;align-self:flex-end;">
+      <button id="send-btn" class="ds-btn ds-btn-primary press-effect" disabled style="height:2.75rem;flex-shrink:0;align-self:flex-end;">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         <span>Send</span>
       </button>
@@ -65,7 +66,7 @@ const { title = 'AI Mentor' } = Astro.props;
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          history = parsed.slice(-20); // cap at last 20 messages
+          history = parsed.slice(-20);
           return true;
         }
       }
@@ -73,14 +74,12 @@ const { title = 'AI Mentor' } = Astro.props;
     return false;
   }
 
-  // ── Save history ──
   function saveHistory() {
     try {
       localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(history.slice(-20)));
     } catch (e) {}
   }
 
-  // ── Render persisted messages ──
   function renderHistory() {
     messagesArea.innerHTML = '';
     for (const msg of history) {
@@ -99,7 +98,6 @@ const { title = 'AI Mentor' } = Astro.props;
     messagesArea.scrollTop = messagesArea.scrollHeight;
   }
 
-  // ── Show welcome message (personalized) ──
   function showWelcome() {
     const greetings = [
       "Hi! I'm your AI study mentor. I can see your study history and syllabus progress.",
@@ -113,7 +111,7 @@ const { title = 'AI Mentor' } = Astro.props;
     ];
 
     const div = document.createElement('div');
-    div.className = 'message mentor welcome';
+    div.className = 'message mentor';
     const inner = document.createElement('div');
     inner.className = 'msg-content';
     inner.innerHTML = `<p>${greetings[0]}</p><p>${greetings[1]}</p><ul class="suggestion-list">${suggestions.map(s => `<li>${s}</li>`).join('')}</ul>`;
@@ -121,7 +119,6 @@ const { title = 'AI Mentor' } = Astro.props;
     messagesArea.appendChild(div);
   }
 
-  // ── Init ──
   const hasHistory = loadHistory();
   if (hasHistory) {
     renderHistory();
@@ -129,7 +126,6 @@ const { title = 'AI Mentor' } = Astro.props;
     showWelcome();
   }
 
-  // ── Send button ──
   sendBtn.addEventListener('click', sendMessage);
 
   function autoResize() {
@@ -149,9 +145,8 @@ const { title = 'AI Mentor' } = Astro.props;
     sendBtn.disabled = input.value.trim().length === 0 || isStreaming;
   });
 
-  // ── Chip buttons ──
   chipsContainer.addEventListener('click', (e) => {
-    const chip = e.target.closest('.ds-chip');
+    const chip = e.target.closest('.suggestion-chip');
     if (!chip) return;
     const prompt = chip.dataset.prompt;
     if (prompt && !isStreaming) {
@@ -179,6 +174,11 @@ const { title = 'AI Mentor' } = Astro.props;
     div.appendChild(inner);
     messagesArea.appendChild(div);
     messagesArea.scrollTop = messagesArea.scrollHeight;
+
+    // Entrance animation
+    div.style.animation = 'none';
+    void div.offsetHeight;
+    div.style.animation = '';
     return inner;
   }
 
@@ -198,7 +198,7 @@ const { title = 'AI Mentor' } = Astro.props;
 
   function renderMarkdown(text) {
     let html = escapeHtml(text);
-    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre class="code-block"><code>$2</code></pre>');
     html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
     html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
     html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
@@ -239,15 +239,12 @@ const { title = 'AI Mentor' } = Astro.props;
     autoResize();
     sendBtn.disabled = true;
 
-    // Add user message
     addMessage('user', text);
     history.push({ role: 'user', content: text });
     saveHistory();
 
-    // Track for getting-started checklist
     try { localStorage.setItem('sl-checklist-mentor', '1'); } catch(e) {}
 
-    // Add placeholder mentor message
     addMessage('mentor', '▊', true);
     isStreaming = true;
 
@@ -308,7 +305,6 @@ const { title = 'AI Mentor' } = Astro.props;
         }
       }
 
-      // Finalize
       const streamingMsg = messagesArea.querySelector('.message.mentor.streaming');
       if (streamingMsg) {
         streamingMsg.classList.remove('streaming');
@@ -348,18 +344,19 @@ const { title = 'AI Mentor' } = Astro.props;
     flex-direction: column;
     height: 70vh;
     max-height: 700px;
-    background: var(--ds-bg-elevated);
-    border: 1px solid var(--ds-border-subtle);
-    border-radius: var(--ds-radius-lg);
     overflow: hidden;
+    padding: 0;
   }
   @media (max-width: 767px) {
-    .mentor-chat { height: calc(100vh - 14rem); max-height: none; border-radius: var(--ds-radius-md); }
+    .mentor-chat { height: calc(100vh - 14rem); max-height: none; }
   }
+
+  /* ── Header ── */
   .chat-header {
     padding: var(--ds-space-2);
-    border-bottom: 1px solid var(--ds-border-subtle);
+    border-bottom: 1px solid var(--ds-border-default);
     flex-shrink: 0;
+    background: var(--ds-bg-base);
   }
   .chat-title-row {
     display: flex;
@@ -386,10 +383,12 @@ const { title = 'AI Mentor' } = Astro.props;
     padding: var(--ds-space-2);
     display: flex;
     flex-direction: column;
-    gap: var(--ds-space-2);
+    gap: var(--ds-space-1);
+    background: var(--ds-bg-base);
   }
   .message {
     max-width: 88%;
+    animation: slide-up-fade 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
   .message.user { align-self: flex-end; }
   .message.mentor { align-self: flex-start; }
@@ -398,20 +397,23 @@ const { title = 'AI Mentor' } = Astro.props;
     padding: var(--ds-space-1) var(--ds-space-2);
     border-radius: var(--ds-radius-lg);
     font-size: var(--ds-text-sm);
-    line-height: 1.6;
+    line-height: 1.65;
+    position: relative;
   }
   .message.user .msg-content {
     background: var(--ds-accent-bg);
     border: 1px solid var(--ds-accent-border);
-    color: var(--ds-text-secondary);
+    color: var(--ds-text-primary);
+    border-bottom-right-radius: var(--ds-radius-sm);
   }
   .message.mentor .msg-content {
-    background: var(--ds-bg-elevated);
-    border: 1px solid var(--ds-border-subtle);
+    background: var(--ds-bg-surface);
+    border: 1px solid var(--ds-border-default);
     color: var(--ds-text-secondary);
+    border-bottom-left-radius: var(--ds-radius-sm);
   }
 
-  /* ── Markdown content ── */
+  /* ── Markdown content inside messages ── */
   .message.mentor .msg-content p { margin: 0.3rem 0; }
   .message.mentor .msg-content p:first-child { margin-top: 0; }
   .message.mentor .msg-content p:last-child { margin-bottom: 0; }
@@ -421,29 +423,39 @@ const { title = 'AI Mentor' } = Astro.props;
     padding-left: 1.2rem;
   }
   .message.mentor .msg-content li { margin: 0.15rem 0; }
+
+  /* Inline code */
   .message.mentor .msg-content code {
-    background: var(--ds-bg-base);
-    padding: 0.1rem 0.3rem;
+    background: var(--ds-bg-elevated);
+    padding: 0.1rem 0.35rem;
     border-radius: var(--ds-radius-sm);
     font-size: var(--ds-text-xs);
     font-family: var(--ds-font-mono);
     color: var(--ds-accent-300);
   }
-  .message.mentor .msg-content pre {
-    background: var(--ds-bg-base);
-    padding: var(--ds-space-3);
+
+  /* Code blocks — dark, monospace, scrollable */
+  .message.mentor .msg-content pre.code-block {
+    background: #0b1120;
+    padding: var(--ds-space-2) var(--ds-space-3);
     border-radius: var(--ds-radius-md);
     overflow-x: auto;
     margin: var(--ds-space-2) 0;
+    border: 1px solid rgba(51, 65, 85, 0.5);
+    box-shadow: inset 0 1px 4px rgba(0,0,0,0.3);
   }
-  .message.mentor .msg-content pre code {
+  .message.mentor .msg-content pre.code-block code {
     background: none;
     padding: 0;
+    color: #e2e8f0;
+    font-size: var(--ds-text-xs);
+    line-height: 1.6;
   }
+
   .message.mentor .msg-content blockquote {
     border-left: 3px solid var(--ds-accent-border);
-    padding-left: var(--ds-space-3);
-    margin: var(--ds-space-2) 0;
+    padding-left: var(--ds-space-2);
+    margin: var(--ds-space-1) 0;
     color: var(--ds-text-tertiary);
   }
 
@@ -471,7 +483,8 @@ const { title = 'AI Mentor' } = Astro.props;
   .input-area {
     flex-shrink: 0;
     padding: var(--ds-space-2);
-    border-top: 1px solid var(--ds-border-subtle);
+    border-top: 1px solid var(--ds-border-default);
+    background: var(--ds-bg-base);
   }
   .chips {
     display: flex;
@@ -479,6 +492,27 @@ const { title = 'AI Mentor' } = Astro.props;
     margin-bottom: var(--ds-space-1);
     flex-wrap: wrap;
   }
+
+  /* ── Premium Suggestion Chips ── */
+  .suggestion-chip {
+    font-size: var(--ds-text-xs);
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--ds-radius-full);
+    border: 1px solid var(--ds-border-default);
+    background: var(--ds-bg-elevated);
+    color: var(--ds-text-tertiary);
+    cursor: pointer;
+    font-family: var(--ds-font-sans);
+    transition: all 0.2s var(--ds-ease-spring);
+    white-space: nowrap;
+  }
+  .suggestion-chip:hover {
+    color: var(--ds-text-primary);
+    background: var(--ds-accent-bg);
+    border-color: var(--ds-accent-border);
+    transform: translateY(-1px);
+  }
+
   .input-row {
     display: flex;
     gap: var(--ds-space-2);

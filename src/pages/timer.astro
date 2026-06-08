@@ -12,13 +12,26 @@ const subjects = settings.subjects || ['Physics', 'Chemistry', 'Mathematics', 'B
 ---
 
 <BaseLayout title="Study Timer">
-  <div class="max-w-lg mx-auto">
-    <div class="mb-6">
+  <div class="animate-slide-up" style="max-width:min(40rem,100%);margin:0 auto;">
+    <div class="ds-page-header" style="margin-bottom:var(--ds-space-3);">
       <h1 class="ds-heading-page" style="margin-bottom:0.25rem;">Study Timer</h1>
-      <p class="ds-body-sm" style="margin:0;">Track your study sessions with precision. When you're done, save directly as a log entry.</p>
+      <p class="ds-body-sm" style="margin:0;">Track your study sessions with precision</p>
     </div>
 
     <StudyTimer subjects={subjects} />
+
+    <!-- Recent Sessions -->
+    <div id="recent-sessions" class="animate-slide-up" style="animation-delay:0.3s;opacity:0;animation-fill-mode:forwards;margin-top:var(--ds-space-3);">
+      <div class="ds-card-glass" style="padding:var(--ds-space-2);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--ds-space-1);">
+          <h3 style="font-size:var(--ds-text-sm);font-weight:var(--ds-weight-semibold);color:var(--ds-text-primary);margin:0;">Recent Sessions</h3>
+          <button id="clear-sessions-btn" class="ds-btn ds-btn-ghost ds-btn-sm" style="font-size:var(--ds-text-2xs);color:var(--ds-text-muted);">Clear</button>
+        </div>
+        <div id="sessions-list" style="display:flex;flex-direction:column;gap:var(--ds-space-1);min-height:2rem;">
+          <p style="font-size:var(--ds-text-xs);color:var(--ds-text-muted);margin:0;text-align:center;padding:var(--ds-space-2);" id="sessions-empty">No sessions yet. Complete a timer session to see it here.</p>
+        </div>
+      </div>
+    </div>
   </div>
 
   <TourTooltip
@@ -29,6 +42,69 @@ const subjects = settings.subjects || ['Physics', 'Chemistry', 'Mathematics', 'B
   />
 </BaseLayout>
 
+<script>
+  // ── Recent sessions (localStorage) ──
+  (function() {
+    const STORAGE_KEY = 'timer_recent_sessions';
+    const list = document.getElementById('sessions-list');
+    const empty = document.getElementById('sessions-empty');
+    const clearBtn = document.getElementById('clear-sessions-btn');
+
+    function loadSessions() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      } catch { return []; }
+    }
+
+    function saveSessions(sessions) {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions.slice(0, 10))); } catch(e) {}
+    }
+
+    function renderSessions() {
+      const sessions = loadSessions();
+      if (sessions.length === 0) {
+        list.innerHTML = '';
+        if (empty) list.appendChild(empty);
+        return;
+      }
+      list.innerHTML = '';
+      sessions.forEach(s => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:var(--ds-space-1) var(--ds-space-2);background:var(--ds-bg-base);border-radius:var(--ds-radius-md);font-size:var(--ds-text-xs);';
+        const info = document.createElement('span');
+        info.style.cssText = 'color:var(--ds-text-secondary);';
+        info.textContent = `${s.subject}${s.topic ? ' — ' + s.topic : ''}`;
+        const time = document.createElement('span');
+        time.style.cssText = 'font-family:var(--ds-font-mono);font-size:var(--ds-text-2xs);color:var(--ds-text-muted);';
+        time.textContent = s.duration;
+        row.appendChild(info);
+        row.appendChild(time);
+        list.appendChild(row);
+      });
+    }
+
+    // New session added — listen on custom event from StudyTimer
+    document.addEventListener('timer-session-saved', (e) => {
+      const { subject, topic, duration } = e.detail || {};
+      if (!subject) return;
+      const sessions = loadSessions();
+      const label = topic ? `${subject} — ${topic}` : subject;
+      sessions.unshift({ subject, topic, duration, date: new Date().toISOString() });
+      saveSessions(sessions);
+      renderSessions();
+    });
+
+    clearBtn?.addEventListener('click', () => {
+      saveSessions([]);
+      renderSessions();
+    });
+
+    renderSessions();
+  })();
+</script>
+
 <style>
-  /* Timer page uses design system classes */
+  #recent-sessions {
+    --stagger-index: 3;
+  }
 </style>

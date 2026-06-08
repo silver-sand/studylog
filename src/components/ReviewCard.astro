@@ -9,205 +9,313 @@ export interface Props {
 const { review } = Astro.props;
 
 function mdToHtml(md: string): string {
-  // Escape HTML entities first
   let html = md
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
 
-  // Bold
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-
-  // Convert ## headings
   html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
   html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
-
-  // Convert inline code
   html = html.replace(/`(.+?)`/g, '<code>$1</code>');
-
-  // Convert - list items
   html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
-
-  // Wrap consecutive <li> in <ul>
   html = html.replace(/((?:<li>.*?<\/li>\n?)+)/g, '<ul>$1</ul>');
-
-  // Horizontal rules
   html = html.replace(/^---$/gm, '<hr>');
-
-  // Paragraphs: double newline = paragraph break
   html = html.replace(/\n\n/g, '</p><p>');
-
-  // Single newline = line break (within a paragraph context)
   html = html.replace(/\n/g, '<br>');
-
-  // Wrap in paragraph if not already wrapped
   if (!html.startsWith('<h') && !html.startsWith('<ul')) {
     html = '<p>' + html + '</p>';
   }
-
-  // Clean up empty paragraphs
   html = html.replace(/<p><\/p>/g, '');
   html = html.replace(/<br><\/p>/g, '</p>');
   html = html.replace(/<p><br>/g, '<p>');
-
   return html;
 }
 
 const renderedContent = mdToHtml(review.content);
 ---
 
-<div class="review-card">
+<div class="review-card ds-card-glass card-lift animate-slide-up">
+  <!-- Review content -->
   <div class="review-content" set:html={renderedContent}></div>
 
-  {review.insights.length > 0 && (
+  <!-- Strengths & Opportunities grid -->
+  <div class="review-grid">
+    {review.strengths?.length > 0 && (
+      <div class="grid-section">
+        <div class="grid-section-header">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ds-success-500)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+          <span>Strengths</span>
+        </div>
+        <ul class="grid-list">
+          {review.strengths.map(s => (
+            <li>{s.replace(/^✅\s*/, '')}</li>
+          ))}
+        </ul>
+      </div>
+    )}
+    {review.weaknesses?.length > 0 && (
+      <div class="grid-section">
+        <div class="grid-section-header">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ds-warning-500)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <span>Opportunities</span>
+        </div>
+        <ul class="grid-list grid-list-warn">
+          {review.weaknesses.map(w => (
+            <li>{w.replace(/^⚠️\s*/, '')}</li>
+          ))}
+        </ul>
+      </div>
+    )}
+  </div>
+
+  <!-- Insights chips -->
+  {review.insights?.length > 0 && (
     <div class="insights-section">
-      <h3 class="insights-title">Key Insights</h3>
-      <ul class="insights-list">
+      <div class="insights-header">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ds-accent-400)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/>
+        </svg>
+        <span>Key Insights</span>
+      </div>
+      <div class="insights-chips">
         {review.insights.map(insight => (
-          <li>{insight}</li>
+          <span class="insight-chip">{insight}</span>
+        ))}
+      </div>
+    </div>
+  )}
+
+  <!-- Recommendations -->
+  {review.recommendations?.length > 0 && (
+    <div class="recommendations-section">
+      <div class="rec-header">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ds-accent-400)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+        <span>Recommendations</span>
+      </div>
+      <ul class="rec-list">
+        {review.recommendations.map(r => (
+          <li>{r}</li>
         ))}
       </ul>
     </div>
   )}
 
   <div class="review-footer">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+    </svg>
     <span>Generated {formatFullDate(review.createdAt)}</span>
     <span class="dot">•</span>
-    <span>Based on {review.entryIds?.length || 0} entries</span>
+    <span>{review.entryIds?.length || 0} entries analyzed</span>
   </div>
 </div>
 
 <style>
   .review-card {
-    background: rgba(15, 23, 42, 0.8);
-    border: 1px solid rgba(51, 65, 85, 0.4);
-    border-radius: 0.75rem;
-    padding: 1.5rem;
+    padding: var(--ds-space-3);
   }
+
+  /* Review content uses design system tokens */
   .review-content :global(h1) {
-    color: #f1f5f9;
-    font-size: 1.375rem;
+    color: var(--ds-text-primary);
+    font-size: var(--ds-text-xl);
     font-weight: 700;
-    margin-bottom: 1rem;
-    margin-top: 1.5rem;
+    margin-bottom: var(--ds-space-2);
+    margin-top: var(--ds-space-3);
   }
-  .review-content :global(h1:first-child) {
-    margin-top: 0;
-  }
+  .review-content :global(h1:first-child) { margin-top: 0; }
   .review-content :global(h2) {
-    color: #e2e8f0;
-    font-size: 1.1rem;
+    color: var(--ds-text-primary);
+    font-size: var(--ds-text-lg);
     font-weight: 600;
-    margin-bottom: 0.75rem;
-    margin-top: 1.25rem;
+    margin-bottom: var(--ds-space-1);
+    margin-top: var(--ds-space-2);
   }
   .review-content :global(h3) {
-    color: #cbd5e1;
-    font-size: 0.95rem;
+    color: var(--ds-text-secondary);
+    font-size: var(--ds-text-base);
     font-weight: 600;
-    margin-bottom: 0.5rem;
-    margin-top: 1rem;
+    margin-bottom: var(--ds-space-1);
+    margin-top: var(--ds-space-2);
   }
   .review-content :global(p) {
-    color: #94a3b8;
+    color: var(--ds-text-secondary);
     line-height: 1.7;
-    margin-bottom: 0.75rem;
-    font-size: 0.9rem;
+    margin-bottom: var(--ds-space-1);
+    font-size: var(--ds-text-sm);
   }
-  .review-content :global(strong) {
-    color: #e2e8f0;
-  }
+  .review-content :global(strong) { color: var(--ds-text-primary); }
   .review-content :global(table) {
     width: 100%;
     border-collapse: collapse;
-    margin: 0.75rem 0;
+    margin: var(--ds-space-1) 0;
   }
   .review-content :global(th) {
-    background: rgba(51, 65, 85, 0.4);
-    color: #cbd5e1;
-    padding: 0.5rem 0.75rem;
+    background: var(--ds-bg-elevated);
+    color: var(--ds-text-secondary);
+    padding: 0.4rem 0.6rem;
     text-align: left;
     font-weight: 600;
-    font-size: 0.8rem;
+    font-size: var(--ds-text-xs);
   }
   .review-content :global(td) {
-    padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid rgba(51, 65, 85, 0.3);
-    color: #94a3b8;
-    font-size: 0.8rem;
+    padding: 0.4rem 0.6rem;
+    border-bottom: 1px solid var(--ds-border-subtle);
+    color: var(--ds-text-secondary);
+    font-size: var(--ds-text-xs);
   }
   .review-content :global(ul) {
     list-style: none;
     padding: 0;
-    margin: 0.5rem 0;
+    margin: 0.3rem 0;
   }
   .review-content :global(li) {
-    color: #94a3b8;
-    padding: 0.2rem 0;
-    padding-left: 1.25rem;
+    color: var(--ds-text-secondary);
+    padding: 0.15rem 0 0.15rem 1.2rem;
     position: relative;
-    font-size: 0.85rem;
+    font-size: var(--ds-text-sm);
   }
   .review-content :global(li::before) {
     content: '';
     width: 4px;
     height: 4px;
-    background: #3b82f6;
+    background: var(--ds-accent-500);
     border-radius: 50%;
     position: absolute;
-    left: 0.4rem;
-    top: 0.6rem;
+    left: 0.35rem;
+    top: 0.55rem;
   }
   .review-content :global(hr) {
     border: 0;
-    border-top: 1px solid rgba(51, 65, 85, 0.4);
-    margin: 1rem 0;
+    border-top: 1px solid var(--ds-border-default);
+    margin: var(--ds-space-2) 0;
   }
-  .insights-section {
-    margin-top: 1.5rem;
-    padding-top: 1.25rem;
-    border-top: 1px solid rgba(51, 65, 85, 0.3);
+
+  /* ── Strengths & Opportunities Grid ── */
+  .review-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--ds-space-2);
+    margin: var(--ds-space-3) 0;
   }
-  .insights-title {
-    font-size: 0.7rem;
+  @media (max-width: 640px) {
+    .review-grid { grid-template-columns: 1fr; }
+  }
+  .grid-section {
+    background: var(--ds-bg-base);
+    border: 1px solid var(--ds-border-default);
+    border-radius: var(--ds-radius-lg);
+    padding: var(--ds-space-2);
+  }
+  .grid-section-header {
+    display: flex;
+    align-items: center;
+    gap: var(--ds-space-1);
+    font-size: var(--ds-text-xs);
     font-weight: 600;
-    color: #64748b;
+    color: var(--ds-text-primary);
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-bottom: 0.75rem;
+    letter-spacing: 0.06em;
+    margin-bottom: var(--ds-space-1);
   }
-  .insights-list {
+  .grid-list {
     list-style: none;
     padding: 0;
     margin: 0;
   }
-  .insights-list li {
-    font-size: 0.85rem;
-    color: #94a3b8;
-    padding: 0.25rem 0;
+  .grid-list li {
+    font-size: var(--ds-text-xs);
+    color: var(--ds-text-secondary);
+    padding: 0.15rem 0;
+    position: relative;
+  }
+  .grid-list.grid-list-warn li { color: var(--ds-warning-text); }
+
+  /* ── Insights ── */
+  .insights-section {
+    margin: var(--ds-space-2) 0;
+  }
+  .insights-header {
+    display: flex;
+    align-items: center;
+    gap: var(--ds-space-1);
+    font-size: var(--ds-text-xs);
+    font-weight: 600;
+    color: var(--ds-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: var(--ds-space-1);
+  }
+  .insights-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ds-space-1);
+  }
+  .insight-chip {
+    font-size: var(--ds-text-2xs);
+    padding: 0.25rem 0.6rem;
+    background: var(--ds-accent-bg);
+    border: 1px solid var(--ds-accent-border);
+    color: var(--ds-accent-400);
+    border-radius: var(--ds-radius-full);
+    font-weight: 500;
+  }
+
+  /* ── Recommendations ── */
+  .recommendations-section {
+    margin: var(--ds-space-2) 0;
+    background: var(--ds-bg-base);
+    border: 1px solid var(--ds-border-default);
+    border-radius: var(--ds-radius-lg);
+    padding: var(--ds-space-2);
+  }
+  .rec-header {
+    display: flex;
+    align-items: center;
+    gap: var(--ds-space-1);
+    font-size: var(--ds-text-xs);
+    font-weight: 600;
+    color: var(--ds-text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: var(--ds-space-1);
+  }
+  .rec-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .rec-list li {
+    font-size: var(--ds-text-xs);
+    color: var(--ds-text-secondary);
+    padding: 0.2rem 0;
     padding-left: 1rem;
     position: relative;
   }
-  .insights-list li::before {
-    content: '';
-    width: 3px;
-    height: 3px;
-    background: #475569;
-    border-radius: 50%;
+  .rec-list li::before {
+    content: '→';
     position: absolute;
-    left: 0.25rem;
-    top: 0.6rem;
+    left: 0;
+    color: var(--ds-accent-400);
   }
+
+  /* ── Footer ── */
   .review-footer {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    margin-top: 1rem;
-    padding-top: 0.75rem;
-    font-size: 0.75rem;
-    color: #475569;
+    gap: var(--ds-space-1);
+    margin-top: var(--ds-space-2);
+    padding-top: var(--ds-space-1);
+    border-top: 1px solid var(--ds-border-subtle);
+    font-size: var(--ds-text-2xs);
+    color: var(--ds-text-muted);
   }
-  .dot {
-    color: #334155;
-  }
+  .dot { color: var(--ds-border-default); }
 </style>

@@ -51,6 +51,12 @@ const links: NavLink[] = [
     icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
     section: 'tools',
   },
+  {
+    href: '/settings',
+    label: 'Settings',
+    icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>',
+    section: 'tools',
+  },
 ];
 
 function isActive(href: string): boolean {
@@ -73,7 +79,8 @@ function isActive(href: string): boolean {
     <div class="nav-group">
       <span class="nav-group-label">Study</span>
       {links.filter(l => l.section === 'primary').map(link => (
-        <a href={link.href} class:list={{ 'nav-link': true, active: isActive(link.href) }}>
+        <a href={link.href} class:list={{ 'nav-link': true, 'nav-link-active': isActive(link.href) }}>
+          <span class="nav-indicator"></span>
           <span class="nav-icon" set:html={link.icon}></span>
           <span>{link.label}</span>
         </a>
@@ -83,7 +90,8 @@ function isActive(href: string): boolean {
     <div class="nav-group">
       <span class="nav-group-label">Review</span>
       {links.filter(l => l.section === 'review').map(link => (
-        <a href={link.href} class:list={{ 'nav-link': true, active: isActive(link.href) }}>
+        <a href={link.href} class:list={{ 'nav-link': true, 'nav-link-active': isActive(link.href) }}>
+          <span class="nav-indicator"></span>
           <span class="nav-icon" set:html={link.icon}></span>
           <span>{link.label}</span>
         </a>
@@ -93,7 +101,8 @@ function isActive(href: string): boolean {
     <div class="nav-group">
       <span class="nav-group-label">Tools</span>
       {links.filter(l => l.section === 'tools').map(link => (
-        <a href={link.href} class:list={{ 'nav-link': true, active: isActive(link.href) }}>
+        <a href={link.href} class:list={{ 'nav-link': true, 'nav-link-active': isActive(link.href) }}>
+          <span class="nav-indicator"></span>
           <span class="nav-icon" set:html={link.icon}></span>
           <span>{link.label}</span>
         </a>
@@ -138,14 +147,22 @@ function isActive(href: string): boolean {
   </div>
 </aside>
 
-<!-- Mobile bottom nav (5 core items only) -->
+<!-- Mobile bottom nav (5 core items only, + overflow) -->
 <nav class="mobile-nav">
   {links.slice(0, 5).map(link => (
-    <a href={link.href} class:list={{ 'mobile-nav-link': true, active: isActive(link.href) }}>
+    <a href={link.href} class:list={{ 'mobile-nav-link': true, 'mobile-nav-link-active': isActive(link.href) }}>
       <span class="mobile-nav-icon" set:html={link.icon}></span>
       <span>{link.label}</span>
+      <span class="mobile-nav-dot"></span>
     </a>
   ))}
+  <a href="/settings" class:list={{ 'mobile-nav-link': true, 'mobile-nav-link--compact': true, 'mobile-nav-link-active': isActive('/settings') }}>
+    <span class="mobile-nav-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    </span>
+    <span>Settings</span>
+    <span class="mobile-nav-dot"></span>
+  </a>
 </nav>
 
 <script>
@@ -158,9 +175,7 @@ function isActive(href: string): boolean {
     window.location.href = '/';
   }
   document.getElementById('logout-btn')?.addEventListener('click', handleLogout);
-  document.getElementById('mobile-logout-btn')?.addEventListener('click', handleLogout);
   document.getElementById('exit-guest-btn')?.addEventListener('click', handleExitGuest);
-  document.getElementById('mobile-exit-guest-btn')?.addEventListener('click', handleExitGuest);
 </script>
 
 <style>
@@ -191,6 +206,10 @@ function isActive(href: string): boolean {
     align-items: center;
     gap: var(--ds-space-1);
     text-decoration: none;
+    transition: opacity 0.2s ease;
+  }
+  .logo-link:hover {
+    opacity: 0.8;
   }
   .logo-icon {
     width: 1.75rem;
@@ -203,6 +222,10 @@ function isActive(href: string): boolean {
     color: white;
     font-size: var(--ds-text-xs);
     font-weight: var(--ds-weight-bold);
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .logo-link:hover .logo-icon {
+    transform: scale(1.05);
   }
   .logo-text {
     font-size: var(--ds-text-md);
@@ -233,7 +256,10 @@ function isActive(href: string): boolean {
     text-transform: uppercase;
     letter-spacing: var(--ds-tracking-wider);
   }
+
+  /* Premium nav link with left indicator bar */
   .nav-link {
+    position: relative;
     display: flex;
     align-items: center;
     gap: var(--ds-space-2);
@@ -243,21 +269,42 @@ function isActive(href: string): boolean {
     font-size: var(--ds-text-sm);
     font-weight: var(--ds-weight-normal);
     color: var(--ds-text-tertiary);
-    transition: all var(--ds-transition-base);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     text-decoration: none;
+    overflow: hidden;
   }
   .nav-link:hover {
     color: var(--ds-text-secondary);
     background: var(--ds-bg-hover);
   }
-  .nav-link.active {
+  .nav-link:hover .nav-icon {
+    color: var(--ds-text-secondary);
+  }
+  .nav-link-active {
     color: var(--ds-text-primary);
     background: var(--ds-accent-bg);
     font-weight: var(--ds-weight-medium);
   }
-  .nav-link.active .nav-icon {
+  .nav-link-active .nav-icon {
     color: var(--ds-accent-400);
   }
+
+  /* Left accent bar (slides in on active) */
+  .nav-indicator {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 3px;
+    height: 0;
+    border-radius: 0 2px 2px 0;
+    background: var(--ds-accent-500);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: translateY(-50%);
+  }
+  .nav-link-active .nav-indicator {
+    height: 1.25rem;
+  }
+
   .nav-icon {
     display: flex;
     align-items: center;
@@ -265,6 +312,10 @@ function isActive(href: string): boolean {
     width: 1.25rem;
     height: 1.25rem;
     flex-shrink: 0;
+    transition: color 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .nav-link:hover .nav-icon {
+    transform: translateX(1px);
   }
 
   /* ── User area ── */
@@ -368,6 +419,7 @@ function isActive(href: string): boolean {
     .mobile-nav { display: none; }
   }
   .mobile-nav-link {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -375,12 +427,34 @@ function isActive(href: string): boolean {
     padding: var(--ds-space-1);
     font-size: var(--ds-text-2xs);
     color: var(--ds-text-muted);
-    transition: color var(--ds-transition-base);
+    transition: color 0.2s ease, transform 0.15s ease;
     text-decoration: none;
   }
-  .mobile-nav-link.active {
+  .mobile-nav-link:hover {
+    color: var(--ds-text-secondary);
+  }
+  .mobile-nav-link:active {
+    transform: scale(0.95);
+  }
+  .mobile-nav-link--compact {
+    padding: var(--ds-space-1) 0.5rem;
+  }
+  .mobile-nav-link-active {
     color: var(--ds-accent-400);
   }
+
+  /* Active dot indicator for mobile */
+  .mobile-nav-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: transparent;
+    transition: background 0.2s ease;
+  }
+  .mobile-nav-link-active .mobile-nav-dot {
+    background: var(--ds-accent-500);
+  }
+
   .mobile-nav-icon {
     display: flex;
     align-items: center;

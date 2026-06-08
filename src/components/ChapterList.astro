@@ -36,7 +36,7 @@ function daysAgo(dateStr: string | null): string {
 }
 ---
 
-<div class="chapter-list" data-subject-list={subject}>
+<div class="chapter-list animate-stagger" data-subject-list={subject} style="--stagger-delay: 0.04s;">
   {chapters.length === 0 && (
     <div class="chapter-empty">
       <p class="ds-caption" style="text-align:center;padding:var(--ds-space-3);margin:0;">
@@ -44,10 +44,14 @@ function daysAgo(dateStr: string | null): string {
       </p>
     </div>
   )}
-  {chapters.map((ch) => {
+  {chapters.map((ch, idx) => {
     const activeIdx = STATUS_ORDER.indexOf(ch.status);
     return (
-    <div class="chapter-row" data-chapter-id={ch.id} class:list={{ [`status-${ch.status}`]: true }}>
+    <div
+      class="chapter-row animate-stagger-item"
+      data-chapter-id={ch.id}
+      style="--stagger-index: {idx};"
+      class:list={{ [`status-${ch.status}`]: true }}>
       <div class="chapter-info">
         <span class="chapter-name">{ch.chapter}</span>
         <div class="chapter-meta">

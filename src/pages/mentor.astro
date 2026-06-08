@@ -4,12 +4,95 @@ import MentorChat from '../components/MentorChat.astro';
 ---
 
 <BaseLayout title="AI Mentor">
-    <div style="max-width:min(56rem,100%);">
+    <div class="animate-slide-up">
     <div class="ds-page-header">
       <h1 class="ds-heading-page">AI Mentor</h1>
-      <p class="ds-body-sm" style="margin-bottom:var(--ds-space-3);">Your AI study partner — ask questions, get quizzed, or talk through what you're learning. Chat history is saved locally.</p>
+      <p class="ds-body-sm" style="margin-bottom:var(--ds-space-3);">Your AI study partner — ask questions, get quizzed, or talk through what you're learning.</p>
     </div>
 
-    <MentorChat />
+    <!-- Split-panel layout: chat + math workspace -->
+    <div class="mentor-split">
+      <div class="mentor-chat-panel">
+        <MentorChat />
+      </div>
+      <div class="mentor-workspace" id="mentor-workspace">
+        <div class="workspace-card ds-card-glass card-lift animate-slide-up" style="--stagger-index:1;">
+          <div class="workspace-header">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+            <span>Math Workspace</span>
+          </div>
+          <div class="workspace-body">
+            <div id="workspace-content" class="workspace-content">
+              <p class="workspace-empty">Ask a math or science question in the chat and see the rendered work here.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </BaseLayout>
+
+<style>
+  .mentor-split {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--ds-space-2);
+  }
+  @media (min-width: 1024px) {
+    .mentor-split {
+      grid-template-columns: 1fr 20rem;
+    }
+  }
+  .mentor-chat-panel {
+    min-width: 0;
+  }
+
+  /* ── Math Workspace Panel ── */
+  .mentor-workspace {
+    display: none;
+  }
+  @media (min-width: 1024px) {
+    .mentor-workspace {
+      display: block;
+      position: sticky;
+      top: var(--ds-space-2);
+      align-self: start;
+    }
+  }
+  .workspace-card {
+    padding: 0;
+    overflow: hidden;
+  }
+  .workspace-header {
+    display: flex;
+    align-items: center;
+    gap: var(--ds-space-1);
+    padding: var(--ds-space-1) var(--ds-space-2);
+    border-bottom: 1px solid var(--ds-border-default);
+    font-size: var(--ds-text-xs);
+    font-weight: 600;
+    color: var(--ds-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .workspace-body {
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+  .workspace-content {
+    padding: var(--ds-space-2);
+    font-size: var(--ds-text-sm);
+    line-height: 1.7;
+    color: var(--ds-text-secondary);
+    min-height: 8rem;
+  }
+  .workspace-empty {
+    font-size: var(--ds-text-xs);
+    color: var(--ds-text-muted);
+    text-align: center;
+    margin: var(--ds-space-4) 0;
+    line-height: 1.6;
+  }
+</style>

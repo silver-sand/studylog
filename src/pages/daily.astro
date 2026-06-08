@@ -24,17 +24,32 @@ const hasEntriesToday = recentEntries.some(e => e.date === today);
 ---
 
 <BaseLayout title="Daily Log">
-    <div style="max-width:min(56rem,100%);">
+    <div style="max-width:min(56rem,100%);" class="animate-slide-up">
     <!-- Header -->
     <div class="ds-page-header" style="max-width:min(56rem,100%);">
       <h1 class="ds-heading-page" style="margin-bottom:0.25rem;">Daily Study Log</h1>
       <p class="ds-body-sm" style="margin:0;">
         {todayEntry ? 'Update today\'s entry' : 'What did you study today?'}
       </p>
-      <p class="ds-caption" style="margin-top:var(--ds-space-1);">
-        AI: {aiProvider === 'MockAIService' ? 'Offline mode' : 'Gemini'}
-      </p>
     </div>
+
+    <!-- Quick stat strip -->
+    {hasEntriesToday && (
+      <div class="daily-stats animate-stagger" style="--stagger-delay:0.08s;">
+        <div class="ds-card-glass" style="padding:var(--ds-space-2);text-align:center;--stagger-index:0">
+          <div class="ds-stat-value" style="font-size:var(--ds-text-xl);">{todayEntry?.hoursStudied || 0}h</div>
+          <div class="ds-stat-label">Today</div>
+        </div>
+        <div class="ds-card-glass" style="padding:var(--ds-space-2);text-align:center;--stagger-index:1">
+          <div class="ds-stat-value" style="font-size:var(--ds-text-xl);">{todayEntry?.focusRating || '-'}/5</div>
+          <div class="ds-stat-label">Focus</div>
+        </div>
+        <div class="ds-card-glass" style="padding:var(--ds-space-2);text-align:center;--stagger-index:2">
+          <div class="ds-stat-value" style="font-size:var(--ds-text-xl);">{todayEntry?.studyType ? todayEntry.studyType.replace('_', ' ') : '-'}</div>
+          <div class="ds-stat-label">Type</div>
+        </div>
+      </div>
+    )}
 
     <!-- Entry Form -->
     <div style="margin-bottom:var(--ds-space-4);">
@@ -56,11 +71,11 @@ const hasEntriesToday = recentEntries.some(e => e.date === today);
           {todayReview ? (
             <DailyReviewCard review={todayReview} />
           ) : (
-            <div class="ds-card" style="text-align:center;padding:var(--ds-space-3);">
+            <div class="ds-card-glass card-lift" style="text-align:center;padding:var(--ds-space-4);">
               <p style="font-size:var(--ds-text-sm);color:var(--ds-text-tertiary);margin-bottom:var(--ds-space-4);line-height:1.5;">
                 You have entries for today. Generate an AI-powered daily review to summarize your progress.
               </p>
-              <button id="generate-daily-btn" class="ds-btn ds-btn-primary">
+              <button id="generate-daily-btn" class="ds-btn ds-btn-primary pulse-glow">
                 Generate Daily Review
               </button>
             </div>
@@ -75,7 +90,7 @@ const hasEntriesToday = recentEntries.some(e => e.date === today);
     )}
 
     <!-- Recent Entries -->
-    <div>
+    <div class="animate-slide-up" style="animation-delay:0.2s;opacity:0;animation-fill-mode:forwards;">
       <h2 class="ds-heading-section">Recent Entries</h2>
       <EntryList entries={recentEntries} />
     </div>
@@ -164,6 +179,18 @@ const hasEntriesToday = recentEntries.some(e => e.date === today);
 </script>
 
 <style>
-  /* Minimal overrides — most styling uses design system classes */
   .hidden { display: none; }
+
+  /* Daily stat strip */
+  .daily-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--ds-space-2);
+    margin-bottom: var(--ds-space-3);
+  }
+  @media (max-width: 480px) {
+    .daily-stats {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>

@@ -82,7 +82,7 @@ function subjectColor(s: string): string {
 ---
 
 <BaseLayout title="Syllabus Tracker">
-    <div style="max-width:min(56rem,100%);">
+    <div style="max-width:min(56rem,100%);" class="animate-slide-up">
 
     <!-- Header -->
     <div class="ds-page-header">
@@ -92,7 +92,7 @@ function subjectColor(s: string): string {
 
     <!-- No exams configured -->
     {filteredExams.length === 0 && (
-      <div class="ds-card" style="text-align:center;padding:var(--ds-space-5);">
+      <div class="ds-card-glass" style="text-align:center;padding:var(--ds-space-5);">
         <div class="ds-empty">
           <div class="ds-empty-icon">📋</div>
           <p class="ds-empty-title">No exams configured</p>
@@ -102,7 +102,7 @@ function subjectColor(s: string): string {
       </div>
     )}
 
-    <!-- Exam Tabs -->
+    <!-- Exam Tabs — Premium Pill Style -->
     {filteredExams.length > 0 && (
       <>
       <div class="exam-tabs" style="display:flex;gap:var(--ds-space-1);margin-bottom:var(--ds-space-3);overflow-x:auto;padding-bottom:2px;">
@@ -125,36 +125,51 @@ function subjectColor(s: string): string {
           class:list={{ 'exam-content': true, hidden: exam.key !== defaultKey }}
           data-exam-content={exam.key}
         >
-          <!-- Overall progress bar -->
-          <div class="ds-card" style="margin-bottom:var(--ds-space-3);">
+          <!-- Overall progress bar — Glass card -->
+          <div class="ds-card-glass card-lift animate-slide-up" style="margin-bottom:var(--ds-space-2);padding:var(--ds-space-2);">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--ds-space-1);">
-              <span style="font-size:var(--ds-text-sm);color:var(--ds-text-secondary);">Overall Progress</span>
+              <span style="font-size:var(--ds-text-sm);font-weight:var(--ds-weight-medium);color:var(--ds-text-secondary);">Overall Progress</span>
               <span style="font-family:var(--ds-font-mono);font-size:var(--ds-text-xs);color:var(--ds-text-tertiary);"
                 id={`progress-text-${exam.key}`}
               >{exam.completedChapters}/{exam.totalChapters} chapters ({exam.overallPercent}%)</span>
             </div>
             <div class="ds-progress">
-              <div class="ds-progress-bar" id={`progress-fill-${exam.key}`}
-                style={`width: ${exam.overallPercent}%;`}
+              <div class="ds-progress-bar bar-fill" id={`progress-fill-${exam.key}`}
+                style="width: {exam.overallPercent}%;"
               ></div>
             </div>
           </div>
 
-          <!-- Subject sections: click header to collapse/expand chapters -->
-          <div style="display:flex;flex-direction:column;gap:var(--ds-space-2);">
-            {exam.progress.map((p) => {
+          <!-- Subject sections with staggered entrance -->
+          <div class="subject-sections animate-stagger" style="--stagger-delay: 0.08s;">
+            {exam.progress.map((p, idx) => {
               const subjectChapters = exam.chapters.filter(
                 (ch) => ch.subject === p.subject
               );
+              const sName = p.subject.toLowerCase();
+              const subjColor = sName.includes('physics') ? '#3b82f6' :
+                sName.includes('chemistry') ? '#22c55e' :
+                sName.includes('math') ? '#f59e0b' :
+                sName.includes('biology') ? '#ec4899' : '#64748b';
               return (
-                <div class="subject-section" data-subject={p.subject}>
+                <div
+                  class="subject-section animate-stagger-item card-lift"
+                  data-subject={p.subject}
+                  style="--stagger-index: {idx}; --subject-color: {subjColor};"
+                >
                   <div class="subject-header" role="button" tabindex="0"
-                    aria-label={`Toggle ${p.subject} chapters`}
-                    onclick="this.parentElement.classList.toggle('collapsed')"
-                    onkeydown="if(event.key==='Enter'||event.key===' ') { event.preventDefault(); this.parentElement.classList.toggle('collapsed'); }">
+                    aria-label={`Toggle ${p.subject} chapters`}>
+                    <div class="subject-accent-bar" style="background: {subjColor};"></div>
                     <SyllabusCard subject={p.subject} progress={p} />
+                    <div class="collapse-chevron">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
+                    </div>
                   </div>
-                  <ChapterList chapters={subjectChapters} subject={p.subject} />
+                  <div class="chapter-collapse">
+                    <ChapterList chapters={subjectChapters} subject={p.subject} />
+                  </div>
                 </div>
               );
             })}
@@ -167,7 +182,7 @@ function subjectColor(s: string): string {
 </BaseLayout>
 
 <script>
-  // ── Exam tab switching ──
+  // ── Exam tab switching with entrance animation ──
   const tabs = document.querySelectorAll('.exam-tab');
   const contents = new Map();
   document.querySelectorAll('.exam-content').forEach((el) => {
@@ -180,8 +195,48 @@ function subjectColor(s: string): string {
       tabs.forEach((t) => t.classList.remove('active'));
       tab.classList.add('active');
       contents.forEach((content, key) => {
-        content.classList.toggle('hidden', key !== exam);
+        if (key === exam) {
+          content.classList.remove('hidden');
+          // Re-trigger stagger animations
+          content.querySelectorAll('.animate-stagger-item').forEach(el => {
+            el.style.animation = 'none';
+            void el.offsetHeight;
+            el.style.animation = '';
+          });
+        } else {
+          content.classList.add('hidden');
+        }
       });
+    });
+  });
+
+  // ── Smooth collapse/expand with height animation ──
+  document.querySelectorAll('.subject-header').forEach(header => {
+    header.addEventListener('click', () => {
+      const section = header.closest('.subject-section');
+      if (!section) return;
+      const collapse = section.querySelector('.chapter-collapse');
+      if (!collapse) return;
+
+      if (section.classList.contains('collapsed')) {
+        // Expand
+        section.classList.remove('collapsed');
+        collapse.style.maxHeight = collapse.scrollHeight + 'px';
+      } else {
+        // Collapse
+        collapse.style.maxHeight = collapse.scrollHeight + 'px';
+        void collapse.offsetHeight;
+        collapse.style.maxHeight = '0';
+        section.classList.add('collapsed');
+      }
+    });
+
+    // Keyboard support
+    header.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        header.click();
+      }
     });
   });
 
@@ -210,14 +265,7 @@ function subjectColor(s: string): string {
 
         const percentEl = card.querySelector('.percent-text');
         if (percentEl) {
-          const sl = subj.toLowerCase();
-          const colors = {
-            blue: '#93c5fd', green: '#86efac', amber: '#fcd34d', pink: '#f9a8d4', gray: '#94a3b8'
-          };
-          const ck = sl.includes('physics') ? 'blue' : sl.includes('chemistry') ? 'green'
-            : sl.includes('math') ? 'amber' : sl.includes('biology') ? 'pink' : 'gray';
           percentEl.textContent = `${p.weightedPercent}%`;
-          percentEl.style.color = colors[ck];
         }
 
         const fill = card.querySelector('.syllabus-bar-fill');
@@ -249,7 +297,6 @@ function subjectColor(s: string): string {
         }
       });
 
-      // Track for checklist
       try { localStorage.setItem('sl-checklist-syllabus', '1'); } catch(e) {}
     } catch (err) {
       // Silently fail
@@ -258,33 +305,41 @@ function subjectColor(s: string): string {
 </script>
 
 <style>
-  /* ── Exam tabs ── */
+  /* ── Premium Pill Exam Tabs ── */
   .exam-tabs {
     display: flex;
     gap: var(--ds-space-1);
-    border-bottom: 1px solid var(--ds-border-default);
+    padding-bottom: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
   .exam-tab {
     display: flex;
     align-items: center;
     gap: var(--ds-space-1);
     padding: var(--ds-space-1) var(--ds-space-2);
-    background: transparent;
-    border: none;
-    border-bottom: 2px solid transparent;
+    background: var(--ds-bg-elevated);
+    border: 1px solid var(--ds-border-default);
+    border-radius: var(--ds-radius-full);
     color: var(--ds-text-tertiary);
     font-size: var(--ds-text-sm);
     font-family: var(--ds-font-sans);
     cursor: pointer;
-    transition: all 0.15s;
+    transition: all 0.2s var(--ds-ease-spring);
     white-space: nowrap;
+    flex-shrink: 0;
   }
   .exam-tab:hover {
-    color: var(--ds-text-secondary);
+    color: var(--ds-text-primary);
+    background: var(--ds-bg-hover);
+    border-color: var(--ds-border-hover);
+    transform: translateY(-1px);
   }
   .exam-tab.active {
     color: var(--ds-text-primary);
-    border-bottom-color: var(--ds-accent-500);
+    background: color-mix(in srgb, var(--ds-accent-500) 15%, transparent);
+    border-color: color-mix(in srgb, var(--ds-accent-500) 30%, transparent);
+    font-weight: var(--ds-weight-semibold);
   }
   .exam-tab-label {
     font-weight: var(--ds-weight-medium);
@@ -295,58 +350,89 @@ function subjectColor(s: string): string {
     color: var(--ds-text-muted);
   }
 
-  /* ── Subject sections ── */
+  /* ── Subject sections with smooth collapse ── */
+  .subject-sections {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ds-space-1);
+  }
+
   .subject-section {
     display: flex;
     flex-direction: column;
-  }
-  .subject-section > .subject-header > .syllabus-card {
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-    border-bottom: none;
-    transition: border-radius 0.2s ease;
-  }
-  .subject-section.collapsed > .subject-header > .syllabus-card {
-    border-bottom-left-radius: var(--ds-radius-lg);
-    border-bottom-right-radius: var(--ds-radius-lg);
-    border-bottom: 1px solid var(--ds-border-default);
-  }
-
-  /* Chevron indicator */
-  .subject-header {
-    display: flex;
-    align-items: stretch;
-    cursor: pointer;
+    background: var(--ds-bg-surface);
+    border: 1px solid var(--ds-border-default);
+    border-radius: var(--ds-radius-lg);
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
     position: relative;
-    user-select: none;
   }
-  .subject-header::after {
-    content: '';
+  .subject-section:hover {
+    border-color: var(--ds-border-hover);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  :root.dark .subject-section:hover {
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  }
+  .subject-section .subject-accent-bar {
     position: absolute;
-    right: 0.75rem;
-    top: 50%;
-    width: 0;
-    height: 0;
-    border-left: 6px solid transparent;
-    border-right: 6px solid transparent;
-    border-top: 8px solid var(--ds-text-muted);
-    transition: transform 0.25s ease, border-top-color 0.15s;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    border-radius: 0 2px 2px 0;
+    z-index: 1;
     pointer-events: none;
   }
-  .collapsed .subject-header::after {
-    transform: rotate(180deg);
+
+  .subject-header {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
   }
-  .subject-header:hover::after {
-    border-top-color: var(--ds-text-secondary);
+  .subject-header > .syllabus-card {
+    flex: 1;
+    border: none;
+    background: transparent;
+    box-shadow: none;
   }
-  .subject-section {
-    transition: margin-bottom 0.2s ease;
+  .subject-header > .syllabus-card:hover {
+    transform: none;
   }
-  .subject-section.collapsed {
-    margin-bottom: 0;
-  }
-  .subject-section.collapsed .chapter-list {
+  .subject-header > .syllabus-card .subject-accent-bar {
     display: none;
+  }
+
+  /* Chevron button */
+  .collapse-chevron {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+    margin-right: var(--ds-space-1);
+    color: var(--ds-text-muted);
+    transition: transform 0.3s var(--ds-ease-spring);
+    border-radius: var(--ds-radius-full);
+  }
+  .collapse-chevron:hover {
+    background: var(--ds-bg-hover);
+  }
+  .collapsed .collapse-chevron {
+    transform: rotate(-90deg);
+  }
+
+  /* Height-animated collapse */
+  .chapter-collapse {
+    max-height: 2000px;
+    overflow: hidden;
+    transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .collapsed .chapter-collapse {
+    max-height: 0 !important;
   }
 
   .hidden { display: none; }

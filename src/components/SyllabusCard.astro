@@ -19,21 +19,29 @@ function subjectColor(s: string): string {
 
 const color = subjectColor(subject);
 
-const colorMap: Record<string, { border: string; bar: string }> = {
-  blue: { border: 'rgba(59, 130, 246, 0.3)', bar: '#3b82f6' },
-  green: { border: 'rgba(34, 197, 94, 0.3)', bar: '#22c55e' },
-  amber: { border: 'rgba(245, 158, 11, 0.3)', bar: '#f59e0b' },
-  pink: { border: 'rgba(236, 72, 153, 0.3)', bar: '#ec4899' },
-  gray: { border: 'rgba(100, 116, 139, 0.3)', bar: '#64748b' },
+const colorMap: Record<string, { accent: string; bar: string }> = {
+  blue: { accent: '#3b82f6', bar: '#3b82f6' },
+  green: { accent: '#22c55e', bar: '#22c55e' },
+  amber: { accent: '#f59e0b', bar: '#f59e0b' },
+  pink: { accent: '#ec4899', bar: '#ec4899' },
+  gray: { accent: '#64748b', bar: '#64748b' },
 };
 
 const c = colorMap[color];
 ---
 
-<div class="syllabus-card" id={`card-${subject.replace(/\s+/g, '-')}`} data-subject={subject}>
+<div
+  class="syllabus-card ds-card-glass card-lift animate-slide-up"
+  id={`card-${subject.replace(/\s+/g, '-')}`}
+  data-subject={subject}
+  style="--subject-color: {c.accent};"
+>
+  <!-- Subject accent bar -->
+  <div class="subject-accent-bar" style="background: {c.accent};"></div>
+
   <div class="card-header">
     <div class="subject-info">
-      <div class="subject-icon" style={`border-color: ${c.border}; color: var(--ds-text-primary);`}>
+      <div class="subject-icon" style="border-color: color-mix(in srgb, {c.accent} 30%, transparent); color: {c.accent};">
         {subject[0]}
       </div>
       <div>
@@ -42,29 +50,33 @@ const c = colorMap[color];
       </div>
     </div>
     <div class="percent-wrap">
-      <span class="percent-text" style={`color: ${c.bar}`}>{progress.weightedPercent}%</span>
+      <span class="percent-text count-up" style="color: {c.accent};">{progress.weightedPercent}%</span>
     </div>
   </div>
 
   <div class="syllabus-bar-bg">
     <div
-      class="syllabus-bar-fill"
-      style={`width: ${progress.weightedPercent}%; background: ${c.bar}`}
+      class="syllabus-bar-fill bar-fill"
+      style="width: {progress.weightedPercent}%; background: {c.bar};"
+      data-width="{progress.weightedPercent}"
     />
   </div>
 </div>
 
 <style>
   .syllabus-card {
-    background: var(--ds-bg-surface);
-    border: 1px solid var(--ds-border-default);
-    border-radius: var(--ds-radius-lg);
-    padding: clamp(var(--ds-space-1), 1.5vw, var(--ds-space-3)) clamp(var(--ds-space-2), 2vw, var(--ds-space-3));
-    transition: border-color 0.15s, transform 0.15s;
+    position: relative;
+    padding: var(--ds-space-1) var(--ds-space-2);
     width: 100%;
+    overflow: hidden;
   }
-  .syllabus-card:hover {
-    border-color: var(--ds-border-hover);
+  .syllabus-card .subject-accent-bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    border-radius: 0 2px 2px 0;
   }
   .card-header {
     display: flex;
@@ -76,27 +88,31 @@ const c = colorMap[color];
     display: flex;
     align-items: center;
     gap: var(--ds-space-1);
+    min-width: 0;
   }
   .subject-icon {
-    width: clamp(1.75rem, 2.2vw, 2.5rem);
-    height: clamp(1.75rem, 2.2vw, 2.5rem);
+    width: clamp(1.5rem, 1.8vw, 2rem);
+    height: clamp(1.5rem, 1.8vw, 2rem);
     border-radius: var(--ds-radius-md);
     border: 1px solid var(--ds-border-subtle);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: clamp(0.75rem, 1vw, 0.95rem);
+    font-size: clamp(0.65rem, 0.9vw, 0.8rem);
     font-weight: 700;
     flex-shrink: 0;
   }
   .subject-name {
-    font-size: clamp(var(--ds-text-base), 1.2vw, var(--ds-text-md));
+    font-size: clamp(var(--ds-text-sm), 1.1vw, var(--ds-text-base));
     font-weight: var(--ds-weight-semibold);
     color: var(--ds-text-primary);
     margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .subject-count {
-    font-size: var(--ds-text-xs);
+    font-size: var(--ds-text-2xs);
     color: var(--ds-text-muted);
     margin: 0;
     font-family: var(--ds-font-mono);
@@ -104,15 +120,16 @@ const c = colorMap[color];
   .percent-wrap {
     display: flex;
     align-items: center;
+    flex-shrink: 0;
   }
   .percent-text {
-    font-size: clamp(var(--ds-text-base), 1.5vw, var(--ds-text-xl));
+    font-size: clamp(var(--ds-text-sm), 1.3vw, var(--ds-text-lg));
     font-weight: var(--ds-weight-bold);
     font-family: var(--ds-font-mono);
   }
   .syllabus-bar-bg {
     width: 100%;
-    height: 0.35rem;
+    height: 0.25rem;
     background: var(--ds-bg-elevated);
     border-radius: 999px;
     overflow: hidden;

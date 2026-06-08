@@ -3,6 +3,7 @@ import DailyActionCard from './DailyActionCard.astro';
 import WeakChapters from './WeakChapters.astro';
 import DashboardAnalytics from './DashboardAnalytics.astro';
 import CalendarWidget from './CalendarWidget.astro';
+import WeeklyProgressRing from './WeeklyProgressRing.astro';
 import type { DailyTrendItem, WeekComparisonData, FocusTrendItem, SubjectBreakdownItem } from '../services/stats-service';
 
 export interface Props {
@@ -30,46 +31,146 @@ const {
   dailyTrend = [], subjectBreakdown = [], weekComparison, focusTrend = [],
   monthlyEntryDates = new Set(), calendarYear = 2026, calendarMonth = 6,
 } = Astro.props;
+
+// Compute subject "grades" from breakdown data
+function getGrade(percent: number): { letter: string; color: string } {
+  if (percent >= 90) return { letter: 'A+', color: 'var(--ds-success-text)' };
+  if (percent >= 80) return { letter: 'A', color: 'var(--ds-success-text)' };
+  if (percent >= 70) return { letter: 'B+', color: 'var(--ds-success-text)' };
+  if (percent >= 60) return { letter: 'B', color: 'var(--ds-warning-text)' };
+  if (percent >= 50) return { letter: 'C+', color: 'var(--ds-warning-text)' };
+  if (percent >= 40) return { letter: 'C', color: 'var(--ds-danger-text)' };
+  return { letter: 'D', color: 'var(--ds-danger-text)' };
+}
+
+const subjectGrades = subjectBreakdown.map(s => ({
+  subject: s.subject,
+  ...getGrade(s.percentage),
+  hours: s.hours,
+  percentage: s.percentage,
+}));
+
+// Best subject
+const bestSubject = subjectGrades.length > 0
+  ? subjectGrades.reduce((a, b) => a.percentage > b.percentage ? a : b)
+  : null;
+
+// Last studied subject
+const lastSubject = hasEntries && recentEntries.length > 0
+  ? recentEntries[0].subject
+  : null;
 ---
 
-<div class="right-column">
+<div class="right-column animate-stagger">
   <!-- Tab Navigation -->
-  <div class="ds-tabs" id="dashboard-tabs">
+  <div class="ds-tabs" id="dashboard-tabs" style="--stagger-index:0">
     <button class="ds-tab active" data-tab="quests">Overview</button>
     <button class="ds-tab" data-tab="analytics">Analytics</button>
     <button class="ds-tab" data-tab="calendar">Calendar</button>
   </div>
 
-  <!-- Tab: Quests / Overview — Stitch layout -->
+  <!-- Tab: Overview — Premium Layout -->
   <div class="tab-panel" id="panel-quests" data-tab-panel="quests">
-    <!-- Today's Quests — Stitch style -->
-    <div class="glass-card rounded-xl p-card-padding">
-      <div class="quests-header">
-        <span class="quests-header-icon material-symbols-outlined">task_alt</span>
-        <h2 class="quests-header-title">Today's Quests</h2>
+
+    <!-- Top Row: Weekly Progress Ring + Subject Grades -->
+    <div class="premium-grid">
+      <!-- Weekly Progress Ring -->
+      <div class="glass-card rounded-xl p-card-padding ring-section card-lift" style="--stagger-index:1">
+        <div class="section-mini-header">
+          <span class="stat-card-label">Weekly Progress</span>
+        </div>
+        <div class="ring-section-body">
+          <WeeklyProgressRing
+            totalHours={totalHoursThisWeek}
+            targetHours={targetHoursPerWeek}
+            progressPercent={weeklyProgressPercent}
+          />
+          <div class="ring-details">
+            <div class="ring-stat">
+              <span class="ring-stat-value count-up">{entriesThisWeek}</span>
+              <span class="ring-stat-label">sessions</span>
+            </div>
+            <div class="ring-stat">
+              <span class="ring-stat-value count-up">{studyDaysPerWeek}</span>
+              <span class="ring-stat-label">goal days</span>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="quests-list">
+
+      <!-- Subject Grades -->
+      <div class="glass-card rounded-xl p-card-padding card-lift" style="--stagger-index:2">
+        <div class="section-mini-header">
+          <span class="stat-card-label">Subject Breakdown</span>
+          {bestSubject && (
+            <span class="best-subject-badge">
+              Best: {bestSubject.subject}
+            </span>
+          )}
+        </div>
+        <div class="subject-grades-grid">
+          {subjectGrades.length > 0 ? subjectGrades.map((sg, i) => (
+            <div class="subject-grade-item" style={`--stagger-index:${i + 3}`}>
+              <div class="sg-row">
+                <span class="sg-letter" style="color: {sg.color}">
+                  {sg.letter}
+                </span>
+                <span class="sg-bar-track">
+                  <span class="sg-bar-fill bar-fill" style={`width:${sg.percentage}%;background:${sg.color}`}></span>
+                </span>
+              </div>
+              <div class="sg-info">
+                <span class="sg-name">{sg.subject}</span>
+                <span class="sg-hours">{sg.hours}h</span>
+              </div>
+            </div>
+          )) : (
+            <div class="empty-mini">
+              <p class="empty-mini-text">Log sessions to see subject breakdown</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+
+    <!-- Today's Quests — Premium Style -->
+    <div class="glass-card rounded-xl p-card-padding quests-card card-lift" style="--stagger-index:4">
+      <div class="quests-header-row">
+        <div class="quests-header-left">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--ds-accent-400)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+          <div>
+            <h2 class="quests-title">Today's Quests</h2>
+            <p class="quests-subtitle">{hasEntries ? `${entriesThisWeek} study sessions this week` : 'Start your first session'}</p>
+          </div>
+        </div>
+      </div>
+      <div class="quests-content">
         <DailyActionCard examType={examKey} />
       </div>
     </div>
 
-    <!-- Stats Grid — Stitch style 2-col -->
+    <!-- Stats Row: This Week + Up Next -->
     <div class="stats-grid">
       <!-- This Week -->
-      <div class="glass-card rounded-xl p-card-padding">
+      <div class="glass-card rounded-xl p-card-padding card-lift" style="--stagger-index:5">
         <div class="stat-card-header">
           <h3 class="stat-card-label">This Week</h3>
-          <span class="stat-card-icon material-symbols-outlined">query_stats</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(193,199,211,0.5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/>
+          </svg>
         </div>
         <div class="stat-card-body">
           <div class="stat-card-value-row">
-            <span class="stat-card-value">{totalHoursThisWeek}</span>
+            <span class="stat-card-value count-up">{totalHoursThisWeek}</span>
             <span class="stat-card-divider">/ {targetHoursPerWeek}h</span>
           </div>
           <p class="stat-card-subtext">Study Goal Progress</p>
           <div class="stat-progress-track">
             <div
-              class="stat-progress-fill"
+              class="stat-progress-fill bar-fill"
               style={`width:${Math.min(weeklyProgressPercent, 100)}%`}
             ></div>
           </div>
@@ -77,16 +178,23 @@ const {
       </div>
 
       <!-- Up Next -->
-      <div class="glass-card rounded-xl p-card-padding">
+      <div class="glass-card rounded-xl p-card-padding card-lift" style="--stagger-index:6">
         <div class="stat-card-header">
           <h3 class="stat-card-label">Up Next</h3>
-          <span class="stat-card-icon material-symbols-outlined">event</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(193,199,211,0.5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
         </div>
-        {hasEntries && recentEntries.length > 0 ? (
+        {hasEntries && lastSubject ? (
           <div class="upnext-card">
-            <span class="upnext-badge">Coming Up</span>
-            <h4 class="upnext-title">{recentEntries[0].subject}</h4>
-            <p class="upnext-desc">{recentEntries[0].content}</p>
+            <span class="upnext-badge">Continue Where You Left</span>
+            <h4 class="upnext-title">{lastSubject}</h4>
+            <p class="upnext-desc">
+              {recentEntries[0].content.length > 80
+                ? recentEntries[0].content.slice(0, 80) + '...'
+                : recentEntries[0].content
+              }
+            </p>
           </div>
         ) : (
           <div class="upnext-card upnext-empty">
@@ -98,33 +206,43 @@ const {
       </div>
     </div>
 
-    <!-- Weak Chapters (if any) -->
-    {hasEntries && <WeakChapters examType={examKey} />}
+    <!-- Weak Chapters -->
+    {hasEntries && <div style="--stagger-index:7"><WeakChapters examType={examKey} /></div>}
 
-    <!-- Weekly Insight — Stitch style -->
+    <!-- Weekly Insight — Premium Style -->
     {hasEntries && (
-      <div class="glass-card rounded-xl p-card-padding insight-card">
+      <div class="glass-card rounded-xl p-card-padding insight-card card-lift" style="--stagger-index:8">
         <div class="insight-row">
           <div class="insight-icon-wrap">
-            <span class="insight-icon material-symbols-outlined">lightbulb</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--ds-secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/>
+            </svg>
           </div>
           <div class="insight-text-wrap">
             <h3 class="insight-label">Weekly Insight</h3>
             <p class="insight-body">
-              Keep building momentum! Your consistency this week is setting a strong foundation.
-              Focus on your weaker chapters to maximize score gains.
+              {weekComparison && weekComparison.change > 0
+                ? `Great momentum! You've studied ${weekComparison.change}h more than last week — a ${weekComparison.changePercent}% increase. Keep it up!`
+                : weekComparison && weekComparison.change < 0
+                ? `You studied ${Math.abs(weekComparison.change)}h less than last week. Try to reclaim your momentum by scheduling a short session today.`
+                : `Keep building momentum! Your consistency this week is setting a strong foundation. Focus on your weaker chapters to maximize score gains.`
+              }
             </p>
           </div>
         </div>
       </div>
     )}
 
-    <!-- Focus Session CTA — Stitch style gradient -->
-    <a href="/timer" class="focus-cta">
-      <span class="focus-cta-icon material-symbols-outlined">play_arrow</span>
-      <span class="focus-cta-text">START FOCUS SESSION</span>
-    </a>
-    <p class="focus-quote">"Focus is the art of knowing what to ignore."</p>
+    <!-- Focus Session CTA — Premium Gradient -->
+    <div style="--stagger-index:9">
+      <a href="/timer" class="focus-cta pulse-glow">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+          <polygon points="5 3 19 12 5 21 5 3"/>
+        </svg>
+        <span class="focus-cta-text">START FOCUS SESSION</span>
+      </a>
+      <p class="focus-quote">"The secret of getting ahead is getting started."</p>
+    </div>
   </div>
 
   <!-- Tab: Analytics -->
@@ -137,7 +255,7 @@ const {
         focusTrend={focusTrend}
       />
     ) : (
-      <div class="glass-card rounded-xl p-card-padding">
+      <div class="glass-card rounded-xl p-card-padding card-lift animate-pop">
         <div class="empty-state">
           <div class="empty-icon">📊</div>
           <p class="empty-title">No data yet</p>
@@ -170,7 +288,18 @@ const {
     function switchTab(name: string) {
       tabs.forEach(t => t.classList.toggle('active', t.getAttribute('data-tab') === name));
       Object.entries(panels).forEach(([key, panel]) => {
-        if (panel) panel.style.display = key === name ? '' : 'none';
+        if (!panel) return;
+        if (key === name) {
+          panel.style.display = '';
+          // Trigger entrance animation
+          panel.classList.remove('tab-enter');
+          // Force reflow
+          void panel.offsetWidth;
+          panel.classList.add('tab-enter');
+        } else {
+          panel.style.display = 'none';
+          panel.classList.remove('tab-enter');
+        }
       });
     }
 
@@ -180,6 +309,15 @@ const {
         if (name) switchTab(name);
       });
     });
+
+    // Animate active panel on load
+    const activeTab = document.querySelector('#dashboard-tabs .ds-tab.active');
+    if (activeTab) {
+      const activeName = activeTab.getAttribute('data-tab');
+      if (activeName && panels[activeName]) {
+        panels[activeName].classList.add('tab-enter');
+      }
+    }
   });
 </script>
 
@@ -188,6 +326,11 @@ const {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+  }
+
+  /* ── Tab panel transitions ── */
+  .tab-panel.tab-enter {
+    animation: slide-up-fade 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
   /* ── Glass card base ── */
@@ -203,28 +346,158 @@ const {
     border: 1px solid rgba(255, 255, 255, 0.15);
   }
 
-  .p-card-padding {
-    padding: 1.5rem;
+  .p-card-padding { padding: 1.5rem; }
+
+  /* ── Section Header Mini ── */
+  .section-mini-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+
+  /* ── Premium Grid (ring + grades) ── */
+  .premium-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  @media (max-width: 1024px) {
+    .premium-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ── Weekly Progress Ring Section ── */
+  .ring-section {
+    display: flex;
+    flex-direction: column;
+  }
+  .ring-section-body {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  .ring-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .ring-stat {
+    display: flex;
+    flex-direction: column;
+  }
+  .ring-stat-value {
+    font-size: var(--ds-text-xl);
+    font-weight: 700;
+    color: var(--ds-text-primary);
+    font-family: var(--ds-font-mono);
+    line-height: 1.2;
+  }
+  .ring-stat-label {
+    font-size: var(--ds-text-xs);
+    color: var(--ds-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── Subject Grades ── */
+  .subject-grades-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+  }
+  .subject-grade-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .sg-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .sg-letter {
+    font-size: var(--ds-text-sm);
+    font-weight: 800;
+    font-family: var(--ds-font-mono);
+    min-width: 1.75rem;
+    text-align: center;
+  }
+  .sg-bar-track {
+    flex: 1;
+    height: 0.375rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 9999px;
+    overflow: hidden;
+  }
+  .sg-bar-fill {
+    display: block;
+    height: 100%;
+    border-radius: 9999px;
+    transition: width 0.6s ease;
+  }
+  .sg-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-left: 2.25rem;
+  }
+  .sg-name {
+    font-size: var(--ds-text-2xs);
+    color: var(--ds-text-tertiary);
+    font-weight: 500;
+  }
+  .sg-hours {
+    font-size: var(--ds-text-2xs);
+    color: var(--ds-text-muted);
+    font-family: var(--ds-font-mono);
+  }
+  .best-subject-badge {
+    font-size: var(--ds-text-2xs);
+    color: var(--ds-success-text);
+    font-weight: 600;
+  }
+  .empty-mini {
+    padding: 1rem 0;
+    text-align: center;
+  }
+  .empty-mini-text {
+    font-size: var(--ds-text-sm);
+    color: var(--ds-text-muted);
+    margin: 0;
   }
 
   /* ── Today's Quests ── */
-  .quests-header {
+  .quests-card {
+    border-left: 4px solid var(--ds-accent-400);
+  }
+  .quests-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+  }
+  .quests-header-left {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    margin-bottom: 1.5rem;
   }
-  .quests-header-icon {
+  .quests-icon {
     color: var(--ds-accent-400);
     font-size: 1.5rem;
   }
-  .quests-header-title {
-    font-size: 1.5rem;
-    font-weight: 600;
+  .quests-title {
+    font-size: 1.35rem;
+    font-weight: 700;
     color: var(--ds-text-primary);
     margin: 0;
+    letter-spacing: -0.01em;
   }
-  .quests-list {
+  .quests-subtitle {
+    font-size: var(--ds-text-xs);
+    color: var(--ds-text-tertiary);
+    margin: 0.125rem 0 0 0;
+  }
+  .quests-content {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;

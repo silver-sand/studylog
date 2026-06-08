@@ -958,6 +958,61 @@ textarea.ds-input {
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
+/* ── Premium Animation Keyframes ── */
+@keyframes slide-up-fade {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-down-fade {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in-glow {
+  0% { opacity: 0; transform: scale(0.96); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+  50% { opacity: 1; transform: scale(1.01); box-shadow: 0 0 20px 4px rgba(99, 102, 241, 0.15); }
+  100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes count-up {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(99, 102, 241, 0.3); }
+  50% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.5); }
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+@keyframes slide-right-in {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slide-left-in {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fill-bar {
+  from { width: 0%; }
+}
+
+@keyframes ring-fill {
+  from { stroke-dashoffset: var(--ring-circumference); }
+}
+
 /* ── Study Rings Animations ── */
 @keyframes draw-ring {
   from { stroke-dashoffset: var(--ring-circumference); }
@@ -1342,3 +1397,146 @@ textarea.ds-input {
 .ds-subject-business-studies { color: var(--ds-subject-business-studies); }
 .ds-subject-economics { color: var(--ds-subject-economics); }
 .ds-subject-applied-mathematics { color: var(--ds-subject-applied-mathematics); }
+
+
+/* ==========================================================================
+   PREMIUM ANIMATION UTILITIES
+   ========================================================================== */
+
+/* ── Staggered Entrance System ──
+   Usage: <div class="animate-stagger">
+            <div style="--stagger-index:0">...</div>
+            <div style="--stagger-index:1">...</div>
+          </div>
+   Each child animates in sequence with an 80ms delay offset.
+*/
+.animate-stagger {
+  --stagger-delay: 0.05s;
+}
+.animate-stagger > * {
+  opacity: 0;
+  animation: slide-up-fade 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: calc(var(--stagger-index, 0) * var(--stagger-delay, 0.05s));
+}
+
+/* ── Single element entrance ── */
+.animate-fade-in {
+  animation: ds-fade-in 0.3s ease forwards;
+}
+.animate-slide-up {
+  animation: slide-up-fade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-pop {
+  animation: ds-pop 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-slide-down {
+  animation: slide-down-fade 0.25s ease forwards;
+}
+.animate-scale-in {
+  animation: scale-in-glow 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ── Micro-interaction: Card lift ── */
+.card-lift {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.2s ease;
+}
+.card-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--ds-shadow-lg);
+}
+.card-lift:active {
+  transform: translateY(0);
+}
+
+/* ── Press effect ── */
+.press-effect {
+  transition: transform 0.1s ease;
+}
+.press-effect:active {
+  transform: scale(0.97);
+}
+
+/* ── Glow border ── */
+.glow-border {
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.glow-border:focus-visible,
+.glow-border:hover {
+  border-color: var(--ds-accent-500);
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.3), 0 0 12px rgba(99, 102, 241, 0.15);
+}
+
+/* ── Pulse glow for CTAs / active elements ── */
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* ── Shimmer loading skeleton ── */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--ds-bg-surface) 25%,
+    var(--ds-bg-elevated) 37%,
+    var(--ds-bg-surface) 63%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--ds-radius-md);
+}
+
+/* ── Animated progress bar fill ── */
+.bar-fill {
+  animation: fill-bar 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: left;
+}
+
+/* ── Entrance delay modifiers ── */
+.delay-1  { animation-delay: 0.05s; }
+.delay-2  { animation-delay: 0.1s; }
+.delay-3  { animation-delay: 0.15s; }
+.delay-4  { animation-delay: 0.2s; }
+.delay-5  { animation-delay: 0.25s; }
+.delay-6  { animation-delay: 0.3s; }
+.delay-7  { animation-delay: 0.35s; }
+.delay-8  { animation-delay: 0.4s; }
+.delay-9  { animation-delay: 0.45s; }
+.delay-10 { animation-delay: 0.5s; }
+
+/* ── Hover states for glass cards ── */
+.glass-hover {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.glass-hover:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+/* ── Breathe animation for idle states ── */
+.animate-breathe {
+  animation: breathe 3s ease-in-out infinite;
+}
+
+/* ── Subject accent bar (left border color) ── */
+.subject-accent-bar {
+  position: relative;
+}
+.subject-accent-bar::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.5rem;
+  bottom: 0.5rem;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--subject-color, var(--ds-accent-500));
+}
+
+/* ── Number count-up animation ── */
+.count-up {
+  display: inline-block;
+  animation: count-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  font-variant-numeric: tabular-nums;
+}

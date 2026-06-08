@@ -1,0 +1,54 @@
+---
+export interface Props {
+  totalHours: number;
+  targetHours: number;
+  progressPercent: number;
+}
+
+const { totalHours, targetHours, progressPercent } = Astro.props;
+const circumference = 2 * Math.PI * 54; // r=54
+const offset = circumference - (Math.min(progressPercent, 100) / 100) * circumference;
+---
+
+<svg class="weekly-ring" width="140" height="140" viewBox="0 0 140 140">
+  <!-- Background circle -->
+  <circle cx="70" cy="70" r="54" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="10" />
+
+  <!-- Progress arc -->
+  <circle
+    cx="70" cy="70" r="54"
+    fill="none"
+    stroke="var(--ds-accent-400)"
+    stroke-width="10"
+    stroke-linecap="round"
+    stroke-dasharray={circumference}
+    stroke-dashoffset={offset}
+    transform="rotate(-90 70 70)"
+    class="progress-arc"
+  />
+
+  <!-- Center text -->
+  <text x="70" y="58" text-anchor="middle" class="ring-hours">{totalHours}</text>
+  <text x="70" y="82" text-anchor="middle" class="ring-target">/ {targetHours}h</text>
+</svg>
+
+<style>
+  .weekly-ring {
+    display: block;
+  }
+  .progress-arc {
+    transition: stroke-dashoffset 0.8s ease;
+    filter: drop-shadow(0 0 8px rgba(96, 165, 250, 0.3));
+  }
+  .ring-hours {
+    fill: var(--ds-text-primary);
+    font-size: 1.75rem;
+    font-weight: 700;
+    font-family: var(--ds-font-mono);
+  }
+  .ring-target {
+    fill: var(--ds-text-tertiary);
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+</style>

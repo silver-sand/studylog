@@ -6,71 +6,153 @@ export interface Props {
 const { subjects = ['Physics', 'Chemistry', 'Mathematics', 'Biology'] } = Astro.props;
 ---
 
-<div class="timer-card" id="study-timer">
-  <div class="timer-header">
-    <span class="timer-icon">⏱️</span>
-    <h3 class="timer-title">Study Timer</h3>
-  </div>
-
-  <!-- Timer display -->
-  <div class="timer-display" id="timer-display">00:00:00</div>
-
-  <!-- Subject selector (shown before starting) -->
-  <div class="timer-controls" id="timer-controls">
-    <div class="timer-field">
-      <label for="timer-subject" class="timer-label">Subject</label>
-      <select id="timer-subject" class="timer-select">
-        <option value="">— Select subject —</option>
-        {subjects.map(s => (
-          <option value={s}>{s}</option>
-        ))}
-      </select>
+<div class="timer-wrapper animate-slide-up" style="--stagger-index:0;">
+  <div class="ds-card-glass timer-card card-lift" id="study-timer">
+    <!-- SVG Circular Progress Ring -->
+    <div class="timer-ring-container">
+      <svg class="timer-ring" viewBox="0 0 200 200" aria-hidden="true">
+        <!-- Track ring -->
+        <circle
+          cx="100" cy="100" r="88"
+          fill="none"
+          stroke="var(--ds-bg-elevated)"
+          stroke-width="6"
+        />
+        <!-- Progress ring -->
+        <circle
+          id="timer-progress-ring"
+          cx="100" cy="100" r="88"
+          fill="none"
+          stroke="var(--ds-accent-500)"
+          stroke-width="6"
+          stroke-linecap="round"
+          stroke-dasharray="553"
+          stroke-dashoffset="553"
+          transform="rotate(-90 100 100)"
+          style="transition: stroke-dashoffset 0.25s linear;"
+        />
+      </svg>
+      <div class="timer-display-group">
+        <div class="timer-display" id="timer-display">00:00:00</div>
+        <div class="timer-state-label" id="timer-state-label">Ready</div>
+      </div>
     </div>
 
-    <div class="timer-field">
-      <label for="timer-topic" class="timer-label">Topic (optional)</label>
-      <input
-        type="text"
-        id="timer-topic"
-        class="timer-input"
-        placeholder="e.g. Kinematics"
-      />
-    </div>
-  </div>
+    <!-- Controls -->
+    <div class="timer-controls" id="timer-controls">
+      <div class="controls-row">
+        <div class="timer-field">
+          <label for="timer-subject" class="timer-label">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+            Subject
+          </label>
+          <select id="timer-subject" class="ds-select">
+            <option value="">— Select subject —</option>
+            {subjects.map(s => (
+              <option value={s}>{s}</option>
+            ))}
+          </select>
+        </div>
+        <div class="timer-field">
+          <label for="timer-topic" class="timer-label">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+            </svg>
+            Topic
+          </label>
+          <input
+            type="text"
+            id="timer-topic"
+            class="ds-input"
+            placeholder="e.g. Kinematics"
+          />
+        </div>
+      </div>
 
-  <!-- Action buttons -->
-  <div class="timer-actions">
-    <button id="timer-start-btn" class="timer-btn timer-btn-start">▶ Start</button>
-    <button id="timer-pause-btn" class="timer-btn timer-btn-pause hidden">⏸ Pause</button>
-    <button id="timer-resume-btn" class="timer-btn timer-btn-resume hidden">▶ Resume</button>
-    <button id="timer-stop-btn" class="timer-btn timer-btn-stop hidden">⏹ Stop</button>
-  </div>
-
-  <!-- Session summary (shown after stop) -->
-  <div id="timer-summary" class="timer-summary hidden">
-    <div class="summary-divider"></div>
-    <p class="summary-title">Session Complete</p>
-    <div class="summary-details">
-      <span class="summary-stat">
-        Duration: <strong id="summary-duration">00:00:00</strong>
-      </span>
-      <span class="summary-stat" id="summary-subject-stat" style="display:none;">
-        Subject: <strong id="summary-subject">—</strong>
-      </span>
-      <span class="summary-stat" id="summary-topic-stat" style="display:none;">
-        Topic: <strong id="summary-topic">—</strong>
-      </span>
+      <!-- Action buttons -->
+      <div class="timer-actions">
+        <button id="timer-start-btn" class="ds-btn ds-btn-primary press-effect">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+          Start
+        </button>
+        <button id="timer-pause-btn" class="ds-btn press-effect hidden" style="background:var(--ds-warning);color:white;border:none;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
+          </svg>
+          Pause
+        </button>
+        <button id="timer-resume-btn" class="ds-btn ds-btn-secondary press-effect hidden">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+          Resume
+        </button>
+        <button id="timer-stop-btn" class="ds-btn press-effect hidden" style="background:var(--ds-danger);color:white;border:none;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            <rect x="6" y="6" width="12" height="12" rx="1"/>
+          </svg>
+          Stop
+        </button>
+      </div>
     </div>
-    <div class="summary-actions">
-      <button id="save-entry-btn" class="timer-btn timer-btn-save">📝 Save as Entry</button>
-      <button id="discard-btn" class="timer-btn timer-btn-discard">✕ Discard</button>
+
+    <!-- Session Summary -->
+    <div id="timer-summary" class="timer-summary hidden">
+      <div class="summary-divider"></div>
+      <div class="summary-content">
+        <div class="summary-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--ds-success-500)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+        </div>
+        <p class="summary-title">Session Complete</p>
+        <div class="summary-details">
+          <div class="summary-stat-row">
+            <span class="summary-stat-label">Duration</span>
+            <span class="summary-stat-value" id="summary-duration">00:00:00</span>
+          </div>
+          <div class="summary-stat-row" id="summary-subject-row" style="display:none;">
+            <span class="summary-stat-label">Subject</span>
+            <span class="summary-stat-value" id="summary-subject">—</span>
+          </div>
+          <div class="summary-stat-row" id="summary-topic-row" style="display:none;">
+            <span class="summary-stat-label">Topic</span>
+            <span class="summary-stat-value" id="summary-topic">—</span>
+          </div>
+        </div>
+        <div class="summary-actions">
+          <button id="save-entry-btn" class="ds-btn ds-btn-primary press-effect">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+              <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+            </svg>
+            Save as Entry
+          </button>
+          <button id="discard-btn" class="ds-btn ds-btn-ghost press-effect">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+            Discard
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
   (function() {
+    const RING_CIRCUMFERENCE = 553; // ≈ 2 * π * 88
+    const TARGET_SECONDS = 3600;    // 1 hour default target for ring fill
+
     const display = document.getElementById('timer-display');
+    const ring = document.getElementById('timer-progress-ring');
+    const stateLabel = document.getElementById('timer-state-label');
     const startBtn = document.getElementById('timer-start-btn');
     const pauseBtn = document.getElementById('timer-pause-btn');
     const resumeBtn = document.getElementById('timer-resume-btn');
@@ -81,18 +163,19 @@ const { subjects = ['Physics', 'Chemistry', 'Mathematics', 'Biology'] } = Astro.
     const summaryDuration = document.getElementById('summary-duration');
     const summarySubject = document.getElementById('summary-subject');
     const summaryTopic = document.getElementById('summary-topic');
-    const summarySubjectStat = document.getElementById('summary-subject-stat');
-    const summaryTopicStat = document.getElementById('summary-topic-stat');
+    const summarySubjectRow = document.getElementById('summary-subject-row');
+    const summaryTopicRow = document.getElementById('summary-topic-row');
     const saveBtn = document.getElementById('save-entry-btn');
     const discardBtn = document.getElementById('discard-btn');
+    const controls = document.getElementById('timer-controls');
 
     let startTime = 0;
-    let elapsed = 0;        // ms elapsed before current pause
+    let elapsed = 0;
     let running = false;
     let paused = false;
-    let intervalId: number | null = null;
+    let intervalId = null;
 
-    function formatTime(ms: number): string {
+    function formatTime(ms) {
       const totalSec = Math.floor(ms / 1000);
       const h = Math.floor(totalSec / 3600);
       const m = Math.floor((totalSec % 3600) / 60);
@@ -100,26 +183,64 @@ const { subjects = ['Physics', 'Chemistry', 'Mathematics', 'Biology'] } = Astro.
       return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
     }
 
-    function getCurrentElapsed(): number {
+    function getCurrentElapsed() {
       if (running && !paused) {
         return elapsed + (Date.now() - startTime);
       }
       return elapsed;
     }
 
+    function updateRing(ms) {
+      const progress = Math.min(ms / (TARGET_SECONDS * 1000), 1);
+      const offset = RING_CIRCUMFERENCE * (1 - progress);
+      if (ring) ring.style.strokeDashoffset = String(offset);
+
+      // Color transition: accent → warning → success as time passes
+      if (ring) {
+        if (progress >= 0.9) {
+          ring.style.stroke = 'var(--ds-success-500)';
+        } else if (progress >= 0.6) {
+          ring.style.stroke = 'var(--ds-warning-500, #f59e0b)';
+        } else {
+          ring.style.stroke = 'var(--ds-accent-500)';
+        }
+      }
+    }
+
     function updateDisplay() {
-      display.textContent = formatTime(getCurrentElapsed());
+      const ms = getCurrentElapsed();
+      display.textContent = formatTime(ms);
+      updateRing(ms);
     }
 
     function tick() {
       updateDisplay();
     }
 
+    function setState(state) {
+      // state: 'idle', 'running', 'paused', 'stopped'
+      startBtn.classList.toggle('hidden', state !== 'idle');
+      pauseBtn.classList.toggle('hidden', state !== 'running');
+      resumeBtn.classList.toggle('hidden', state !== 'paused');
+      stopBtn.classList.toggle('hidden', state === 'idle' || state === 'stopped');
+      summary.classList.toggle('hidden', state !== 'stopped');
+
+      // State label
+      const labels = { idle: 'Ready', running: 'Studying', paused: 'Paused', stopped: 'Done' };
+      if (stateLabel) stateLabel.textContent = labels[state] || '';
+
+      // Animate controls visibility
+      if (controls) {
+        controls.style.opacity = state === 'stopped' ? '0' : '1';
+        controls.style.pointerEvents = state === 'stopped' ? 'none' : 'auto';
+      }
+    }
+
     function startTimer() {
       const subject = subjectSelect.value;
       if (!subject) {
         subjectSelect.focus();
-        subjectSelect.style.borderColor = '#ef4444';
+        subjectSelect.style.borderColor = 'var(--ds-danger)';
         setTimeout(() => { subjectSelect.style.borderColor = ''; }, 2000);
         return;
       }
@@ -129,104 +250,71 @@ const { subjects = ['Physics', 'Chemistry', 'Mathematics', 'Biology'] } = Astro.
       running = true;
       paused = false;
 
-      // Disable inputs
       subjectSelect.disabled = true;
       topicInput.disabled = true;
 
-      // Toggle buttons
-      startBtn.classList.add('hidden');
-      pauseBtn.classList.remove('hidden');
-      stopBtn.classList.remove('hidden');
-      summary.classList.add('hidden');
-
-      // Start ticker
-      intervalId = window.setInterval(tick, 200);
+      setState('running');
+      intervalId = setInterval(tick, 200);
     }
 
     function pauseTimer() {
       if (!running || paused) return;
       elapsed += Date.now() - startTime;
       paused = true;
-      if (intervalId) clearInterval(intervalId);
-      intervalId = null;
-
-      pauseBtn.classList.add('hidden');
-      resumeBtn.classList.remove('hidden');
+      if (intervalId) { clearInterval(intervalId); intervalId = null; }
+      setState('paused');
     }
 
     function resumeTimer() {
       if (!running || !paused) return;
       startTime = Date.now();
       paused = false;
-
-      resumeBtn.classList.add('hidden');
-      pauseBtn.classList.remove('hidden');
-
-      intervalId = window.setInterval(tick, 200);
+      setState('running');
+      intervalId = setInterval(tick, 200);
     }
 
     function stopTimer() {
       if (!running) return;
 
-      // Final elapsed
-      if (paused) {
-        // elapsed already captured in pause
-      } else {
+      if (!paused) {
         elapsed += Date.now() - startTime;
       }
       running = false;
       paused = false;
-      if (intervalId) {
-        clearInterval(intervalId);
-        intervalId = null;
-      }
+      if (intervalId) { clearInterval(intervalId); intervalId = null; }
 
-      // Update display one last time
       updateDisplay();
 
-      // Hide timer controls, show summary
-      startBtn.classList.add('hidden');
-      pauseBtn.classList.add('hidden');
-      resumeBtn.classList.add('hidden');
-      stopBtn.classList.add('hidden');
+      subjectSelect.disabled = false;
+      topicInput.disabled = false;
 
       const subject = subjectSelect.value;
       const topic = topicInput.value.trim();
 
       summaryDuration.textContent = formatTime(elapsed);
-
       if (subject) {
         summarySubject.textContent = subject;
-        summarySubjectStat.style.display = '';
+        summarySubjectRow.style.display = '';
       } else {
-        summarySubjectStat.style.display = 'none';
+        summarySubjectRow.style.display = 'none';
       }
-
       if (topic) {
         summaryTopic.textContent = topic;
-        summaryTopicStat.style.display = '';
+        summaryTopicRow.style.display = '';
       } else {
-        summaryTopicStat.style.display = 'none';
+        summaryTopicRow.style.display = 'none';
       }
 
-      summary.classList.remove('hidden');
+      setState('stopped');
     }
 
     function resetTimer() {
-      // Re-enable inputs
       subjectSelect.disabled = false;
       topicInput.disabled = false;
-
-      // Show start button
-      startBtn.classList.remove('hidden');
-      pauseBtn.classList.add('hidden');
-      resumeBtn.classList.add('hidden');
-      stopBtn.classList.add('hidden');
-      summary.classList.add('hidden');
-
-      // Reset display
       elapsed = 0;
       display.textContent = '00:00:00';
+      updateRing(0);
+      setState('idle');
     }
 
     function saveAsEntry() {
@@ -234,16 +322,20 @@ const { subjects = ['Physics', 'Chemistry', 'Mathematics', 'Biology'] } = Astro.
       const subject = subjectSelect.value;
       const topic = topicInput.value.trim();
 
-      // Store timer data in sessionStorage for the entry form to pick up
-      const timerData: Record<string, string> = {
-        hours: hours.toFixed(2),
-        subject: subject,
-      };
+      const timerData = { hours: hours.toFixed(2), subject };
       if (topic) timerData.topic = topic;
-
       sessionStorage.setItem('studyTimerData', JSON.stringify(timerData));
 
-      // Navigate to home page where EntryForm lives
+      // Fire custom event for recent sessions
+      document.dispatchEvent(new CustomEvent('timer-session-saved', {
+        detail: {
+          subject,
+          topic,
+          duration: formatTime(elapsed),
+          hours: hours.toFixed(2),
+        }
+      }));
+
       window.location.href = '/';
     }
 
@@ -254,181 +346,183 @@ const { subjects = ['Physics', 'Chemistry', 'Mathematics', 'Biology'] } = Astro.
     if (stopBtn) stopBtn.addEventListener('click', stopTimer);
     if (saveBtn) saveBtn.addEventListener('click', saveAsEntry);
     if (discardBtn) discardBtn.addEventListener('click', resetTimer);
+
+    // Init ring to 0
+    updateRing(0);
   })();
 </script>
 
 <style>
+  .timer-wrapper {
+    max-width: 32rem;
+    margin: 0 auto;
+  }
+
   .timer-card {
-    background: var(--ds-bg-elevated);
-    border: 1px solid var(--ds-border-subtle);
-    border-radius: 0.75rem;
-    padding: 1.5rem;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1rem;
+    padding: var(--ds-space-3);
+    gap: var(--ds-space-2);
   }
-  .timer-header {
+
+  /* ── Circular Ring + Timer Display ── */
+  .timer-ring-container {
+    position: relative;
+    width: 14rem;
+    height: 14rem;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    justify-content: center;
   }
-  .timer-icon {
-    font-size: 1.3rem;
+  .timer-ring {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
   }
-  .timer-title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--ds-text-primary);
-    margin: 0;
+  .timer-display-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
   }
   .timer-display {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 3rem;
+    font-family: var(--ds-font-mono);
+    font-size: 3.5rem;
     font-weight: 700;
     color: var(--ds-text-primary);
-    letter-spacing: 0.05em;
-    padding: 0.5rem 0;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
   }
+  .timer-state-label {
+    font-size: var(--ds-text-xs);
+    font-weight: 500;
+    color: var(--ds-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* ── Controls ── */
   .timer-controls {
     width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+    transition: opacity 0.3s ease;
+  }
+  .controls-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--ds-space-2);
+    margin-bottom: var(--ds-space-2);
+  }
+  @media (max-width: 480px) {
+    .controls-row {
+      grid-template-columns: 1fr;
+    }
   }
   .timer-field {
     display: flex;
     flex-direction: column;
-    gap: 0.3rem;
+    gap: 0.25rem;
   }
-  .timer-label {
-    font-size: 0.75rem;
+  .timer-field .timer-label {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: var(--ds-text-xs);
     font-weight: 500;
     color: var(--ds-text-tertiary);
   }
-  .timer-select,
-  .timer-input {
+  .timer-field select,
+  .timer-field input {
     width: 100%;
-    padding: 0.6rem 0.75rem;
-    background: rgba(15, 23, 42, 0.6);
-    border: 1px solid rgba(51, 65, 85, 0.6);
-    border-radius: 0.5rem;
-    color: #e2e8f0;
-    font-size: 0.85rem;
-    font-family: 'Inter', sans-serif;
-    outline: none;
-    transition: border-color 0.15s;
-    box-sizing: border-box;
   }
-  .timer-select:focus,
-  .timer-input:focus {
-    border-color: rgba(59, 130, 246, 0.5);
-  }
-  .timer-select:disabled,
-  .timer-input:disabled {
+  .timer-field select:disabled,
+  .timer-field input:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }
-  .timer-select option {
-    background: var(--ds-bg-surface);
-  }
+
+  /* ── Action Buttons ── */
   .timer-actions {
     display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
+    gap: var(--ds-space-1);
     justify-content: center;
+    flex-wrap: wrap;
   }
-  .timer-btn {
-    padding: 0.6rem 1.25rem;
-    border-radius: 0.5rem;
-    font-size: 0.85rem;
-    font-weight: 500;
-    border: none;
-    cursor: pointer;
-    transition: all 0.15s;
-    font-family: 'Inter', sans-serif;
+  .timer-actions .ds-btn {
+    gap: 0.35rem;
+    font-size: var(--ds-text-sm);
   }
-  .timer-btn-start {
-    background: var(--ds-success-500);
-    color: white;
-  }
-  .timer-btn-start:hover {
-    background: var(--ds-success-400);
-  }
-  .timer-btn-pause {
-    background: var(--ds-warning);
-    color: white;
-  }
-  .timer-btn-pause:hover {
-    background: var(--ds-warning-400);
-  }
-  .timer-btn-resume {
-    background: var(--ds-accent-600);
-    color: white;
-  }
-  .timer-btn-resume:hover {
-    background: var(--ds-accent-500);
-  }
-  .timer-btn-stop {
-    background: var(--ds-danger);
-    color: white;
-  }
-  .timer-btn-stop:hover {
-    background: var(--ds-danger-500);
-  }
-  .timer-btn-save {
-    background: var(--ds-accent-600);
-    color: white;
-  }
-  .timer-btn-save:hover {
-    background: var(--ds-accent-500);
-  }
-  .timer-btn-discard {
-    background: var(--ds-border-default);
-    color: var(--ds-text-tertiary);
-  }
-  .timer-btn-discard:hover {
-    background: var(--ds-border-hover);
-    color: var(--ds-text-primary);
-  }
+
+  /* ── Session Summary ── */
   .timer-summary {
     width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.75rem;
+    animation: slide-up-fade 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
   .summary-divider {
     width: 100%;
     height: 1px;
     background: var(--ds-border-subtle);
+    margin: var(--ds-space-1) 0;
+  }
+  .summary-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--ds-space-1);
+    padding: var(--ds-space-1) 0;
+  }
+  .summary-icon {
+    opacity: 0;
+    animation: scale-in-glow 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards;
   }
   .summary-title {
-    font-size: 0.9rem;
-    font-weight: 600;
+    font-size: var(--ds-text-base);
+    font-weight: var(--ds-weight-semibold);
     color: var(--ds-text-primary);
     margin: 0;
   }
   .summary-details {
     display: flex;
     flex-direction: column;
-    align-items: center;
     gap: 0.25rem;
+    width: 100%;
+    max-width: 16rem;
   }
-  .summary-stat {
-    font-size: 0.8rem;
+  .summary-stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    background: var(--ds-bg-base);
+    border-radius: var(--ds-radius-md);
+  }
+  .summary-stat-label {
+    font-size: var(--ds-text-xs);
     color: var(--ds-text-tertiary);
   }
-  .summary-stat strong {
+  .summary-stat-value {
+    font-size: var(--ds-text-xs);
+    font-weight: var(--ds-weight-semibold);
     color: var(--ds-text-primary);
-    font-weight: 600;
+    font-family: var(--ds-font-mono);
   }
   .summary-actions {
     display: flex;
-    gap: 0.5rem;
-    margin-top: 0.25rem;
+    gap: var(--ds-space-1);
+    margin-top: var(--ds-space-1);
   }
-  .hidden {
-    display: none !important;
+  .summary-actions .ds-btn {
+    gap: 0.35rem;
+    font-size: var(--ds-text-sm);
+  }
+
+  .hidden { display: none !important; }
+
+  /* ── Ring glow on active ── */
+  #timer-progress-ring {
+    filter: drop-shadow(0 0 4px color-mix(in srgb, var(--ds-accent-500) 30%, transparent));
+    transition: stroke-dashoffset 0.2s linear, stroke 0.4s ease;
   }
 </style>
