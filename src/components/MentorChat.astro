@@ -51,22 +51,21 @@ const { title = 'AI Mentor' } = Astro.props;
 </div>
 
 <script>
-  // ── KaTeX rendering function ──
+  // ── KaTeX rendering ──
   function renderMath(text) {
-    if (window.katex) {
-      try {
-        // Try to render display math first ($$...$$)
-        text = text.replace(/\$\$(.+?)\$\$/gs, (_, expr) => {
-          try { return katex.renderToString(expr.trim(), { displayMode: true, throwOnError: false }); }
-          catch(e) { return `$$${expr}$$`; }
-        });
-        // Then inline math ($...$)
-        text = text.replace(/\$(.+?)\$/g, (_, expr) => {
-          try { return katex.renderToString(expr.trim(), { displayMode: false, throwOnError: false }); }
-          catch(e) { return `$${expr}$`; }
-        });
-      } catch(e) {}
-    }
+    if (!window.katex) return text;
+    try {
+      // Display math ($$...$$)
+      text = text.replace(/\$\$(.+?)\$\$/gs, (_, expr) => {
+        try { return katex.renderToString(expr.trim(), { displayMode: true, throwOnError: false }); }
+        catch(e) { return `$$${expr}$$`; }
+      });
+      // Inline math ($...$)
+      text = text.replace(/\$(.+?)\$/g, (_, expr) => {
+        try { return katex.renderToString(expr.trim(), { displayMode: false, throwOnError: false }); }
+        catch(e) { return `$${expr}$`; }
+      });
+    } catch(e) {}
     return text;
   }
 
@@ -237,6 +236,18 @@ const { title = 'AI Mentor' } = Astro.props;
                 const txtDiv = msgEl.querySelector('.flex-1 > div');
                 if (txtDiv) {
                   txtDiv.innerHTML = renderMarkdown(reply);
+                  // Re-render math if Katex wasn't ready
+                  if (!window.katex && reply.includes('$')) {
+                    const mc = setInterval(() => {
+                      if (window.katex) {
+                        clearInterval(mc);
+                        const b = document.getElementById('streaming-msg');
+                        const d = b?.querySelector('.flex-1 > div');
+                        if (d) d.innerHTML = renderMarkdown(reply);
+                      }
+                    }, 200);
+                    setTimeout(() => clearInterval(mc), 15000);
+                  }
                   chatContainer?.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
                 }
               }
@@ -321,7 +332,44 @@ const { title = 'AI Mentor' } = Astro.props;
   });
 
   // ── Init ──
+  // Render history immediately (LaTeX shows as raw text until KaTeX loads)
   if (loadHistory()) renderHistory();
+
+  // When KaTeX finishes loading, re-render all messages to apply math
+  if (!window.katex) {
+    const recheck = setInterval(() => {
+      if (window.katex) {
+        clearInterval(recheck);
+        // Re-render from saved history with KaTeX now available
+        messagesArea.innerHTML = '';
+        for (const msg of history) {
+          const wrapper = document.createElement('div');
+          if (msg.role === 'user') {
+            wrapper.className = 'flex justify-end message-entrance';
+            const bubble = document.createElement('div');
+            bubble.className = 'bg-[#0d1321] border border-white/5 rounded-2xl rounded-tr-sm p-5 max-w-[85%] md:max-w-[75%] shadow-sm';
+            bubble.innerHTML = `<p class="text-neutral-200 leading-relaxed">${escapeHtml(msg.content)}</p>`;
+            wrapper.appendChild(bubble);
+          } else {
+            wrapper.className = 'flex gap-4 message-entrance';
+            const avatar = document.createElement('div');
+            avatar.className = 'w-8 h-8 rounded bg-indigo-500/20 text-indigo-500 flex items-center justify-center shrink-0 border border-indigo-500/30 mt-1';
+            avatar.innerHTML = '<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: \'FILL\' 1;">smart_toy</span>';
+            wrapper.appendChild(avatar);
+            const bubble = document.createElement('div');
+            bubble.className = 'flex-1 bg-[#0d1321]/30 border border-white/5 rounded-2xl rounded-tl-sm p-5 md:p-6 max-w-[95%] shadow-sm';
+            bubble.innerHTML = renderMarkdown(msg.content);
+            wrapper.appendChild(bubble);
+          }
+          messagesArea.appendChild(wrapper);
+        }
+        chatContainer?.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+      }
+    }, 100);
+    // Safety: stop checking after 15s
+    setTimeout(() => clearInterval(recheck), 15000);
+  }
+
   sendBtn.disabled = true;
 </script>
 
