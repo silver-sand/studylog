@@ -194,19 +194,64 @@ const { title = 'AI Mentor' } = Astro.props;
     chatContainer?.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
 
     try {
-      // Build conversation for API
-      const messages = history.map(h => ({ role: h.role, content: h.content }));
+      // Build query and history for API
+      const lastMsg = history[history.length - 1];
+      const prevHistory = history.slice(0, -1).map(h => ({ role: h.role, content: h.content }));
       const res = await fetch('/api/mentor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages }),
+        body: JSON.stringify({ query: lastMsg.content, history: prevHistory }),
       });
       if (!res.ok) throw new Error('API Error');
 
-      const data = await res.json();
-      const reply = data.message || data.content || data.text || '';
+      // Read SSE stream
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let reply = '';
+      let streamingEl = document.getElementById('streaming-msg');
 
-      // Remove thinking indicator
+      // Replace thinking indicator with live streaming bubble
+      if (streamingEl) {
+        const bubbleDiv = streamingEl.querySelector('.flex-1');
+        if (bubbleDiv) {
+          bubbleDiv.className = 'flex-1 bg-[#0d1321]/30 border border-white/5 rounded-2xl rounded-tl-sm p-5 md:p-6 max-w-[95%] shadow-sm';
+          bubbleDiv.innerHTML = '<div class="text-neutral-300 leading-relaxed"></div>';
+        }
+      }
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.type === 'chunk' && data.text) {
+              reply += data.text;
+              // Update the streaming bubble with rendered markdown
+              const msgEl = document.getElementById('streaming-msg');
+              if (msgEl) {
+                const txtDiv = msgEl.querySelector('.flex-1 > div');
+                if (txtDiv) {
+                  txtDiv.innerHTML = renderMarkdown(reply);
+                  chatContainer?.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+                }
+              }
+            } else if (data.type === 'error') {
+              throw new Error(data.text);
+            }
+            // 'done' type — stream complete, fall through
+          } catch (e) {
+            if (e instanceof SyntaxError) continue; // bad JSON line, skip
+            throw e;
+          }
+        }
+      }
+
+      // Remove streaming indicator
       const streaming = document.getElementById('streaming-msg');
       if (streaming) streaming.remove();
 

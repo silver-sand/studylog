@@ -20,7 +20,7 @@ export interface Props {
 const {
   totalHoursThisWeek, targetHoursPerWeek, hasEntries,
   subjectBreakdown = [], weekComparison, user,
-  dailyTrend = [],
+  dailyTrend = [], examKey,
 } = Astro.props;
 
 const today = new Date();
