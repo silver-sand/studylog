@@ -9,3 +9,4 @@ dist/
 cloudflared.exe
 # Astro build cache
 .astro/
+.gstack/
