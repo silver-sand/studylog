@@ -22,7 +22,7 @@ const days = weekDays.length === 7
 <div class="streak-card">
   <div class="streak-top-row">
     <div class="streak-title-group">
-      <span class="streak-fire-icon material-symbols-outlined">local_fire_department</span>
+      <span class="material-symbols-outlined filled-icon text-amber-400 text-2xl" style="font-variation-settings: 'FILL' 1; filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.5));">local_fire_department</span>
       <span class="streak-count-text">{streak}-Day Streak</span>
     </div>
     <span class="streak-encouragement">Keep it up!</span>
@@ -34,7 +34,7 @@ const days = weekDays.length === 7
         <span class="day-label">{d.label}</span>
         {d.completed ? (
           <div class="day-dot day-dot--filled">
-            <span class="day-fire material-symbols-outlined">local_fire_department</span>
+            <span class="material-symbols-outlined filled-icon text-amber-400 text-sm">local_fire_department</span>
           </div>
         ) : (
           <div class="day-dot day-dot--empty">
@@ -64,13 +64,6 @@ const days = weekDays.length === 7
     display: flex;
     align-items: center;
     gap: 0.5rem;
-  }
-
-  .streak-fire-icon {
-    color: var(--ds-secondary);
-    font-size: 1.5rem;
-    filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.5));
-    font-variation-settings: 'FILL' 1;
   }
 
   .streak-count-text {
@@ -122,12 +115,6 @@ const days = weekDays.length === 7
 
   .day-dot--filled {
     background: rgba(255, 198, 64, 0.2);
-  }
-
-  .day-fire {
-    font-size: 0.875rem;
-    color: var(--ds-secondary);
-    font-variation-settings: 'FILL' 1;
   }
 
   .day-dot--empty {

@@ -3,301 +3,51 @@ import type { SyllabusChapter } from '../types/review';
 import { STATUS_ORDER, STATUS_LABELS } from '../types/review';
 
 export interface Props {
-  chapters: SyllabusChapter[];
-  subject: string;
+  chapter: SyllabusChapter;
 }
 
-const { chapters, subject } = Astro.props;
+const { chapter } = Astro.props;
 
-const STATUSES = STATUS_ORDER.map(s => ({
-  value: s,
-  label: STATUS_LABELS[s],
-  color: s === 'not_started' ? '#64748b' :
-         s === 'studied' ? '#f59e0b' :
-         s === 'revision_1' ? '#3b82f6' :
-         s === 'revision_2' ? '#8b5cf6' :
-         s === 'revision_3' ? '#ec4899' :
-         '#22c55e',
-  short: s === 'not_started' ? 'NS' :
-         s === 'studied' ? 'S' :
-         s === 'revision_1' ? 'R1' :
-         s === 'revision_2' ? 'R2' :
-         s === 'revision_3' ? 'R3' :
-         'M',
-}));
+// Determine initial status
+const activeIdx = STATUS_ORDER.indexOf(chapter.status);
+const statusLabel = STATUS_LABELS[chapter.status] || 'Locked';
 
-function daysAgo(dateStr: string | null): string {
-  if (!dateStr) return '';
-  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
-  if (diff === 0) return 'today';
-  if (diff === 1) return 'yesterday';
-  if (diff < 30) return `${diff}d ago`;
-  return `${Math.floor(diff / 30)}mo ago`;
-}
+const colorMap: Record<string, string> = {
+  not_started: '#475569',
+  studied: '#f59e0b',
+  revision_1: '#3b82f6',
+  revision_2: '#8b5cf6',
+  revision_3: '#ec4899',
+  mastered: '#22c55e',
+};
+
+const bgMap: Record<string, string> = {
+  not_started: 'bg-slate-800 text-slate-500',
+  studied: 'bg-yellow-500/10 text-yellow-500',
+  revision_1: 'bg-blue-500/10 text-blue-400',
+  revision_2: 'bg-purple-500/10 text-purple-400',
+  revision_3: 'bg-pink-500/10 text-pink-400',
+  mastered: 'bg-emerald-500/10 text-emerald-400',
+};
+
+const isCompleted = chapter.status === 'mastered';
+const isInProgress = chapter.status === 'studied';
+const iconColor = colorMap[chapter.status] || '#475569';
+const badgeClass = bgMap[chapter.status] || 'bg-slate-800 text-slate-500';
+const ringClass = chapter.status === 'studied' ? 'ring-1 ring-indigo-500/20 border-indigo-500/40' : 'border-slate-800/50';
 ---
 
-<div class="chapter-list animate-stagger" data-subject-list={subject} style="--stagger-delay: 0.04s;">
-  {chapters.length === 0 && (
-    <div class="chapter-empty">
-      <p class="ds-caption" style="text-align:center;padding:var(--ds-space-3);margin:0;">
-        No chapters loaded for this subject yet.
-      </p>
-    </div>
-  )}
-  {chapters.map((ch, idx) => {
-    const activeIdx = STATUS_ORDER.indexOf(ch.status);
-    return (
-    <div
-      class="chapter-row animate-stagger-item"
-      data-chapter-id={ch.id}
-      style="--stagger-index: {idx};"
-      class:list={{ [`status-${ch.status}`]: true }}>
-      <div class="chapter-info">
-        <span class="chapter-name">{ch.chapter}</span>
-        <div class="chapter-meta">
-          {ch.classLevel && <span class="meta-badge">Class {ch.classLevel}</span>}
-          {ch.lastRevisedAt && ch.status !== 'not_started' && (
-            <span class="meta-badge revision" title={`Last revised ${daysAgo(ch.lastRevisedAt)}`}>
-              {daysAgo(ch.lastRevisedAt)}
-            </span>
-          )}
-          {ch.revisionCount > 0 && (
-            <span class="meta-badge count">{ch.revisionCount}r</span>
-          )}
-        </div>
-      </div>
-      <div class="slider-group" data-chapter={ch.id}>
-        {STATUSES.map((s, i) => {
-          const isActive = i === activeIdx;
-          const isBefore = i < activeIdx;
-          const isAfter = i > activeIdx;
-          return (
-            <button
-              class:list={{
-                'slider-btn': true,
-                active: isActive,
-                before: isBefore,
-                after: isAfter,
-              }}
-              data-chapter-id={ch.id}
-              data-status={s.value}
-              style={`--accent: ${s.color}`}
-              title={s.label}
-            >
-              <span class="slider-btn-label">{s.label}</span>
-              <span class="slider-btn-short">{s.short}</span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-    );
-  })}
+<div
+  class="chapter-item flex items-center gap-3 p-3 bg-[#050b18] rounded-xl border transition-all group hover:border-indigo-500/30 {ringClass}"
+  data-chapter-id={chapter.id}
+  data-status={chapter.status}
+>
+  <span
+    class="chapter-icon material-symbols-outlined shrink-0"
+    style={`color: ${iconColor}; font-variation-settings: 'FILL' ${isCompleted ? 1 : 0};`}
+  >{isCompleted ? 'check_circle' : isInProgress ? 'radio_button_unchecked' : 'radio_button_unchecked'}</span>
+  <div class="flex-1 min-w-0">
+    <p class="chapter-name text-sm font-semibold truncate text-white">{chapter.chapter}</p>
+    <span class="chapter-badge text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wider {badgeClass}">{statusLabel}</span>
+  </div>
 </div>
-
-<script>
-  const CHAPTER_STATUSES = ['not_started', 'studied', 'revision_1', 'revision_2', 'revision_3', 'mastered'];
-
-  const ACCENT_COLORS: Record<string, string> = {
-    not_started: '#64748b',
-    studied: '#f59e0b',
-    revision_1: '#3b82f6',
-    revision_2: '#8b5cf6',
-    revision_3: '#ec4899',
-    mastered: '#22c55e',
-  };
-
-  // Use event delegation on each chapter-list container
-  document.querySelectorAll('.chapter-list').forEach(list => {
-    list.addEventListener('click', async (e) => {
-      const btn = (e.target as HTMLElement).closest('.slider-btn');
-      if (!btn) return;
-
-      const chapterId = btn.dataset.chapterId;
-      const status = btn.dataset.status;
-      if (!chapterId || !status) return;
-
-      const group = btn.closest('.slider-group');
-      if (!group) return;
-      const allBtns = group.querySelectorAll('.slider-btn');
-      allBtns.forEach(b => (b as HTMLButtonElement).disabled = true);
-
-      try {
-        const res = await fetch('/api/syllabus', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: chapterId, status }),
-        });
-        if (!res.ok) throw new Error('Update failed');
-
-        const updated = await res.json();
-        const activeIdx = CHAPTER_STATUSES.indexOf(status);
-
-        allBtns.forEach((b, idx) => {
-          const s = b.dataset.status!;
-          const isActive = s === status;
-          const isBefore = idx < activeIdx;
-          const isAfter = idx > activeIdx;
-
-          b.classList.toggle('active', isActive);
-          b.classList.toggle('before', isBefore);
-          b.classList.toggle('after', isAfter);
-          b.style.setProperty('--accent', ACCENT_COLORS[s] || '#64748b');
-        });
-
-        // Update row status class
-        const row = btn.closest('.chapter-row');
-        if (row) {
-          CHAPTER_STATUSES.forEach(st => row.classList.remove('status-' + st));
-          row.classList.add('status-' + status);
-        }
-
-        // Trigger progress refresh
-        document.dispatchEvent(new CustomEvent('syllabus-updated', {
-          detail: { examType: updated.examType },
-        }));
-
-      } catch (err) {
-        alert('Failed: ' + (err instanceof Error ? err.message : 'Error'));
-      } finally {
-        allBtns.forEach(b => (b as HTMLButtonElement).disabled = false);
-      }
-    });
-  });
-</script>
-
-<style>
-  .chapter-list {
-    border: 1px solid var(--ds-border-default);
-    border-top: none;
-    border-radius: 0 0 var(--ds-radius-lg) var(--ds-radius-lg);
-    overflow: hidden;
-  }
-  .chapter-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--ds-space-1) var(--ds-space-2);
-    background: var(--ds-bg-base);
-    border-bottom: 1px solid var(--ds-border-subtle);
-    gap: var(--ds-space-1);
-    transition: background 0.15s, opacity 0.2s;
-  }
-  .chapter-row:last-child {
-    border-bottom: none;
-  }
-  .chapter-row:hover {
-    background: var(--ds-bg-hover);
-  }
-  .chapter-row.status-mastered {
-    opacity: 0.55;
-  }
-  .chapter-row.status-mastered .chapter-name {
-    text-decoration: line-through;
-    color: var(--ds-text-muted);
-  }
-  .chapter-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-    flex: 1;
-    min-width: 0;
-  }
-  .chapter-name {
-    font-size: var(--ds-text-sm);
-    color: var(--ds-text-secondary);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .chapter-meta {
-    display: flex;
-    align-items: center;
-    gap: 0.3rem;
-  }
-  .meta-badge {
-    font-size: 0.55rem;
-    padding: 0.08rem 0.3rem;
-    border-radius: 0.25rem;
-    background: var(--ds-bg-elevated);
-    color: var(--ds-text-muted);
-    font-family: var(--ds-font-mono);
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-  .meta-badge.revision {
-    background: rgba(59, 130, 246, 0.15);
-    color: #93c5fd;
-  }
-  .meta-badge.count {
-    background: rgba(139, 92, 246, 0.15);
-    color: #c4b5fd;
-  }
-  .chapter-empty {
-    padding: var(--ds-space-2);
-  }
-
-  /* ── Status slider ── */
-  .slider-group {
-    display: flex;
-    border-radius: var(--ds-radius-sm);
-    overflow: hidden;
-    border: 1px solid var(--ds-border-default);
-    flex-shrink: 0;
-  }
-  .slider-btn {
-    font-size: var(--ds-text-2xs);
-    padding: 0.2rem 0.35rem;
-    min-width: 2rem;
-    border: none;
-    background: var(--ds-bg-surface);
-    color: var(--ds-text-muted);
-    cursor: pointer;
-    font-family: var(--ds-font-sans);
-    transition: all 0.15s ease;
-    border-right: 1px solid var(--ds-border-subtle);
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .slider-btn:last-child {
-    border-right: none;
-  }
-  .slider-btn:hover:not(:disabled) {
-    color: var(--ds-text-secondary);
-    background: var(--ds-bg-hover);
-  }
-  .slider-btn.active {
-    background: var(--ds-accent-bg);        /* fallback for Firefox (no color-mix) */
-    background: color-mix(in srgb, var(--accent) 20%, transparent);
-    color: var(--accent);
-    font-weight: var(--ds-weight-semibold);
-  }
-  .slider-btn.before {
-    opacity: 0.3;
-  }
-  .slider-btn.after {
-    opacity: 0.45;
-  }
-  .slider-btn:disabled {
-    opacity: 0.25;
-    cursor: not-allowed;
-  }
-
-  /* Full label on larger screens, short label on small */
-  .slider-btn-label {
-    display: none;
-  }
-  .slider-btn-short {
-    display: inline;
-  }
-  @media (min-width: 640px) {
-    .slider-btn { min-width: 2.2rem; padding: 0.2rem 0.4rem; }
-  }
-  @media (min-width: 1024px) {
-    .slider-btn { min-width: 3rem; padding: 0.25rem 0.5rem; }
-    .slider-btn-label { display: inline; }
-    .slider-btn-short { display: none; }
-  }
-</style>

@@ -21,80 +21,193 @@ const aiProvider = ai.constructor.name;
 // Try to load today's daily review
 const todayReview = getDailyReviewByDate(today);
 const hasEntriesToday = recentEntries.some(e => e.date === today);
+
+// Stats for right column
+const todayHours = todayEntry?.hoursStudied || 0;
+const targetHours = 8;
+const todayFocus = todayEntry?.focusRating || 0;
+const streak = db.getStreakInfo();
+
+// Today's summary
+function getFocusLabel(rating: number): string {
+  if (rating >= 4) return 'High';
+  if (rating >= 3) return 'Medium';
+  if (rating > 0) return 'Low';
+  return '—';
+}
+
+const todayDate = new Date();
+const dateDisplay = todayDate.toLocaleDateString('en-US', {
+  weekday: 'long',
+  month: 'short',
+  day: 'numeric',
+});
 ---
 
 <BaseLayout title="Daily Log">
-    <div style="max-width:min(56rem,100%);" class="animate-slide-up">
-    <!-- Header -->
-    <div class="ds-page-header" style="max-width:min(56rem,100%);">
-      <h1 class="ds-heading-page" style="margin-bottom:0.25rem;">Daily Study Log</h1>
-      <p class="ds-body-sm" style="margin:0;">
-        {todayEntry ? 'Update today\'s entry' : 'What did you study today?'}
-      </p>
-    </div>
+  <!-- Main Content Area — Stitch Daily Log Layout -->
+  <main class="md:ml-64 p-6 md:p-10 min-h-screen pb-24 md:pb-10 bg-[#050b18]">
 
-    <!-- Quick stat strip -->
-    {hasEntriesToday && (
-      <div class="daily-stats animate-stagger" style="--stagger-delay:0.08s;">
-        <div class="ds-card-glass" style="padding:var(--ds-space-2);text-align:center;--stagger-index:0">
-          <div class="ds-stat-value" style="font-size:var(--ds-text-xl);">{todayEntry?.hoursStudied || 0}h</div>
-          <div class="ds-stat-label">Today</div>
-        </div>
-        <div class="ds-card-glass" style="padding:var(--ds-space-2);text-align:center;--stagger-index:1">
-          <div class="ds-stat-value" style="font-size:var(--ds-text-xl);">{todayEntry?.focusRating || '-'}/5</div>
-          <div class="ds-stat-label">Focus</div>
-        </div>
-        <div class="ds-card-glass" style="padding:var(--ds-space-2);text-align:center;--stagger-index:2">
-          <div class="ds-stat-value" style="font-size:var(--ds-text-xl);">{todayEntry?.studyType ? todayEntry.studyType.replace('_', ' ') : '-'}</div>
-          <div class="ds-stat-label">Type</div>
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+      <div>
+        <h2 class="text-3xl md:text-4xl font-headline font-bold text-[#dce2f5] tracking-tight">Daily Log</h2>
+        <p class="text-[#8b919d] mt-1 flex items-center gap-2">
+          <span class="material-symbols-outlined text-sm">event</span>
+          {dateDisplay}
+        </p>
+      </div>
+      <div class="hidden md:flex items-center gap-4">
+        <div class="bg-[#0d1321]/50 border border-slate-800 rounded-lg px-4 py-2 flex items-center gap-3">
+          <span class="w-2 h-2 rounded-full bg-[#60a5fa] animate-pulse"></span>
+          <span class="text-xs font-label text-[#8b919d]">Live Study Session Active</span>
         </div>
       </div>
-    )}
+    </header>
 
-    <!-- Entry Form -->
-    <div style="margin-bottom:var(--ds-space-4);">
-      <EntryForm todayEntry={todayEntry ? {
-        id: todayEntry.id,
-        date: todayEntry.date,
-        content: todayEntry.content,
-        hoursStudied: todayEntry.hoursStudied,
-        studyType: todayEntry.studyType,
-        focusRating: todayEntry.focusRating,
-        examType: todayEntry.examType,
-      } : null} defaultExamType={settings.selectedExams?.[0] || 'JEE'} />
-    </div>
+    <!-- Two-column grid: Form (2/3) + Summary (1/3) -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-    <!-- Daily Review -->
-    {hasEntriesToday && (
-      <div style="margin-bottom:var(--ds-space-4);" id="daily-review-section">
-        <div style="display:flex;flex-direction:column;">
-          {todayReview ? (
-            <DailyReviewCard review={todayReview} />
-          ) : (
-            <div class="ds-card-glass card-lift" style="text-align:center;padding:var(--ds-space-4);">
-              <p style="font-size:var(--ds-text-sm);color:var(--ds-text-tertiary);margin-bottom:var(--ds-space-4);line-height:1.5;">
-                You have entries for today. Generate an AI-powered daily review to summarize your progress.
-              </p>
-              <button id="generate-daily-btn" class="ds-btn ds-btn-primary pulse-glow">
-                Generate Daily Review
+      <!-- Left: Entry Form + History (2/3) -->
+      <div class="lg:col-span-2 space-y-8">
+
+        <!-- Entry Form Card -->
+        <section class="bg-[#0d1321] rounded-2xl p-6 md:p-8 shadow-xl shadow-black/20 border border-slate-800/50">
+          <div class="flex items-center gap-3 mb-6">
+            <span class="material-symbols-outlined text-[#60a5fa]">edit_note</span>
+            <h3 class="text-xl font-bold text-[#dce2f5]">New Entry</h3>
+          </div>
+          <EntryForm
+            todayEntry={todayEntry ? {
+              id: todayEntry.id,
+              date: todayEntry.date,
+              content: todayEntry.content,
+              hoursStudied: todayEntry.hoursStudied,
+              studyType: todayEntry.studyType,
+              focusRating: todayEntry.focusRating,
+              examType: todayEntry.examType,
+            } : null}
+            defaultExamType={settings.selectedExams?.[0] || 'JEE'}
+          />
+        </section>
+
+        <!-- Daily Review -->
+        {hasEntriesToday && (
+          <section id="daily-review-section">
+            {todayReview ? (
+              <DailyReviewCard review={todayReview} />
+            ) : (
+              <div class="bg-[#0d1321] rounded-2xl p-6 md:p-8 shadow-xl shadow-black/20 border border-slate-800/50 text-center">
+                <p class="text-sm text-[#8b919d] mb-6 leading-relaxed">
+                  You have entries for today. Generate an AI-powered daily review to summarize your progress.
+                </p>
+                <button id="generate-daily-btn" class="bg-[#60a5fa] hover:bg-[#60a5fa]/90 text-[#050b18] font-bold py-3 px-8 rounded-xl transition-all active:scale-[0.98]">
+                  Generate Daily Review
+                </button>
+              </div>
+            )}
+            {todayReview && (
+              <button id="refresh-daily-btn" class="text-[#60a5fa] text-sm hover:underline mt-3">
+                Refresh Review
               </button>
+            )}
+          </section>
+        )}
+
+        <!-- History Section — Past Week table -->
+        <section>
+          <div class="flex items-center justify-between mb-6 px-2">
+            <h3 class="text-xl font-bold text-[#dce2f5] flex items-center gap-3">
+              <span class="material-symbols-outlined text-[#8b919d]">history</span>
+              Past Week
+            </h3>
+          </div>
+          {recentEntries.length > 0 ? (
+            <div class="overflow-hidden rounded-2xl border border-slate-800 bg-[#0d1321]/30">
+              <EntryList entries={recentEntries} />
+            </div>
+          ) : (
+            <div class="bg-[#0d1321]/30 rounded-2xl p-12 border border-slate-800 text-center">
+              <span class="material-symbols-outlined text-4xl text-[#8b919d]/40 mb-3">history</span>
+              <p class="text-[#8b919d]">No entries yet. Start logging above!</p>
             </div>
           )}
-          {todayReview && (
-            <button id="refresh-daily-btn" class="ds-btn ds-btn-ghost ds-btn-sm" style="margin-top:var(--ds-space-3);">
-              Refresh Review
-            </button>
-          )}
+        </section>
+      </div>
+
+      <!-- Right: Summary Column (1/3) -->
+      <div class="space-y-6">
+
+        <!-- Today's Summary Card -->
+        <div class="bg-[#0d1321] rounded-2xl p-6 shadow-lg border border-slate-800 group hover:border-[#60a5fa]/30 transition-all">
+          <h3 class="text-sm font-label text-[#8b919d] mb-6 flex items-center justify-between">
+            Today's Summary
+            <span class="material-symbols-outlined text-xs">info</span>
+          </h3>
+          <div class="space-y-6">
+            <div class="flex items-center justify-between">
+              <span class="text-[#8b919d]">Total Hours</span>
+              <div class="text-right">
+                <span class="text-2xl font-bold text-[#dce2f5]">{todayHours.toFixed(1)}</span>
+                <span class="text-sm text-[#8b919d]">/ {targetHours}.0</span>
+              </div>
+            </div>
+            <div class="w-full bg-[#050b18] h-2 rounded-full overflow-hidden">
+              <div
+                class="bg-[#60a5fa] h-full rounded-full transition-all duration-1000"
+                style={`width:${Math.min((todayHours / targetHours) * 100, 100)}%; box-shadow: 0 0 12px rgba(96, 165, 250, 0.4);`}
+              ></div>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-[#8b919d]">Focus Quality</span>
+              <div class="flex items-center gap-2">
+                <span class="text-lg font-bold text-[#60a5fa]">{getFocusLabel(todayFocus)}</span>
+                {todayFocus > 0 && (
+                  <span class="material-symbols-outlined text-[#60a5fa] filled-icon">bolt</span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Study Streak Card -->
+        <div class="bg-gradient-to-br from-[#60a5fa]/10 to-[#0d1321] rounded-2xl p-6 border border-[#60a5fa]/20 relative overflow-hidden group">
+          <div class="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-500">
+            <span class="material-symbols-outlined text-9xl filled-icon" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+          </div>
+          <div class="relative z-10">
+            <div class="flex items-center gap-3 mb-2">
+              <span class="material-symbols-outlined text-[#60a5fa] filled-icon">local_fire_department</span>
+              <h3 class="text-sm font-label text-[#8b919d] uppercase tracking-widest">Study Streak</h3>
+            </div>
+            <p class="text-4xl font-headline font-black text-[#dce2f5]">{streak} Days</p>
+            <p class="text-xs text-[#60a5fa] mt-2 font-medium">Keep it going! You're building great momentum.</p>
+          </div>
+        </div>
+
+        <!-- Motivation Card -->
+        <div class="bg-[#0d1321] rounded-2xl overflow-hidden shadow-lg border border-slate-800">
+          <div class="h-32 bg-slate-800 relative">
+            <div class="absolute inset-0 bg-gradient-to-t from-[#0d1321] to-transparent"></div>
+            <div class="absolute inset-0 flex items-center justify-center opacity-20">
+              <span class="material-symbols-outlined text-6xl filled-icon" style="font-variation-settings: 'FILL' 1;">auto_stories</span>
+            </div>
+          </div>
+          <div class="p-6">
+            <h4 class="font-bold text-[#dce2f5] mb-2">Did you know?</h4>
+            <p class="text-sm text-[#8b919d] leading-relaxed italic">
+              "Taking a 10-minute break every hour increases long-term retention by up to 20%."
+            </p>
+            <div class="mt-4 flex items-center gap-2 text-[#60a5fa] text-xs font-bold cursor-pointer group">
+              Learn more about active recall
+              <span class="material-symbols-outlined text-xs group-hover:translate-x-1 transition-transform">arrow_forward</span>
+            </div>
+          </div>
         </div>
       </div>
-    )}
 
-    <!-- Recent Entries -->
-    <div class="animate-slide-up" style="animation-delay:0.2s;opacity:0;animation-fill-mode:forwards;">
-      <h2 class="ds-heading-section">Recent Entries</h2>
-      <EntryList entries={recentEntries} />
     </div>
-  </div>
+  </main>
 </BaseLayout>
 
 <script>
@@ -104,7 +217,7 @@ const hasEntriesToday = recentEntries.some(e => e.date === today);
 
   async function loadDailyReview() {
     if (!section) return;
-    section.innerHTML = '<p class="text-sm text-slate-500">Generating daily review...</p>';
+    section.innerHTML = '<p class="text-sm text-[#8b919d]">Generating daily review...</p>';
 
     try {
       const res = await fetch('/api/daily', { method: 'POST' });
@@ -112,18 +225,13 @@ const hasEntriesToday = recentEntries.some(e => e.date === today);
         const err = await res.json().catch(() => ({ error: 'Failed' }));
         throw new Error(err.error || 'Failed to generate');
       }
-      const review = await res.json();
-
-      // Re-render the section with the new review
       window.location.reload();
     } catch (err) {
       section.innerHTML = `
-        <div class="p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-400">
+        <div class="bg-red-500/10 border border-red-500/20 text-sm text-red-400 p-4 rounded-lg">
           Failed to generate daily review: ${err.message}
         </div>
-        <button onclick="loadDailyReview()" class="btn-secondary mt-2">
-          Try Again
-        </button>
+        <button onclick="loadDailyReview()" class="text-[#60a5fa] text-sm mt-2 hover:underline">Try Again</button>
       `;
     }
   }
@@ -131,7 +239,7 @@ const hasEntriesToday = recentEntries.some(e => e.date === today);
   generateBtn?.addEventListener('click', loadDailyReview);
   refreshBtn?.addEventListener('click', loadDailyReview);
 
-  // ── Pick up timer data from sessionStorage ──
+  // Pick up timer data from sessionStorage
   (function() {
     try {
       const raw = sessionStorage.getItem('studyTimerData');
@@ -152,45 +260,16 @@ const hasEntriesToday = recentEntries.some(e => e.date === today);
           ta.dispatchEvent(evt);
         }
       }
-    } catch (e) {
-      // Ignore parse errors
-    }
+    } catch (e) {}
   })();
-
-  // Auto-dismiss entry form success — refresh daily review when entries change
-  let submitTimeout = null;
-  const form = document.querySelector('form');
-  form?.addEventListener('submit', async (e) => {
-    if (submitTimeout) clearTimeout(submitTimeout);
-    submitTimeout = setTimeout(async () => {
-      if (generateBtn && section) {
-        try {
-          const res = await fetch('/api/daily?date=' + new Date().toISOString().split('T')[0]);
-          if (res.ok) {
-            const review = await res.json();
-            if (review && review.id) {
-              window.location.reload();
-            }
-          }
-        } catch {}
-      }
-    }, 2000);
-  });
 </script>
 
 <style>
-  .hidden { display: none; }
-
-  /* Daily stat strip */
-  .daily-stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--ds-space-2);
-    margin-bottom: var(--ds-space-3);
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    vertical-align: middle;
   }
-  @media (max-width: 480px) {
-    .daily-stats {
-      grid-template-columns: 1fr;
-    }
+  .filled-icon {
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
   }
 </style>

@@ -1,6 +1,5 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import StreakDisplay from '../components/StreakDisplay.astro';
 import GettingStarted from '../components/GettingStarted.astro';
 import DashboardLeftColumn from '../components/DashboardLeftColumn.astro';
 import DashboardRightColumn from '../components/DashboardRightColumn.astro';
@@ -24,45 +23,16 @@ const hasAnyProgress = syllProgress.some(p => p.weightedPercent > 0);
 const syllabusPercent = hasAnyProgress
   ? Math.round(syllProgress.reduce((s, p) => s + p.weightedPercent, 0) / syllProgress.length)
   : 0;
-
-// Focus chapter for greeting
-const weakChapters = hasAnyProgress
-  ? syllProgress.filter(p => p.weightedPercent < 50).slice(0, 5)
-  : [];
-const focusChapter = weakChapters?.[0] || null;
-
-const today = new Date();
-
-function formatGreeting(): string {
-  const hour = today.getHours();
-  if (hour < 12) return 'Good morning';
-  if (hour < 17) return 'Good afternoon';
-  return 'Good evening';
-}
 ---
 
 <BaseLayout title="Dashboard">
-  <div class="ds-page-wide animate-slide-up" style="--stagger-index:0">
+  <!-- Full-height grid layout matching Stitch Premium Dashboard exactly -->
+  <div class="h-full min-h-screen grid grid-cols-1 xl:grid-cols-3 overflow-hidden">
 
-    <!-- Header with greeting -->
-    <div class="ds-page-header">
-      <h1 class="ds-heading-page" style="margin-bottom:0.25rem;">
-        {formatGreeting()}{user?.name && user.name !== 'Guest' ? `, ${user.name.split(' ')[0]}` : ''} 👋
-      </h1>
-      <p class="ds-body-sm" style="margin:0;">
-        {focusChapter
-          ? `Your focus today: <strong>${focusChapter.subject} — ${focusChapter.subtopic || focusChapter.chapter}</strong>`
-          : hasEntries
-          ? 'Keep the momentum going!'
-          : 'Ready to start your study journey?'}
-      </p>
-    </div>
+    <!-- Left Column (1/3) — Darker surface bg, scrollable -->
+    <section class="xl:col-span-1 border-r border-white/5 bg-[#0A0A0B] p-8 overflow-y-auto custom-scrollbar">
+      {!hasEntries && <GettingStarted />}
 
-    <!-- Getting Started (only for new users) -->
-    {!hasEntries && <GettingStarted />}
-
-    <!-- Two-column dashboard layout -->
-    <div class="ds-dashboard-grid">
       <DashboardLeftColumn
         coveragePercent={stats.coveragePercent}
         consistencyPercent={stats.consistencyPercent}
@@ -77,7 +47,10 @@ function formatGreeting(): string {
         syllabusPercent={syllabusPercent}
         user={user}
       />
+    </section>
 
+    <!-- Right Column (2/3) — Base bg color, scrollable, flex layout -->
+    <section class="xl:col-span-2 bg-[#050505] p-8 lg:p-12 overflow-y-auto flex flex-col custom-scrollbar">
       <DashboardRightColumn
         totalHoursThisWeek={stats.totalHoursThisWeek}
         targetHoursPerWeek={stats.targetHoursPerWeek}
@@ -90,12 +63,22 @@ function formatGreeting(): string {
         dailyTrend={stats.dailyTrend}
         subjectBreakdown={stats.subjectBreakdown}
         weekComparison={stats.weekComparison}
-        focusTrend={stats.focusTrend}
-        monthlyEntryDates={getMonthlyEntryDates(today.getFullYear(), today.getMonth() + 1)}
-        calendarYear={today.getFullYear()}
-        calendarMonth={today.getMonth() + 1}
+        user={user}
       />
-    </div>
+    </section>
 
   </div>
 </BaseLayout>
+
+<style>
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+  }
+</style>

@@ -1,7 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import StudyTimer from '../components/StudyTimer.astro';
-import TourTooltip from '../components/TourTooltip.astro';
 import { getDb } from '../db';
 import { scopeDbToUser } from '../services/user-scope';
 
@@ -9,37 +8,100 @@ scopeDbToUser(Astro.request);
 const db = getDb();
 const settings = db.getSettings();
 const subjects = settings.subjects || ['Physics', 'Chemistry', 'Mathematics', 'Biology'];
+const streak = db.getStreakInfo();
 ---
 
-<BaseLayout title="Study Timer">
-  <div class="animate-slide-up" style="max-width:min(40rem,100%);margin:0 auto;">
-    <div class="ds-page-header" style="margin-bottom:var(--ds-space-3);">
-      <h1 class="ds-heading-page" style="margin-bottom:0.25rem;">Study Timer</h1>
-      <p class="ds-body-sm" style="margin:0;">Track your study sessions with precision</p>
-    </div>
+<BaseLayout title="Timer">
+  <main class="flex-1 ml-20 lg:ml-64 px-4 md:px-8 py-8 overflow-y-auto bg-[#050b18] min-h-screen">
+    <div class="max-w-7xl mx-auto flex flex-col xl:flex-row gap-8">
 
-    <StudyTimer subjects={subjects} />
+      <!-- Left: Timer Experience -->
+      <div class="flex-1 flex flex-col">
 
-    <!-- Recent Sessions -->
-    <div id="recent-sessions" class="animate-slide-up" style="animation-delay:0.3s;opacity:0;animation-fill-mode:forwards;margin-top:var(--ds-space-3);">
-      <div class="ds-card-glass" style="padding:var(--ds-space-2);">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--ds-space-1);">
-          <h3 style="font-size:var(--ds-text-sm);font-weight:var(--ds-weight-semibold);color:var(--ds-text-primary);margin:0;">Recent Sessions</h3>
-          <button id="clear-sessions-btn" class="ds-btn ds-btn-ghost ds-btn-sm" style="font-size:var(--ds-text-2xs);color:var(--ds-text-muted);">Clear</button>
+        <!-- Top Stats Row — Stitch style -->
+        <div class="grid grid-cols-3 gap-4 mb-10">
+          <div class="bg-[#0d1321] border border-white/5 rounded-xl p-4 flex flex-col justify-center items-center">
+            <span class="text-slate-400 text-xs font-label uppercase tracking-wider mb-1">Today's Focus</span>
+            <span class="text-xl font-headline font-bold text-[#f8fafc]" id="today-focus">0m</span>
+          </div>
+          <div class="bg-[#0d1321] border border-white/5 rounded-xl p-4 flex flex-col justify-center items-center">
+            <span class="text-slate-400 text-xs font-label uppercase tracking-wider mb-1">Sessions</span>
+            <span class="text-xl font-headline font-bold text-[#f8fafc]" id="session-count">0</span>
+          </div>
+          <div class="bg-[#0d1321] border border-white/5 rounded-xl p-4 flex flex-col justify-center items-center">
+            <span class="text-slate-400 text-xs font-label uppercase tracking-wider mb-1">Current Streak</span>
+            <span class="text-xl font-headline font-bold text-[#6366f1] flex items-center gap-1">
+              <span class="material-symbols-outlined text-sm filled-icon">local_fire_department</span>
+              {streak} days
+            </span>
+          </div>
         </div>
-        <div id="sessions-list" style="display:flex;flex-direction:column;gap:var(--ds-space-1);min-height:2rem;">
-          <p style="font-size:var(--ds-text-xs);color:var(--ds-text-muted);margin:0;text-align:center;padding:var(--ds-space-2);" id="sessions-empty">No sessions yet. Complete a timer session to see it here.</p>
+
+        <!-- Timer Main Area — Stitch style -->
+        <div class="flex-1 bg-[#0d1321] border border-white/5 rounded-2xl p-8 flex flex-col items-center justify-center relative overflow-hidden">
+          <!-- Subtle background decoration -->
+          <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-lg bg-indigo-500/5 blur-[100px] rounded-full pointer-events-none"></div>
+
+          <!-- Mode Selector Tabs -->
+          <div class="flex bg-[#050b18] border border-white/5 rounded-full p-1 mb-12 z-10">
+            <button class="px-6 py-2 rounded-full bg-[#6366f1] text-white font-medium text-sm transition-all shadow-sm" data-mode="focus">Focus 25m</button>
+            <button class="px-6 py-2 rounded-full text-slate-400 hover:text-slate-200 font-medium text-sm transition-all hover:bg-white/5" data-mode="short">Short Break 5m</button>
+            <button class="px-6 py-2 rounded-full text-slate-400 hover:text-slate-200 font-medium text-sm transition-all hover:bg-white/5" data-mode="long">Long Break 15m</button>
+          </div>
+
+          <!-- Circular Timer Display -->
+          <div class="relative flex items-center justify-center mb-12 z-10">
+            <!-- SVG Progress Ring -->
+            <svg class="w-80 h-80 drop-shadow-[0_0_15px_rgba(99,102,241,0.2)]" viewBox="0 0 100 100">
+              <circle class="stroke-[#050b18]" cx="50" cy="50" fill="transparent" r="46" stroke-width="3"></circle>
+              <circle id="timer-svg-ring" class="stroke-[#6366f1] progress-ring__circle" cx="50" cy="50" fill="transparent" r="46" stroke-dasharray="289.026" stroke-dashoffset="0" stroke-linecap="round" stroke-width="3"></circle>
+            </svg>
+            <div class="absolute flex flex-col items-center justify-center w-64 h-64 bg-[#050b18] rounded-full border border-white/5 timer-glow-inner">
+              <span class="text-7xl font-display font-black tracking-tighter text-[#f8fafc] tabular-nums" id="timer-display-main">25:00</span>
+              <span class="text-sm font-label text-slate-400 mt-2 tracking-wide uppercase" id="timer-session-label">Focus Session</span>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex items-center gap-6 z-10">
+            <button id="timer-reset" class="w-14 h-14 rounded-full bg-[#050b18] border border-white/5 flex items-center justify-center text-slate-400 hover:text-slate-200 hover:border-slate-400 transition-all active:scale-95 group">
+              <span class="material-symbols-outlined text-2xl group-hover:rotate-[-180deg] transition-transform duration-500">restart_alt</span>
+            </button>
+            <button id="timer-play" class="w-20 h-20 rounded-full bg-[#6366f1] hover:bg-[#818cf8] text-white shadow-[0_0_20px_rgba(99,102,241,0.4)] flex items-center justify-center transition-all active:scale-95 hover:scale-105">
+              <span class="material-symbols-outlined text-4xl ml-1 filled-icon">play_arrow</span>
+            </button>
+            <button id="timer-pause" class="w-14 h-14 rounded-full bg-[#050b18] border border-white/5 flex items-center justify-center text-slate-400 hover:text-slate-200 hover:border-slate-400 transition-all active:scale-95">
+              <span class="material-symbols-outlined text-2xl filled-icon">pause</span>
+            </button>
+          </div>
+
+          <!-- Subject & Topic selector (hidden by default, shown on session start) -->
+          <div id="timer-session-details" class="hidden mt-8 w-full max-w-md z-10">
+            <StudyTimer subjects={subjects} />
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Panel: Recent Sessions -->
+      <div class="w-full xl:w-80 flex flex-col gap-6">
+        <div class="bg-[#0d1321] border border-white/5 rounded-2xl p-6 h-full flex flex-col">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-headline font-semibold text-[#f8fafc]">Recent Sessions</h3>
+            <button id="clear-sessions-btn" class="text-slate-400 hover:text-[#6366f1] transition-colors">
+              <span class="material-symbols-outlined text-sm">more_horiz</span>
+            </button>
+          </div>
+          <div id="sessions-list" class="flex flex-col gap-3 flex-1 overflow-y-auto pr-2">
+            <p class="text-sm text-slate-500 text-center py-8" id="sessions-empty">No sessions yet. Start your first focus session above.</p>
+          </div>
+          <button id="log-manual-session" class="w-full mt-4 py-3 border border-dashed border-white/5 rounded-xl text-slate-400 hover:text-slate-200 hover:border-slate-400 hover:bg-white/5 transition-all text-sm font-medium flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-lg">add</span>
+            Log Manual Session
+          </button>
         </div>
       </div>
     </div>
-  </div>
-
-  <TourTooltip
-    tourId="timer-intro"
-    title="⏱️ Study Timer"
-    description="Select a subject and optional topic, then press Start. Pause and resume as needed. When you stop, you can save the session as a study log entry."
-    position="bottom"
-  />
+  </main>
 </BaseLayout>
 
 <script>
@@ -47,51 +109,95 @@ const subjects = settings.subjects || ['Physics', 'Chemistry', 'Mathematics', 'B
   (function() {
     const STORAGE_KEY = 'timer_recent_sessions';
     const list = document.getElementById('sessions-list');
-    const empty = document.getElementById('sessions-empty');
+    const emptyPlaceholder = document.getElementById('sessions-empty');
     const clearBtn = document.getElementById('clear-sessions-btn');
 
     function loadSessions() {
-      try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-      } catch { return []; }
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
     }
 
     function saveSessions(sessions) {
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions.slice(0, 10))); } catch(e) {}
     }
 
+    function formatDuration(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return `${m}m` + (s > 0 ? ` ${s}s` : '');
+    }
+
     function renderSessions() {
       const sessions = loadSessions();
+      list.innerHTML = '';
       if (sessions.length === 0) {
-        list.innerHTML = '';
-        if (empty) list.appendChild(empty);
+        list.appendChild(emptyPlaceholder);
         return;
       }
-      list.innerHTML = '';
       sessions.forEach(s => {
-        const row = document.createElement('div');
-        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:var(--ds-space-1) var(--ds-space-2);background:var(--ds-bg-base);border-radius:var(--ds-radius-md);font-size:var(--ds-text-xs);';
-        const info = document.createElement('span');
-        info.style.cssText = 'color:var(--ds-text-secondary);';
-        info.textContent = `${s.subject}${s.topic ? ' — ' + s.topic : ''}`;
-        const time = document.createElement('span');
-        time.style.cssText = 'font-family:var(--ds-font-mono);font-size:var(--ds-text-2xs);color:var(--ds-text-muted);';
-        time.textContent = s.duration;
-        row.appendChild(info);
-        row.appendChild(time);
-        list.appendChild(row);
+        const card = document.createElement('div');
+        card.className = 'bg-[#050b18] border border-white/5 rounded-xl p-4 hover:border-[#6366f1]/30 transition-colors group cursor-default';
+
+        const topRow = document.createElement('div');
+        topRow.className = 'flex justify-between items-start mb-2';
+
+        const subjectInfo = document.createElement('div');
+        subjectInfo.className = 'flex items-center gap-2';
+        const dot = document.createElement('div');
+        dot.className = 'w-2 h-2 rounded-full';
+        dot.style.background = s.color || '#6366f1';
+        subjectInfo.appendChild(dot);
+        const name = document.createElement('span');
+        name.className = 'font-medium text-[#f8fafc] text-sm';
+        name.textContent = s.subject || 'Study';
+        subjectInfo.appendChild(name);
+        topRow.appendChild(subjectInfo);
+
+        const timeLabel = document.createElement('span');
+        timeLabel.className = 'text-xs text-slate-400 font-label';
+        timeLabel.textContent = s.time || '';
+        topRow.appendChild(timeLabel);
+        card.appendChild(topRow);
+
+        if (s.topic) {
+          const topicEl = document.createElement('div');
+          topicEl.className = 'text-sm text-slate-400 mb-3';
+          topicEl.textContent = s.topic;
+          card.appendChild(topicEl);
+        }
+
+        const bottomRow = document.createElement('div');
+        bottomRow.className = 'flex justify-between items-end';
+        const tag = document.createElement('span');
+        tag.className = 'text-xs font-label px-2 py-1 bg-[#0d1321] rounded-md text-[#f8fafc]';
+        tag.textContent = s.tag || 'Focus';
+        bottomRow.appendChild(tag);
+        const duration = document.createElement('span');
+        duration.className = 'font-headline font-semibold text-[#6366f1]';
+        duration.textContent = s.duration;
+        bottomRow.appendChild(duration);
+        card.appendChild(bottomRow);
+
+        list.appendChild(card);
       });
     }
 
-    // New session added — listen on custom event from StudyTimer
     document.addEventListener('timer-session-saved', (e) => {
       const { subject, topic, duration } = e.detail || {};
       if (!subject) return;
       const sessions = loadSessions();
-      const label = topic ? `${subject} — ${topic}` : subject;
-      sessions.unshift({ subject, topic, duration, date: new Date().toISOString() });
+      const colors = { Physics: '#6366f1', Chemistry: '#22c55e', Mathematics: '#f59e0b', Maths: '#f59e0b', Biology: '#ec4899' };
+      sessions.unshift({
+        subject,
+        topic,
+        duration: formatDuration(duration),
+        date: new Date().toISOString(),
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        color: colors[subject] || '#6366f1',
+        tag: 'Focus',
+      });
       saveSessions(sessions);
       renderSessions();
+      updateStats();
     });
 
     clearBtn?.addEventListener('click', () => {
@@ -100,11 +206,53 @@ const subjects = settings.subjects || ['Physics', 'Chemistry', 'Mathematics', 'B
     });
 
     renderSessions();
+
+    // Update stats from saved sessions
+    function updateStats() {
+      const sessions = loadSessions();
+      const today = new Date().toDateString();
+      const todaySessions = sessions.filter(s => new Date(s.date).toDateString() === today);
+      let totalSeconds = 0;
+      todaySessions.forEach(s => {
+        const match = (s.duration || '').match(/(\d+)m/);
+        if (match) totalSeconds += parseInt(match[1]) * 60;
+      });
+      const hours = Math.floor(totalSeconds / 3600);
+      const mins = Math.floor((totalSeconds % 3600) / 60);
+      document.getElementById('today-focus').textContent = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+      document.getElementById('session-count').textContent = todaySessions.length;
+    }
+    updateStats();
   })();
+
+  // ── Timer Mode Selector ──
+  document.querySelectorAll('[data-mode]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-mode]').forEach(b => {
+        b.classList.remove('bg-[#6366f1]', 'text-white');
+        b.classList.add('text-slate-400');
+      });
+      btn.classList.remove('text-slate-400');
+      btn.classList.add('bg-[#6366f1]', 'text-white');
+    });
+  });
 </script>
 
 <style>
-  #recent-sessions {
-    --stagger-index: 3;
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    vertical-align: middle;
+    line-height: 1;
+  }
+  .filled-icon {
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+  .timer-glow-inner {
+    box-shadow: 0 0 40px rgba(99, 102, 241, 0.15), inset 0 0 20px rgba(99, 102, 241, 0.1);
+  }
+  .progress-ring__circle {
+    transition: stroke-dashoffset 0.35s;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
   }
 </style>

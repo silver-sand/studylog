@@ -52,6 +52,7 @@ const readinessText =
             stroke-linecap="round"
             stroke-dasharray={circ}
             style={`--ring-circumference:${circ}; --ring-offset:${offset}; --ring-delay:${i * 0.2}s; --ring-glow-color:${ring.stroke};`}
+            data-glow={ring.percent >= 80 ? "true" : "false"}
             class={`ring-circle ring-${ring.name}`}
           />
         );

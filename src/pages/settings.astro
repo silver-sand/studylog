@@ -13,7 +13,6 @@ const settings = db.getSettings();
 const user = getSessionUser(getTokenFromCookie(Astro.request));
 const isGuest = user?.userType === 'guest';
 
-// Determine user's stream and default exams
 const userStream = user?.stream || 'science';
 const defaultExams = settings.selectedExams?.length
   ? settings.selectedExams
@@ -23,7 +22,6 @@ const dailyAvg = settings.studyDaysPerWeek > 0
   ? Math.round((settings.targetHoursPerWeek / settings.studyDaysPerWeek) * 10) / 10
   : 7;
 
-// Compute days until exam
 let daysUntilExam = null;
 if (settings.examDate) {
   const now = new Date();
@@ -33,1165 +31,375 @@ if (settings.examDate) {
 ---
 
 <BaseLayout title="Settings">
-  <div class="animate-slide-up">
+  <!-- Main content area matching Stitch's layout -->
+  <main class="flex-1 flex flex-col h-full overflow-hidden pt-16 md:pt-0 bg-[#050b18]">
+    <header class="px-8 py-6 flex-shrink-0">
+      <h2 class="font-headline text-2xl font-bold tracking-tight text-[#f1f5f9]">Settings</h2>
+      <p class="text-[#94a3b8] text-sm mt-1">Manage your account, study preferences, and app appearance.</p>
+    </header>
 
-    <!-- Page Header -->
-    <div class="ds-page-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:var(--ds-space-3);">
-      <div>
-        <h1 class="ds-heading-page">Settings</h1>
-        <p class="ds-body-sm">Manage your profile, study preferences, and account</p>
-      </div>
-    </div>
+    <div class="flex-1 overflow-hidden px-8 pb-8 flex gap-8">
+      <!-- Secondary Navigation (Content Area) — matching Stitch 5-panel nav -->
+      <nav class="w-48 flex-shrink-0 flex flex-col gap-1 overflow-y-auto pr-4 hidden lg:flex">
+        <button class="text-left px-4 py-2.5 rounded-lg text-sm font-medium text-indigo-400 bg-[#0d1321] border border-slate-700/50 settings-nav-btn active" data-tab="profile">
+          Profile
+        </button>
+        <button class="text-left px-4 py-2.5 rounded-lg text-sm font-medium text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#0d1321]/50 transition-colors settings-nav-btn" data-tab="preferences">
+          Study Preferences
+        </button>
+        <button class="text-left px-4 py-2.5 rounded-lg text-sm font-medium text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#0d1321]/50 transition-colors settings-nav-btn" data-tab="appearance">
+          Appearance
+        </button>
+        <button class="text-left px-4 py-2.5 rounded-lg text-sm font-medium text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#0d1321]/50 transition-colors settings-nav-btn" data-tab="notifications">
+          Notifications
+        </button>
+        <button class="text-left px-4 py-2.5 rounded-lg text-sm font-medium text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#0d1321]/50 transition-colors settings-nav-btn" data-tab="account">
+          Account
+        </button>
+      </nav>
 
-    <!-- ── Premium Tab Bar ── -->
-    <div class="settings-tabs" id="settings-tabs">
-      <button class="settings-tab active" data-tab="profile">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        Profile
-      </button>
-      <button class="settings-tab" data-tab="preferences">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="21" y2="21"/><line x1="4" x2="20" y1="14" y2="14"/><line x1="4" x2="9" y1="3" y2="3"/><line x1="15" x2="20" y1="3" y2="3"/><line x1="4" x2="5" y1="7" y2="7"/><line x1="12" x2="20" y1="7" y2="7"/></svg>
-        Study Preferences
-      </button>
-      <button class="settings-tab" data-tab="appearance">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-        Appearance
-      </button>
-      <button class="settings-tab" data-tab="notifications">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-        Notifications
-      </button>
-      <button class="settings-tab" data-tab="account">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        Account
-      </button>
-    </div>
+      <!-- Scrollable Settings Sections -->
+      <div class="flex-1 overflow-y-auto pr-4 space-y-8 max-w-3xl pb-24 md:pb-8 scroll-smooth" id="settings-content">
 
-    <form id="settings-form">
-
-      <!-- ════════════════════════════════════════════ -->
-      <!-- TAB 1: PROFILE                               -->
-      <!-- ════════════════════════════════════════════════ -->
-      <div class="settings-tab-panel active" id="panel-profile">
-
-        <!-- Account Card -->
-        <div class="ds-card-glass card-lift animate-slide-up" style="display:flex;align-items:center;gap:var(--ds-space-3);flex-wrap:wrap;">
-          <div class="account-avatar">{user?.name?.charAt(0)?.toUpperCase() || '?'}</div>
-          <div style="flex:1;min-width:0;">
-            <h2 class="ds-heading-card" style="margin:0;">{user?.name || 'User'}</h2>
-            <p class="ds-caption" style="margin:0.15rem 0 0;">{user?.email || ''}</p>
-            {isGuest && <p class="ds-caption" style="color:var(--ds-warning-400);margin-top:var(--ds-space-1);">Guest — <a href="#" id="guest-signup-link" class="ds-link-accent">Sign up</a> to save your data permanently</p>}
+        <!-- ═══════ PROFILE ═══════ -->
+        <section class="bg-[#0d1321] rounded-xl border border-slate-800 p-6 settings-section" id="section-profile">
+          <h3 class="text-lg font-headline font-semibold text-[#f1f5f9] mb-6">Profile</h3>
+          <div class="flex items-center gap-6 mb-8">
+            <div class="relative group cursor-pointer">
+              <div class="w-20 h-20 rounded-full bg-indigo-500/10 border-2 border-slate-700 flex items-center justify-center text-indigo-400 text-2xl font-bold">
+                {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+              </div>
+              <div class="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <span class="material-symbols-outlined text-white text-xl">photo_camera</span>
+              </div>
+            </div>
+            <div>
+              <button class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-sm font-medium rounded-lg transition-colors mb-2 text-white">Change Avatar</button>
+              <p class="text-xs text-[#94a3b8]">JPG, GIF or PNG. Max size of 2MB.</p>
+            </div>
           </div>
-        </div>
-
-        <!-- Profile Summary -->
-        <div class="ds-card-glass card-lift animate-slide-up" style="--stagger-index:1;">
-          <div class="settings-section-header">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <span>Profile Summary</span>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-[#94a3b8] mb-1">Full Name</label>
+              <input class="w-full bg-[#050b18] border border-slate-700 rounded-lg px-4 py-2 text-[#f1f5f9] focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" type="text" value={user?.name || ''} />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-[#94a3b8] mb-1">Email Address</label>
+              <input class="w-full bg-[#050b18] border border-slate-700 rounded-lg px-4 py-2 text-[#f1f5f9] focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" type="email" value={user?.email || ''} />
+            </div>
+            <div class="pt-2">
+              <button class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors shadow-lg shadow-indigo-500/20">Save Profile</button>
+            </div>
           </div>
-          <p class="ds-caption" style="margin:0 0 var(--ds-space-2);">Your academic background as used by the AI Mentor.</p>
+        </section>
 
-          <div class="profile-summary">
-            {user?.classLevel && (
-              <div class="ps-chip">
-                <span class="ps-chip-icon">&#x1F4DA;</span>
-                <span>Class {user.classLevel.replace('class_', '')}</span>
-              </div>
-            )}
-            {user?.stream && (
-              <div class="ps-chip">
-                <span class="ps-chip-icon">{user.stream === 'science' ? '&#x1F52C;' : user.stream === 'commerce' ? '&#x1F4CA;' : '&#x1F4D6;'}</span>
-                <span>{user.stream.charAt(0).toUpperCase() + user.stream.slice(1)}</span>
-              </div>
-            )}
-            {(user as any)?.coaching && (
-              <div class="ps-chip">
-                <span class="ps-chip-icon">&#x1F3AF;</span>
-                <span>{{coaching_only: 'Coaching only', self_study: 'Self-study', both: 'Coaching + Self-study'}[(user as any).coaching] || (user as any).coaching}</span>
-              </div>
-            )}
-            {(user as any)?.targetRank && (
-              <div class="ps-chip ps-chip-goal">
-                <span class="ps-chip-icon">&#x1F31F;</span>
-                <span>Goal: {(user as any).targetRank}</span>
-              </div>
-            )}
-          </div>
-
-          {(user as any)?.weakSubjects?.length > 0 && (
-            <div style="margin-top:var(--ds-space-2);">
-              <p class="ds-caption" style="margin:0 0 var(--ds-space-1);">Focus areas (subjects needing extra attention):</p>
-              <div style="display:flex;flex-wrap:wrap;gap:0.375rem;">
-                {(user as any).weakSubjects.map((s: string) => (
-                  <span class="ps-weak-chip">{s}</span>
+        <!-- ═══════ STUDY PREFERENCES ═══════ -->
+        <section class="bg-[#0d1321] rounded-xl border border-slate-800 p-6 settings-section hidden" id="section-preferences">
+          <h3 class="text-lg font-headline font-semibold text-[#f1f5f9] mb-6">Study Preferences</h3>
+          <div class="space-y-6">
+            <!-- Stream -->
+            <div>
+              <label class="block text-sm font-medium text-[#94a3b8] mb-2">Stream</label>
+              <div class="flex flex-wrap gap-2" id="stream-grid">
+                {Object.entries(STREAMS).map(([key, stream]) => (
+                  <button
+                    class:list={{
+                      'px-3 py-1.5 rounded-full border text-sm font-medium transition-all': true,
+                      'border-indigo-500 bg-indigo-500/10 text-indigo-400': userStream === key,
+                      'border-slate-700 text-[#94a3b8] hover:border-slate-500 hover:text-white': userStream !== key,
+                    }}
+                    data-stream={key}
+                  >
+                    {stream.icon} {stream.label}
+                  </button>
                 ))}
               </div>
             </div>
-          )}
 
-          <a href="/onboarding?update=1" class="ds-btn ds-btn-secondary ds-btn-sm press-effect" style="margin-top:var(--ds-space-2);display:inline-flex;align-items:center;gap:0.25rem;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            Update Onboarding
-          </a>
-        </div>
-
-        <!-- Stream & Exams -->
-        <div class="ds-card-glass card-lift animate-slide-up" style="--stagger-index:2;">
-          <div class="settings-section-header">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-            <span>Stream & Exams</span>
-          </div>
-          <p class="ds-caption" style="margin:0 0 var(--ds-space-2);">Select your stream and the exams you're preparing for.</p>
-
-          <label class="ds-label-form" style="margin-bottom:var(--ds-space-1);">Stream</label>
-          <div class="settings-chip-grid" id="stream-grid">
-            {Object.entries(STREAMS).map(([key, stream]) => (
-              <div
-                class:list={{ 'settings-chip': true, 'settings-chip--selected': userStream === key }}
-                data-stream={key}
-                data-selected={userStream === key ? '1' : '0'}
-              >
-                <span>{stream.icon}</span>
-                <span>{stream.label}</span>
+            <!-- Exams -->
+            <div>
+              <label class="block text-sm font-medium text-[#94a3b8] mb-2">Target Exams</label>
+              <div class="flex flex-wrap gap-2" id="exam-grid">
+                {EXAM_DEFINITIONS.filter(exam => exam.groups.includes(userStream)).map(exam => {
+                  const isSelected = defaultExams.includes(exam.key);
+                  return (
+                    <button
+                      class:list={{
+                        'px-3 py-1.5 rounded-full border text-sm font-medium transition-all flex items-center gap-1': true,
+                        'border-indigo-500 bg-indigo-500/10 text-indigo-400': isSelected,
+                        'border-slate-700 text-[#94a3b8] hover:border-slate-500 hover:text-white': !isSelected,
+                      }}
+                      data-exam={exam.key}
+                    >
+                      {exam.label}
+                      {isSelected && <span class="material-symbols-outlined text-[16px]">close</span>}
+                    </button>
+                  );
+                })}
               </div>
-            ))}
-          </div>
+            </div>
 
-          <label class="ds-label-form" style="margin-top:var(--ds-space-2);margin-bottom:var(--ds-space-1);">Exams</label>
-          <div class="settings-chip-grid" id="exam-grid">
-            {EXAM_DEFINITIONS.filter(exam => exam.groups.includes(userStream)).map(exam => {
-              const isSelected = defaultExams.includes(exam.key);
-              return (
-                <div
-                  class:list={{ 'settings-chip': true, 'settings-chip--exam-selected': isSelected, 'settings-chip--item': true }}
-                  data-exam={exam.key}
-                  data-selected={isSelected ? '1' : '0'}
-                  data-groups={exam.groups.join(',')}
-                >
-                  <span class="settings-chip-label">{exam.label}</span>
-                  <span class="settings-chip-sub">{exam.subjects.length} subjects</span>
-                </div>
-              );
-            })}
-          </div>
-
-          <!-- Active Subjects (auto-computed) -->
-          <label class="ds-label-form" style="margin-top:var(--ds-space-2);margin-bottom:var(--ds-space-1);">Active Subjects</label>
-          <p class="ds-caption" style="margin:0 0 var(--ds-space-1);">Subjects are auto-selected based on your exams.</p>
-          <div class="settings-chip-grid" id="subjects-grid">
-            {activeSubjects.map(subject => (
-              <div class="settings-chip settings-chip--selected" data-subject={subject}>
-                {subject}
+            <!-- Active Subjects -->
+            <div>
+              <label class="block text-sm font-medium text-[#94a3b8] mb-2">Active Subjects</label>
+              <p class="text-xs text-[#94a3b8] mb-2">Subjects are auto-selected based on your exams.</p>
+              <div class="flex flex-wrap gap-2">
+                {activeSubjects.map(subject => (
+                  <span class="px-3 py-1.5 rounded-full border border-indigo-500 bg-indigo-500/10 text-indigo-400 text-sm font-medium">
+                    {subject}
+                  </span>
+                ))}
+                {activeSubjects.length === 0 && <p class="text-xs text-[#94a3b8]">Select at least one exam to see subjects.</p>}
               </div>
-            ))}
-            {activeSubjects.length === 0 && <p class="ds-caption">Select at least one exam to see subjects.</p>}
-          </div>
-        </div>
+            </div>
 
-      </div>
-
-      <!-- ════════════════════════════════════════════ -->
-      <!-- TAB 2: STUDY PREFERENCES                     -->
-      <!-- ════════════════════════════════════════════════ -->
-      <div class="settings-tab-panel" id="panel-preferences">
-
-        <!-- Weekly Target -->
-        <div class="ds-card-glass card-lift animate-slide-up">
-          <div class="settings-section-header">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
-            <span>Weekly Target</span>
-          </div>
-          <p class="ds-caption" style="margin:0 0 var(--ds-space-2);">Your goal for total study hours and days per week.</p>
-
-          <div class="target-row">
-            <div class="target-field">
-              <label class="ds-label-form" for="target-hours">Hours / Week</label>
-              <div class="target-input-group">
+            <!-- Weekly Target -->
+            <div class="pt-4 border-t border-slate-800">
+              <label class="block text-sm font-medium text-[#94a3b8] mb-2">Daily Study Goal (Hours)</label>
+              <div class="flex items-center gap-3">
                 <input
                   type="number"
                   id="target-hours"
                   name="targetHoursPerWeek"
                   min="1"
                   max="168"
-                  step="1"
-                  value={settings.targetHoursPerWeek}
-                  class="ds-input"
-                  style="width:5rem;text-align:center;font-family:var(--ds-font-mono);"
+                  value={settings.targetHoursPerWeek || 35}
+                  class="w-24 bg-[#050b18] border border-slate-700 rounded-lg px-4 py-2 text-[#f1f5f9] focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                 />
-                <span class="ds-caption">hrs</span>
+                <span class="text-sm text-[#94a3b8]">hours per week</span>
               </div>
             </div>
-            <div class="target-field">
-              <label class="ds-label-form" for="study-days">Days / Week</label>
-              <div class="target-input-group">
-                <input
-                  type="number"
-                  id="study-days"
-                  name="studyDaysPerWeek"
-                  min="1"
-                  max="7"
-                  step="1"
-                  value={settings.studyDaysPerWeek}
-                  class="ds-input"
-                  style="width:4rem;text-align:center;font-family:var(--ds-font-mono);"
-                />
-                <span class="ds-caption">days</span>
-              </div>
-            </div>
-            <div class="target-stats">
-              <span class="ds-label" style="font-size:var(--ds-text-2xs);">Daily Average</span>
-              <span class="target-daily-avg" id="daily-avg-display">{dailyAvg} hrs/day</span>
-            </div>
-          </div>
-        </div>
 
-        <!-- Exam Date -->
-        <div class="ds-card-glass card-lift animate-slide-up" style="--stagger-index:1;">
-          <div class="settings-section-header">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            <span>Exam Date</span>
-          </div>
-          <p class="ds-caption" style="margin:0 0 var(--ds-space-2);">When is your exam? Used for pace prediction and study timeline.</p>
-          <div style="display:flex;align-items:center;gap:var(--ds-space-3);flex-wrap:wrap;">
-            <input
-              type="date"
-              id="exam-date"
-              name="examDate"
-              value={settings.examDate || ''}
-              class="ds-input"
-              style="font-family:var(--ds-font-mono);width:auto;"
-            />
-            {daysUntilExam !== null && (
-              <span class="ds-caption" style="color:var(--ds-accent-400);font-weight:500;">
-                {daysUntilExam === 0 ? '&#x1F4CC; Exam day!' : `&#x1F4C5; ${daysUntilExam} days away`}
-              </span>
-            )}
-          </div>
-        </div>
+            <div class="flex items-center gap-3">
+              <input
+                type="number"
+                id="study-days"
+                name="studyDaysPerWeek"
+                min="1"
+                max="7"
+                value={settings.studyDaysPerWeek || 5}
+                class="w-24 bg-[#050b18] border border-slate-700 rounded-lg px-4 py-2 text-[#f1f5f9] focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+              />
+              <span class="text-sm text-[#94a3b8]">days per week</span>
+            </div>
 
-        <!-- Workspace Preview -->
-        <div class="ds-card-glass card-lift animate-slide-up" style="--stagger-index:2;">
-          <div class="settings-section-header">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-            <span>Workspace Preview</span>
-          </div>
-          <p class="ds-caption" style="margin:0 0 var(--ds-space-2);">Your current study configuration at a glance.</p>
-          <div class="workspace-grid">
-            <div class="wp-block">
-              <span class="wp-label">Active Exams</span>
-              <div style="display:flex;flex-wrap:wrap;gap:0.375rem;margin-top:0.375rem;">
-                {defaultExams.length > 0 ? defaultExams.map(key => {
-                  const examDef = EXAM_DEFINITIONS.find(e => e.key === key);
-                  return <span class="wp-chip">{examDef?.label || key}</span>;
-                }) : <span class="ds-caption" style="margin:0;">No exams configured</span>}
-              </div>
-            </div>
-            <div class="wp-block">
-              <span class="wp-label">Subjects Tracked</span>
-              <span class="wp-value">{activeSubjects.length} subjects</span>
-              <p class="ds-caption" style="margin:0.375rem 0 0;">{activeSubjects.slice(0, 4).join(', ')}{activeSubjects.length > 4 ? ` +${activeSubjects.length - 4} more` : ''}</p>
-            </div>
-            <div class="wp-block">
-              <span class="wp-label">Weekly Commitment</span>
-              <span class="wp-value">{settings.targetHoursPerWeek}h / {settings.studyDaysPerWeek || 0} days</span>
-              {dailyAvg > 0 && <p class="ds-caption" style="margin:0.375rem 0 0;">&#x2248; {dailyAvg} hrs/study day</p>}
-            </div>
-            <div class="wp-block">
-              <span class="wp-label">Exam Timeline</span>
-              {daysUntilExam !== null ? (
-                <>
-                  <span class="wp-value">{daysUntilExam} days</span>
-                  <p class="ds-caption" style="margin:0.375rem 0 0;">until {settings.examDate ? new Date(settings.examDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : 'exam'}</p>
-                </>
-              ) : (
-                <span class="ds-caption" style="margin:0;">No exam date set</span>
+            <!-- Exam Date -->
+            <div class="pt-4 border-t border-slate-800">
+              <label class="block text-sm font-medium text-[#94a3b8] mb-2">Exam Date</label>
+              <input
+                type="date"
+                id="exam-date"
+                name="examDate"
+                value={settings.examDate || ''}
+                class="bg-[#050b18] border border-slate-700 rounded-lg px-4 py-2 text-[#f1f5f9] focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+              />
+              {daysUntilExam !== null && (
+                <span class="text-sm text-indigo-400 ml-3">{daysUntilExam === 0 ? 'Exam day!' : `${daysUntilExam} days away`}</span>
               )}
             </div>
+
+            <button id="save-preferences-btn" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors shadow-lg shadow-indigo-500/20">
+              Save Preferences
+            </button>
           </div>
-        </div>
+        </section>
 
-      </div>
-
-      <!-- ════════════════════════════════════════════ -->
-      <!-- TAB 3: APPEARANCE                            -->
-      <!-- ════════════════════════════════════════════════ -->
-      <div class="settings-tab-panel" id="panel-appearance">
-
-        <div class="ds-card-glass card-lift animate-slide-up">
-          <div class="settings-section-header">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-            <span>Theme</span>
-          </div>
-          <p class="ds-caption" style="margin:0 0 var(--ds-space-2);">Currently the app uses a dark-first design. Light mode support is coming soon.</p>
-
-          <div class="appearance-card">
-            <div class="appearance-option active">
-              <div class="appearance-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <!-- ═══════ APPEARANCE ═══════ -->
+        <section class="bg-[#0d1321] rounded-xl border border-slate-800 p-6 settings-section hidden" id="section-appearance">
+          <h3 class="text-lg font-headline font-semibold text-[#f1f5f9] mb-6">Appearance</h3>
+          <div class="space-y-6">
+            <div>
+              <p class="text-sm text-[#94a3b8] mb-4">Currently the app uses a dark-first design. Light mode support is coming soon.</p>
+              <div class="space-y-3">
+                <div class="flex items-center gap-4 p-4 bg-[#050b18] rounded-xl border border-indigo-500/30">
+                  <div class="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400">
+                    <span class="material-symbols-outlined">dark_mode</span>
+                  </div>
+                  <div class="flex-1">
+                    <p class="text-sm font-medium text-white">Dark Mode</p>
+                    <p class="text-xs text-[#94a3b8]">Current default — optimized for focus</p>
+                  </div>
+                  <span class="material-symbols-outlined text-indigo-400 filled-icon text-lg">check_circle</span>
+                </div>
+                <div class="flex items-center gap-4 p-4 bg-[#050b18] rounded-xl border border-slate-800 opacity-50">
+                  <div class="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-slate-500">
+                    <span class="material-symbols-outlined">light_mode</span>
+                  </div>
+                  <div class="flex-1">
+                    <p class="text-sm font-medium text-white">Light Mode</p>
+                    <p class="text-xs text-[#94a3b8]">Coming soon</p>
+                  </div>
+                </div>
               </div>
+            </div>
+            <div class="pt-4 border-t border-slate-800">
+              <div class="flex items-center justify-between py-2">
+                <div>
+                  <p class="text-sm font-medium text-white">Font Size</p>
+                  <p class="text-xs text-[#94a3b8]">Uses system default</p>
+                </div>
+              </div>
+              <div class="flex items-center justify-between py-2">
+                <div>
+                  <p class="text-sm font-medium text-white">Reduce Motion</p>
+                  <p class="text-xs text-[#94a3b8]">Respects system preference</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ═══════ NOTIFICATIONS ═══════ -->
+        <section class="bg-[#0d1321] rounded-xl border border-slate-800 p-6 settings-section hidden" id="section-notifications">
+          <h3 class="text-lg font-headline font-semibold text-[#f1f5f9] mb-6">Notifications</h3>
+          <div class="space-y-0 divide-y divide-slate-800">
+            <div class="flex items-center justify-between py-4">
               <div>
-                <span class="appearance-label">Dark Mode</span>
-                <span class="appearance-desc">Current default — optimized for focus</span>
+                <p class="text-sm font-medium text-white">Study Reminders</p>
+                <p class="text-xs text-[#94a3b8]">Get reminded to log your study sessions daily</p>
               </div>
-              <div class="appearance-check">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" checked disabled class="sr-only peer" />
+                <div class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+              </label>
             </div>
-            <div class="appearance-option disabled">
-              <div class="appearance-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" x2="12" y1="1" y2="3"/><line x1="12" x2="12" y1="21" y2="23"/><line x1="4.22" x2="5.64" y1="4.22" y2="5.64"/><line x1="18.36" x2="19.78" y1="18.36" y2="19.78"/><line x1="1" x2="3" y1="12" y2="12"/><line x1="21" x2="23" y1="12" y2="12"/><line x1="4.22" x2="5.64" y1="19.78" y2="18.36"/><line x1="18.36" x2="19.78" y1="5.64" y2="4.22"/></svg>
-              </div>
+            <div class="flex items-center justify-between py-4">
               <div>
-                <span class="appearance-label">Light Mode</span>
-                <span class="appearance-desc">Coming soon</span>
+                <p class="text-sm font-medium text-white">Weekly Review Ready</p>
+                <p class="text-xs text-[#94a3b8]">Notify when your weekly AI review is generated</p>
               </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" checked disabled class="sr-only peer" />
+                <div class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+              </label>
+            </div>
+            <div class="flex items-center justify-between py-4">
+              <div>
+                <p class="text-sm font-medium text-white">Streak Alerts</p>
+                <p class="text-xs text-[#94a3b8]">Remind you to keep your study streak alive</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" disabled class="sr-only peer" />
+                <div class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+              </label>
+            </div>
+            <div class="flex items-center justify-between py-4">
+              <div>
+                <p class="text-sm font-medium text-white">AI Mentor Suggestions</p>
+                <p class="text-xs text-[#94a3b8]">Get proactive tips from your AI mentor</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" checked disabled class="sr-only peer" />
+                <div class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+              </label>
             </div>
           </div>
-        </div>
+          <p class="text-xs text-center text-[#94a3b8] mt-6 pt-4 border-t border-slate-800">Notifications are currently disabled. Coming in a future update.</p>
+        </section>
 
-        <div class="ds-card-glass card-lift animate-slide-up" style="--stagger-index:1;">
-          <div class="settings-section-header">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-            <span>Display</span>
-          </div>
-          <div class="settings-row">
+        <!-- ═══════ ACCOUNT ═══════ -->
+        <section class="bg-[#0d1321] rounded-xl border border-slate-800 p-6 settings-section hidden" id="section-account">
+          <h3 class="text-lg font-headline font-semibold text-[#f1f5f9] mb-6">Account</h3>
+          <div class="flex items-center gap-4 mb-6">
+            <div class="w-14 h-14 rounded-full bg-indigo-500/10 border border-slate-700 flex items-center justify-center text-indigo-400 text-lg font-bold shrink-0">
+              {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+            </div>
             <div>
-              <span class="settings-row-label">Font Size</span>
-              <span class="settings-row-desc">Uses system default — adjust in your browser settings</span>
+              <p class="text-base font-semibold text-white">{user?.name || 'User'}</p>
+              <p class="text-sm text-[#94a3b8]">{user?.email || ''}</p>
+              {isGuest && <p class="text-xs text-yellow-400 mt-1">Guest account — data is temporary</p>}
+              {!isGuest && <p class="text-xs text-emerald-400 mt-1">Signed in — your data is saved permanently</p>}
             </div>
           </div>
-          <div class="settings-row" style="border-bottom:none;padding-bottom:0;">
-            <div>
-              <span class="settings-row-label">Reduce Motion</span>
-              <span class="settings-row-desc">Animations respect your system's prefers-reduced-motion setting</span>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- ════════════════════════════════════════════ -->
-      <!-- TAB 4: NOTIFICATIONS                         -->
-      <!-- ════════════════════════════════════════════════ -->
-      <div class="settings-tab-panel" id="panel-notifications">
-
-        <div class="ds-card-glass card-lift animate-slide-up">
-          <div class="settings-section-header">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-            <span>Notification Preferences</span>
-          </div>
-
-          <div class="settings-row">
-            <div>
-              <span class="settings-row-label">Study Reminders</span>
-              <span class="settings-row-desc">Get reminded to log your study sessions daily</span>
-            </div>
-            <label class="toggle">
-              <input type="checkbox" checked disabled />
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div class="settings-row">
-            <div>
-              <span class="settings-row-label">Weekly Review Ready</span>
-              <span class="settings-row-desc">Notify when your weekly AI review is generated</span>
-            </div>
-            <label class="toggle">
-              <input type="checkbox" checked disabled />
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div class="settings-row">
-            <div>
-              <span class="settings-row-label">Streak Alerts</span>
-              <span class="settings-row-desc">Remind you to keep your study streak alive</span>
-            </div>
-            <label class="toggle">
-              <input type="checkbox" disabled />
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div class="settings-row" style="border-bottom:none;padding-bottom:0;">
-            <div>
-              <span class="settings-row-label">AI Mentor Suggestions</span>
-              <span class="settings-row-desc">Get proactive tips and suggestions from your AI mentor</span>
-            </div>
-            <label class="toggle">
-              <input type="checkbox" checked disabled />
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-
-          <p class="ds-caption" style="text-align:center;margin-top:var(--ds-space-2);padding-top:var(--ds-space-2);border-top:1px solid var(--ds-border-subtle);">Notifications are currently disabled. Coming in a future update.</p>
-        </div>
-
-      </div>
-
-      <!-- ════════════════════════════════════════════ -->
-      <!-- TAB 5: ACCOUNT                               -->
-      <!-- ════════════════════════════════════════════════ -->
-      <div class="settings-tab-panel" id="panel-account">
-
-        <div class="ds-card-glass card-lift animate-slide-up">
-          <div class="settings-section-header">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <span>Account Details</span>
-          </div>
-
-          <div style="display:flex;align-items:center;gap:var(--ds-space-3);margin-bottom:var(--ds-space-2);">
-            <div class="account-avatar" style="width:3rem;height:3rem;font-size:1.15rem;">{user?.name?.charAt(0)?.toUpperCase() || '?'}</div>
-            <div>
-              <h2 class="ds-heading-card" style="margin:0;">{user?.name || 'User'}</h2>
-              <p class="ds-caption" style="margin:0.1rem 0 0">{user?.email || ''}</p>
-              {isGuest && <p class="ds-caption" style="color:var(--ds-warning-400);margin-top:0.25rem;">Guest account — data is temporary</p>}
-              {!isGuest && <p class="ds-caption" style="color:var(--ds-success-text);margin-top:0.25rem;">Signed in — your data is saved permanently</p>}
-            </div>
-          </div>
-
           {isGuest && (
-            <a href="#" id="guest-signup-btn" class="ds-btn ds-btn-primary press-effect" style="width:100%;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>
+            <a href="#" id="guest-signup-btn" class="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm py-3 px-6 rounded-lg transition-colors">
+              <span class="material-symbols-outlined text-lg">login</span>
               Sign Up to Save Your Data
             </a>
           )}
-        </div>
-
-        <div class="ds-card-glass card-lift animate-slide-up" style="--stagger-index:1;">
-          <div class="settings-section-header">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="3" y1="12" y2="12"/></svg>
-            <span>Session</span>
-          </div>
-
           {!isGuest && (
-            <button type="button" id="account-logout-btn" class="ds-btn ds-btn-danger press-effect" style="width:100%;margin-bottom:var(--ds-space-2);">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="3" y1="12" y2="12"/></svg>
+            <button type="button" id="account-logout-btn" class="w-full flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-medium text-sm py-3 px-6 rounded-lg transition-colors border border-red-500/20">
+              <span class="material-symbols-outlined text-lg">logout</span>
               Log Out
             </button>
           )}
-          {isGuest && (
-            <button type="button" class="ds-btn ds-btn-ghost ds-btn-sm press-effect" disabled style="opacity:0.5;cursor:default;width:100%;">
-              Guest session — no logout needed
-            </button>
-          )}
-
-          <div class="settings-row" style="border-bottom:none;padding-bottom:0;margin-top:var(--ds-space-1);">
-            <div>
-              <span class="settings-row-label" style="color:var(--ds-danger-text);">Danger Zone</span>
-              <span class="settings-row-desc">Permanently delete all your data and account</span>
-            </div>
-            <button type="button" class="ds-btn ds-btn-ghost ds-btn-sm press-effect" disabled style="color:var(--ds-text-muted);opacity:0.5;flex-shrink:0;">
-              Delete Account
-            </button>
-          </div>
-        </div>
+        </section>
 
       </div>
-
-      <!-- ════════════════════════════════════════════ -->
-      <!-- GLOBAL ACTIONS (shown on every tab)           -->
-      <!-- ════════════════════════════════════════════════ -->
-      <div class="settings-actions">
-        <button type="submit" id="save-btn" class="ds-btn ds-btn-primary press-effect" style="min-width:8rem;">
-          <span id="save-btn-text">Save Changes</span>
-          <span id="save-btn-icon" class="hidden">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          </span>
-        </button>
-        <div id="settings-success" class="success-message" style="display:none;">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          Settings saved successfully
-        </div>
-        <div id="settings-error" class="ds-error-text" style="display:none;"></div>
-      </div>
-
-    </form>
-  </div>
-
-  <!-- Include AuthPopup for guest signup flow -->
-  <AuthPopup />
+    </div>
+  </main>
 </BaseLayout>
 
-<script is:inline>
-  window.__EXAM_SUBJECTS = {
-    {EXAM_DEFINITIONS.map(e => `${JSON.stringify(e.key)}: ${JSON.stringify(e.subjects)}`).join(',\n    ')}
-  };
-  window.__EXAM_LABELS = {
-    {EXAM_DEFINITIONS.map(e => `${JSON.stringify(e.key)}: ${JSON.stringify(e.label)}`).join(',\n    ')}
-  };
-</script>
-
 <script>
-  // ── Tab switching ──
-  const tabs = document.querySelectorAll('.settings-tab');
-  const panels = {
-    profile: document.getElementById('panel-profile'),
-    preferences: document.getElementById('panel-preferences'),
-    appearance: document.getElementById('panel-appearance'),
-    notifications: document.getElementById('panel-notifications'),
-    account: document.getElementById('panel-account'),
-  };
+  // ── Settings tab navigation ──
+  const navBtns = document.querySelectorAll('.settings-nav-btn');
+  const sections = {};
+  document.querySelectorAll('.settings-section').forEach(s => {
+    const id = (s as HTMLElement).id.replace('section-', '');
+    (sections as any)[id] = s;
+  });
 
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      const target = tab.dataset.tab;
+  navBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.tab;
+      if (!tab || !sections[tab]) return;
 
-      // Update tab active state
-      tabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
+      // Update nav
+      navBtns.forEach(b => {
+        b.classList.remove('active', 'text-indigo-400', 'bg-[#0d1321]', 'border', 'border-slate-700/50');
+        b.classList.add('text-[#94a3b8]');
+      });
+      btn.classList.add('active', 'text-indigo-400', 'bg-[#0d1321]', 'border', 'border-slate-700/50');
+      btn.classList.remove('text-[#94a3b8]');
 
-      // Switch panel with animation
-      Object.entries(panels).forEach(([key, panel]) => {
-        const isActive = key === target;
-        if (isActive) {
-          panel.classList.add('active');
-          // Re-trigger entrance animation for staggered children
-          const staggerItems = panel.querySelectorAll('.animate-slide-up');
-          staggerItems.forEach((el, i) => {
-            el.style.animation = 'none';
-            void el.offsetHeight;
-            el.style.animation = '';
-            el.style.setProperty('--stagger-index', i);
-          });
-        } else {
-          panel.classList.remove('active');
-        }
+      // Show section
+      Object.entries(sections).forEach(([key, el]) => {
+        el.classList.toggle('hidden', key !== tab);
       });
     });
   });
 
   // ── Stream selection ──
-  const streamChips = document.querySelectorAll('#stream-grid .settings-chip');
-  const examItems = document.querySelectorAll('#exam-grid .settings-chip--item');
-
-  function filterExamsByStream(stream) {
-    examItems.forEach(item => {
-      const groups = JSON.parse(item.dataset.groups || '[]');
-      if (groups.includes(stream)) {
-        item.classList.remove('hidden');
-      } else {
-        item.classList.add('hidden');
-        item.dataset.selected = '0';
-        item.classList.remove('settings-chip--exam-selected');
-      }
-    });
-  }
-
-  streamChips.forEach(chip => {
-    chip.addEventListener('click', () => {
-      streamChips.forEach(c => {
-        c.dataset.selected = '0';
-        c.classList.remove('settings-chip--selected');
+  document.querySelectorAll('#stream-grid button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#stream-grid button').forEach(b => {
+        b.classList.remove('border-indigo-500', 'bg-indigo-500/10', 'text-indigo-400');
+        b.classList.add('border-slate-700', 'text-[#94a3b8]');
       });
-      chip.dataset.selected = '1';
-      chip.classList.add('settings-chip--selected');
-      filterExamsByStream(chip.dataset.stream);
-      updateSubjectGrid();
-      updateWorkspacePreview();
+      btn.classList.remove('border-slate-700', 'text-[#94a3b8]');
+      btn.classList.add('border-indigo-500', 'bg-indigo-500/10', 'text-indigo-400');
     });
   });
 
-  const activeStream = document.querySelector('#stream-grid .settings-chip[data-selected="1"]');
-  if (activeStream) filterExamsByStream(activeStream.dataset.stream);
-
-  // ── Exam chips (multi-select) ──
-  examItems.forEach(chip => {
-    chip.addEventListener('click', () => {
-      const isSelected = chip.dataset.selected === '1';
-      const selectedCount = document.querySelectorAll('#exam-grid .settings-chip[data-selected="1"]').length;
-      if (isSelected && selectedCount <= 1) return;
-      chip.dataset.selected = isSelected ? '0' : '1';
-      chip.classList.toggle('settings-chip--exam-selected');
-      updateSubjectGrid();
-      updateWorkspacePreview();
+  // ── Exam toggle ──
+  document.querySelectorAll('#exam-grid button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.classList.toggle('border-indigo-500');
+      btn.classList.toggle('bg-indigo-500/10');
+      btn.classList.toggle('text-indigo-400');
+      btn.classList.toggle('border-slate-700');
+      btn.classList.toggle('text-[#94a3b8]');
     });
-  });
-
-  // ── Subject grid ──
-  const EXAMS = window.__EXAM_SUBJECTS || {};
-
-  function updateSubjectGrid() {
-    const selectedExams = [];
-    document.querySelectorAll('#exam-grid .settings-chip[data-selected="1"]').forEach(chip => {
-      selectedExams.push(chip.dataset.exam);
-    });
-
-    const subjects = new Set();
-    selectedExams.forEach(key => {
-      if (EXAMS[key]) EXAMS[key].forEach(s => subjects.add(s));
-    });
-
-    const grid = document.getElementById('subjects-grid');
-    grid.innerHTML = '';
-    if (subjects.size === 0) {
-      grid.innerHTML = '<p class="ds-caption">Select at least one exam to see subjects.</p>';
-      return;
-    }
-    subjects.forEach(subject => {
-      const div = document.createElement('div');
-      div.className = 'settings-chip settings-chip--selected';
-      div.dataset.subject = subject;
-      div.textContent = subject;
-      grid.appendChild(div);
-    });
-  }
-
-  // ── Workspace preview live update ──
-  function updateWorkspacePreview() {
-    const selectedExams = [];
-    document.querySelectorAll('#exam-grid .settings-chip[data-selected="1"]').forEach(chip => {
-      selectedExams.push(chip.dataset.exam);
-    });
-
-    const previewEl = document.querySelector('.workspace-grid');
-    if (!previewEl) return;
-
-    const examChipsContainer = previewEl.querySelector('.wp-block:first-child > div:last-child');
-    if (examChipsContainer) {
-      examChipsContainer.innerHTML = '';
-      if (selectedExams.length > 0) {
-        const LABELS = window.__EXAM_LABELS || {};
-        selectedExams.forEach(key => {
-          const chip = document.createElement('span');
-          chip.className = 'wp-chip';
-          chip.textContent = LABELS[key] || key;
-          examChipsContainer.appendChild(chip);
-        });
-      } else {
-        examChipsContainer.innerHTML = '<span class="ds-caption" style="margin:0;">No exams configured</span>';
-      }
-    }
-
-    const subjects = new Set();
-    selectedExams.forEach(key => {
-      if (EXAMS[key]) EXAMS[key].forEach(s => subjects.add(s));
-    });
-    const blocks = previewEl.querySelectorAll('.wp-block');
-    if (blocks.length >= 2) {
-      const val = blocks[1].querySelector('.wp-value');
-      const desc = blocks[1].querySelector('.ds-caption');
-      if (val) val.textContent = `${subjects.size} subjects`;
-      if (desc) {
-        const arr = [...subjects];
-        desc.textContent = arr.length > 0 ? arr.slice(0, 4).join(', ') + (arr.length > 4 ? ` +${arr.length - 4} more` : '') : 'No subjects';
-      }
-    }
-  }
-
-  // ── Live daily average ──
-  function updateDailyAverage() {
-    const hours = parseFloat(document.getElementById('target-hours').value) || 0;
-    const days = parseInt(document.getElementById('study-days').value) || 1;
-    const avg = Math.round((hours / days) * 10) / 10;
-    document.getElementById('daily-avg-display').textContent = `${avg} hrs/day`;
-  }
-  document.getElementById('target-hours')?.addEventListener('input', updateDailyAverage);
-  document.getElementById('study-days')?.addEventListener('input', updateDailyAverage);
-
-  // ── Guest signup links ──
-  document.getElementById('guest-signup-link')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    window.openAuthPopup('signup');
-  });
-  document.getElementById('guest-signup-btn')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    window.openAuthPopup('signup');
   });
 
   // ── Logout ──
-  const logoutBtn = document.getElementById('account-logout-btn');
-  logoutBtn?.addEventListener('click', async () => {
-    logoutBtn.disabled = true;
-    logoutBtn.innerHTML = '<span class="loading-spinner"></span> Logging out...';
-    await fetch('/api/auth/logout', { method: 'POST' });
-    window.location.href = '/';
-  });
-
-  // ── Form submit with success animation ──
-  const form = document.getElementById('settings-form');
-  const saveBtn = document.getElementById('save-btn');
-  const saveBtnText = document.getElementById('save-btn-text');
-  const saveBtnIcon = document.getElementById('save-btn-icon');
-  const successDiv = document.getElementById('settings-success');
-  const errorDiv = document.getElementById('settings-error');
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    successDiv.style.display = 'none';
-    errorDiv.style.display = 'none';
-
-    const targetHours = parseFloat(document.getElementById('target-hours').value);
-    const selectedExams = [];
-    document.querySelectorAll('#exam-grid .settings-chip[data-selected="1"]').forEach(chip => {
-      selectedExams.push(chip.dataset.exam);
-    });
-    const examDate = document.getElementById('exam-date').value || null;
-    const stream = document.querySelector('#stream-grid .settings-chip[data-selected="1"]')?.dataset?.stream || '';
-    const studyDays = parseInt(document.getElementById('study-days')?.value) || 5;
-
-    if (selectedExams.length === 0) {
-      errorDiv.textContent = 'Select at least one exam.';
-      errorDiv.style.display = 'block';
-      return;
-    }
-
-    saveBtn.disabled = true;
-    saveBtnText.textContent = 'Saving...';
-
+  document.getElementById('account-logout-btn')?.addEventListener('click', async () => {
     try {
-      const res = await fetch('/api/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetHoursPerWeek: targetHours, selectedExams, examDate, stream, studyDaysPerWeek: studyDays }),
-      });
-      if (!res.ok) throw new Error('Failed to save');
-
-      // Success animation
-      saveBtnText.textContent = 'Saved';
-      saveBtnIcon.classList.remove('hidden');
-      successDiv.style.display = 'flex';
-      saveBtn.classList.add('btn-saved');
-
-      setTimeout(() => {
-        window.location.reload();
-      }, 1200);
-    } catch (err) {
-      errorDiv.textContent = 'Failed to save settings.';
-      errorDiv.style.display = 'block';
-      saveBtn.disabled = false;
-      saveBtnText.textContent = 'Save Changes';
-      saveBtnIcon.classList.add('hidden');
+      await fetch('/api/session', { method: 'DELETE' });
+      window.location.href = '/';
+    } catch (e) {
+      window.location.href = '/';
     }
   });
 </script>
 
 <style>
-  /* ── Premium Tab Bar ── */
-  .settings-tabs {
-    display: flex;
-    gap: 0.25rem;
-    background: rgba(15, 23, 42, 0.6);
-    border-radius: var(--ds-radius-lg);
-    padding: 0.35rem;
-    margin-bottom: var(--ds-space-3);
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+  .settings-section {
+    animation: fade-in 0.25s ease forwards;
   }
-
-  .settings-tab {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.55rem 1rem;
-    font-size: var(--ds-text-xs);
-    font-weight: var(--ds-weight-medium);
-    color: var(--ds-text-tertiary);
-    background: transparent;
-    border: none;
-    border-radius: var(--ds-radius-md);
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    font-family: var(--ds-font-sans);
-    white-space: nowrap;
-    flex-shrink: 0;
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
   }
-  .settings-tab:hover {
-    color: var(--ds-text-secondary);
-    background: rgba(255, 255, 255, 0.04);
-  }
-  .settings-tab.active {
-    color: var(--ds-text-primary);
-    background: var(--ds-accent-bg);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-  }
-  .settings-tab svg {
-    flex-shrink: 0;
-    opacity: 0.6;
-  }
-  .settings-tab.active svg {
-    opacity: 1;
-    color: var(--ds-accent-400);
-  }
-
-  @media (max-width: 640px) {
-    .settings-tabs {
-      border-radius: var(--ds-radius-md);
-      padding: 0.3rem;
-      gap: 0.15rem;
-    }
-    .settings-tab {
-      padding: 0.45rem 0.7rem;
-      font-size: var(--ds-text-2xs);
-    }
-  }
-
-  /* ── Tab Panels ── */
-  .settings-tab-panel {
-    display: none;
-    flex-direction: column;
-    gap: var(--ds-space-2);
-  }
-  .settings-tab-panel.active {
-    display: flex;
-    animation: slide-up-fade 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  }
-
-  /* ── Section Header with icon ── */
-  .settings-section-header {
-    display: flex;
-    align-items: center;
-    gap: var(--ds-space-1);
-    font-size: var(--ds-text-sm);
-    font-weight: var(--ds-weight-semibold);
-    color: var(--ds-text-primary);
-    margin-bottom: 0.25rem;
-  }
-  .settings-section-header svg {
-    flex-shrink: 0;
-    color: var(--ds-accent-400);
-  }
-
-  /* ── Settings chip grid ── */
-  .settings-chip-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--ds-space-1);
-  }
-  @media (min-width: 768px) {
-    .settings-chip-grid {
-      grid-template-columns: repeat(3, 1fr);
-    }
-  }
-
-  .settings-chip {
-    padding: 0.55rem var(--ds-space-1);
-    background: var(--ds-bg-elevated);
-    border: 1px solid var(--ds-border-subtle);
-    border-radius: var(--ds-radius-md);
-    cursor: pointer;
-    transition: all 0.15s ease;
-    text-align: center;
-    font-size: var(--ds-text-xs);
-    color: var(--ds-text-tertiary);
-    user-select: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.3rem;
-  }
-  .settings-chip:hover {
-    border-color: var(--ds-border-hover);
-    color: var(--ds-text-secondary);
-    background: var(--ds-bg-hover);
-  }
-  .settings-chip--selected {
-    background: var(--ds-accent-bg);
-    border-color: var(--ds-accent-border);
-    color: var(--ds-accent-300);
-  }
-  .settings-chip--exam-selected {
-    background: rgba(236, 72, 153, 0.12);
-    border-color: rgba(236, 72, 153, 0.5);
-    color: #f9a8d4;
-  }
-  .settings-chip--item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.15rem;
-  }
-  .settings-chip-label {
-    font-size: var(--ds-text-xs);
-    font-weight: 500;
-  }
-  .settings-chip-sub {
-    font-size: var(--ds-text-2xs);
-    opacity: 0.6;
-  }
-
-  /* ── Target row (hours + days + daily avg) ── */
-  .target-row {
-    display: flex;
-    align-items: flex-end;
-    gap: var(--ds-space-3);
-    flex-wrap: wrap;
-  }
-  .target-field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-  .target-input-group {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  .target-stats {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-  }
-  .target-daily-avg {
-    font-size: var(--ds-text-lg);
-    font-weight: var(--ds-weight-bold);
-    color: var(--ds-accent-400);
-    font-variant-numeric: tabular-nums;
-  }
-
-  /* ── Workspace preview blocks ── */
-  .workspace-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--ds-space-1);
-  }
-  @media (max-width: 480px) {
-    .workspace-grid { grid-template-columns: 1fr; }
-  }
-
-  .wp-block {
-    padding: var(--ds-space-1) var(--ds-space-2);
-    background: var(--ds-bg-elevated);
-    border: 1px solid var(--ds-border-subtle);
-    border-radius: var(--ds-radius-md);
-  }
-  .wp-label {
-    font-size: var(--ds-text-2xs);
-    font-weight: var(--ds-weight-semibold);
-    color: var(--ds-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-  .wp-value {
-    display: block;
-    font-size: var(--ds-text-lg);
-    font-weight: var(--ds-weight-bold);
-    color: var(--ds-text-primary);
-    margin-top: 0.15rem;
-  }
-  .wp-chip {
-    display: inline-block;
-    padding: 0.15rem 0.5rem;
-    background: var(--ds-accent-bg);
-    border: 1px solid var(--ds-accent-border);
-    border-radius: 999px;
-    font-size: var(--ds-text-2xs);
-    color: var(--ds-accent-300);
-  }
-
-  /* ── Profile chips ── */
-  .profile-summary {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--ds-space-1);
-  }
-  .ps-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    padding: 0.3rem 0.7rem;
-    background: var(--ds-bg-elevated);
-    border: 1px solid var(--ds-border-subtle);
-    border-radius: 999px;
-    font-size: var(--ds-text-xs);
-    color: var(--ds-text-primary);
-  }
-  .ps-chip-icon {
-    font-size: 0.85rem;
-  }
-  .ps-chip-goal {
-    background: var(--ds-warning-bg);
-    border-color: var(--ds-warning-border);
-    color: var(--ds-warning-text);
-  }
-  .ps-weak-chip {
-    display: inline-block;
-    padding: 0.2rem 0.6rem;
-    background: var(--ds-danger-bg);
-    border: 1px solid var(--ds-danger-border);
-    border-radius: 999px;
-    font-size: var(--ds-text-2xs);
-    color: var(--ds-danger-text);
-  }
-
-  /* ── Account avatar ── */
-  .account-avatar {
-    width: 2.75rem;
-    height: 2.75rem;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--ds-accent-500), #8b5cf6);
-    color: white;
-    font-size: 1.1rem;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-
-  /* ── Settings rows (Appearance / Notifications / Account) ── */
-  .settings-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--ds-space-2);
-    padding: var(--ds-space-1) 0;
-    border-bottom: 1px solid var(--ds-border-subtle);
-  }
-  .settings-row-label {
-    display: block;
-    font-size: var(--ds-text-xs);
-    font-weight: var(--ds-weight-medium);
-    color: var(--ds-text-primary);
-  }
-  .settings-row-desc {
-    display: block;
-    font-size: var(--ds-text-2xs);
-    color: var(--ds-text-muted);
-    margin-top: 0.1rem;
-  }
-
-  /* ── Toggle switch ── */
-  .toggle {
-    position: relative;
-    display: inline-block;
-    width: 2.25rem;
-    height: 1.25rem;
-    flex-shrink: 0;
-  }
-  .toggle input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-    position: absolute;
-  }
-  .toggle-slider {
-    position: absolute;
-    cursor: pointer;
-    inset: 0;
-    background: var(--ds-bg-elevated);
-    border: 1px solid var(--ds-border-default);
-    border-radius: 999px;
-    transition: all 0.2s ease;
-  }
-  .toggle-slider::before {
-    content: '';
-    position: absolute;
-    height: 0.85rem;
-    width: 0.85rem;
-    left: 0.12rem;
-    bottom: 0.12rem;
-    background: var(--ds-text-muted);
-    border-radius: 50%;
-    transition: all 0.2s ease;
-  }
-  .toggle input:checked + .toggle-slider {
-    background: var(--ds-accent-bg);
-    border-color: var(--ds-accent-border);
-  }
-  .toggle input:checked + .toggle-slider::before {
-    transform: translateX(1rem);
-    background: var(--ds-accent-400);
-  }
-  .toggle input:disabled + .toggle-slider {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  /* ── Appearance options ── */
-  .appearance-card {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ds-space-1);
-  }
-  .appearance-option {
-    display: flex;
-    align-items: center;
-    gap: var(--ds-space-2);
-    padding: var(--ds-space-1) var(--ds-space-2);
-    background: var(--ds-bg-elevated);
-    border: 1px solid var(--ds-border-subtle);
-    border-radius: var(--ds-radius-md);
-    cursor: pointer;
-    transition: all 0.15s ease;
-  }
-  .appearance-option.active {
-    border-color: var(--ds-accent-border);
-    background: var(--ds-accent-bg);
-  }
-  .appearance-option.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-  .appearance-icon {
-    width: 2rem;
-    height: 2rem;
-    border-radius: var(--ds-radius-md);
-    background: var(--ds-bg-surface);
-    border: 1px solid var(--ds-border-subtle);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    color: var(--ds-text-tertiary);
-  }
-  .appearance-option.active .appearance-icon {
-    color: var(--ds-accent-400);
-    border-color: var(--ds-accent-border);
-  }
-  .appearance-label {
-    display: block;
-    font-size: var(--ds-text-xs);
-    font-weight: var(--ds-weight-medium);
-    color: var(--ds-text-primary);
-  }
-  .appearance-desc {
-    display: block;
-    font-size: var(--ds-text-2xs);
-    color: var(--ds-text-muted);
-    margin-top: 0.05rem;
-  }
-  .appearance-check {
-    margin-left: auto;
-    color: var(--ds-accent-400);
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-  }
-
-  /* ── Global Actions ── */
-  .settings-actions {
-    display: flex;
-    align-items: center;
-    gap: var(--ds-space-2);
-    margin-top: var(--ds-space-2);
-    padding-top: var(--ds-space-2);
-    border-top: 1px solid var(--ds-border-subtle);
-  }
-  .success-message {
-    display: none;
-    align-items: center;
-    gap: 0.35rem;
-    font-size: var(--ds-text-xs);
-    color: var(--ds-success-text);
-    animation: slide-up-fade 0.3s ease forwards;
-  }
-  .btn-saved {
-    background: var(--ds-success) !important;
-    border-color: var(--ds-success) !important;
-  }
-  #save-btn-icon {
-    display: inline-flex;
-    align-items: center;
-  }
-  #save-btn-icon.hidden {
-    display: none !important;
-  }
-  #save-btn-icon:not(.hidden) {
-    animation: scale-in-glow 0.4s ease forwards;
-  }
-
-  .hidden { display: none !important; }
+  .hidden { display: none; }
 </style>

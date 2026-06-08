@@ -1,6 +1,5 @@
 ---
-import EntryCard from './EntryCard.astro';
-import EmptyState from './EmptyState.astro';
+import { isToday, formatDisplayDate } from '../utils/date';
 import type { Entry } from '../types/entry';
 
 export interface Props {
@@ -8,19 +7,77 @@ export interface Props {
 }
 
 const { entries } = Astro.props;
+
+function subjectColor(subject: string): string {
+  const name = subject.toLowerCase();
+  if (name.includes('physics')) return 'bg-blue-400/10 text-blue-400';
+  if (name.includes('chemistry')) return 'bg-emerald-400/10 text-emerald-400';
+  if (name.includes('math')) return 'bg-amber-400/10 text-amber-400';
+  if (name.includes('biology')) return 'bg-rose-400/10 text-rose-400';
+  if (name.includes('english')) return 'bg-purple-400/10 text-purple-400';
+  return 'bg-slate-400/10 text-slate-400';
+}
 ---
 
 <div>
   {entries.length === 0 ? (
-    <EmptyState
-      title="No entries yet"
-      description="Write your first study log above to start tracking!"
-    />
-  ) : (
-    <div class="space-y-3">
-      {entries.map(entry => (
-        <EntryCard entry={entry} />
-      ))}
+    <div class="p-12 text-center">
+      <span class="material-symbols-outlined text-4xl text-[#8b919d]/40 mb-3">history</span>
+      <p class="text-[#8b919d]">No entries yet. Start logging above!</p>
     </div>
+  ) : (
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-[#0d1321] border-b border-slate-800">
+          <th class="px-6 py-4 font-label text-xs uppercase tracking-wider text-[#8b919d]">Date</th>
+          <th class="px-6 py-4 font-label text-xs uppercase tracking-wider text-[#8b919d]">Subjects</th>
+          <th class="px-6 py-4 font-label text-xs uppercase tracking-wider text-[#8b919d]">Duration</th>
+          <th class="px-6 py-4 font-label text-xs uppercase tracking-wider text-[#8b919d]">Rating</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-800/50">
+        {entries.slice(0, 20).map(entry => (
+          <tr class="hover:bg-[#0d1321]/50 transition-colors">
+            <td class="px-6 py-4 font-medium text-[#dce2f5]">
+              {isToday(entry.date) ? 'Today' : formatDisplayDate(entry.date)}
+            </td>
+            <td class="px-6 py-4">
+              <div class="flex gap-1 flex-wrap">
+                {entry.subjects.length > 0 ? entry.subjects.slice(0, 3).map((subject: string) => (
+                  <span class={`px-2 py-0.5 rounded-full text-[10px] font-bold ${subjectColor(subject)}`}>
+                    {subject}
+                  </span>
+                )) : (
+                  <span class="text-[10px] text-slate-600">—</span>
+                )}
+              </div>
+            </td>
+            <td class="px-6 py-4 text-[#8b919d]">{entry.hoursStudied ? `${entry.hoursStudied.toFixed(1)} hrs` : '—'}</td>
+            <td class="px-6 py-4">
+              {entry.focusRating > 0 ? (
+                <div class="flex text-[#60a5fa]">
+                  {[1, 2, 3, 4, 5].map(n => (
+                    <span
+                      class="material-symbols-outlined text-lg"
+                      class:list={{
+                        'filled-icon': n <= entry.focusRating,
+                      }}
+                    >star</span>
+                  ))}
+                </div>
+              ) : (
+                <span class="text-slate-600">—</span>
+              )}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   )}
 </div>
+
+<style>
+  .filled-icon {
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+</style>

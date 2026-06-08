@@ -4,95 +4,64 @@ import MentorChat from '../components/MentorChat.astro';
 ---
 
 <BaseLayout title="AI Mentor">
-    <div class="animate-slide-up">
-    <div class="ds-page-header">
-      <h1 class="ds-heading-page">AI Mentor</h1>
-      <p class="ds-body-sm" style="margin-bottom:var(--ds-space-3);">Your AI study partner — ask questions, get quizzed, or talk through what you're learning.</p>
-    </div>
-
-    <!-- Split-panel layout: chat + math workspace -->
-    <div class="mentor-split">
-      <div class="mentor-chat-panel">
-        <MentorChat />
+  <!-- Main Content Wrapper -->
+  <div class="flex-1 flex flex-col ml-20 lg:ml-64 h-screen bg-[#050b18]">
+    <!-- TopNavBar -->
+    <header class="h-16 w-full bg-[#050b18]/80 backdrop-blur-md border-b border-white/5 shadow-sm flex justify-between items-center px-6 shrink-0 z-30">
+      <div class="flex items-center gap-4">
+        <h2 class="font-headline text-lg tracking-tight text-neutral-300 font-semibold">AI Mentor Session</h2>
+        <div class="h-4 w-px bg-white/10 hidden md:block"></div>
+        <span class="px-2.5 py-1 rounded bg-indigo-500/10 text-indigo-400 font-label text-xs uppercase tracking-wider hidden md:inline-flex items-center gap-1.5 border border-indigo-500/20">
+          <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></span>
+          Active Connect
+        </span>
       </div>
-      <div class="mentor-workspace" id="mentor-workspace">
-        <div class="workspace-card ds-card-glass card-lift animate-slide-up" style="--stagger-index:1;">
-          <div class="workspace-header">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-            </svg>
-            <span>Math Workspace</span>
-          </div>
-          <div class="workspace-body">
-            <div id="workspace-content" class="workspace-content">
-              <p class="workspace-empty">Ask a math or science question in the chat and see the rendered work here.</p>
-            </div>
+      <div class="flex items-center gap-2">
+        <button class="p-2 text-neutral-500 hover:text-neutral-300 hover:bg-white/5 rounded-lg transition-all active:scale-95 duration-150 relative">
+          <span class="material-symbols-outlined">notifications</span>
+          <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-indigo-500 border-2 border-[#050b18]"></span>
+        </button>
+        <button class="p-2 text-neutral-500 hover:text-neutral-300 hover:bg-white/5 rounded-lg transition-all active:scale-95 duration-150">
+          <span class="material-symbols-outlined">settings</span>
+        </button>
+        <div class="h-8 w-8 ml-2 rounded-full bg-[#1a2235] border border-white/10 overflow-hidden shrink-0 flex items-center justify-center text-neutral-500 font-headline font-semibold text-sm">U</div>
+      </div>
+    </header>
+
+    <!-- Split Screen Layout -->
+    <main class="flex-1 flex overflow-hidden">
+      <!-- Left Panel: Past Sessions (30%) -->
+      <aside class="hidden md:flex flex-col w-[30%] min-w-[300px] max-w-[400px] border-r border-white/5 bg-[#0d1321]/30">
+        <div class="p-4 border-b border-white/5 flex justify-between items-center shrink-0">
+          <h3 class="font-label text-sm uppercase tracking-wider text-neutral-400">Past Sessions</h3>
+          <button class="p-1.5 text-neutral-500 hover:text-indigo-400 hover:bg-indigo-500/10 rounded transition-colors">
+            <span class="material-symbols-outlined text-[18px]">add</span>
+          </button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-3 space-y-2" id="past-sessions">
+          <!-- History items rendered by JS -->
+          <div class="flex items-center justify-center h-full">
+            <p class="text-xs text-neutral-500">Session history will appear here</p>
           </div>
         </div>
-      </div>
-    </div>
+      </aside>
+
+      <!-- Right Panel: Active Chat Canvas (70%) -->
+      <section class="flex-1 flex flex-col bg-[#050b18] relative">
+        <!-- KaTeX CDN -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous" />
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" defer></script>
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" defer></script>
+
+        <MentorChat />
+      </section>
+    </main>
   </div>
 </BaseLayout>
 
 <style>
-  .mentor-split {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--ds-space-2);
-  }
-  @media (min-width: 1024px) {
-    .mentor-split {
-      grid-template-columns: 1fr 20rem;
-    }
-  }
-  .mentor-chat-panel {
-    min-width: 0;
-  }
-
-  /* ── Math Workspace Panel ── */
-  .mentor-workspace {
-    display: none;
-  }
-  @media (min-width: 1024px) {
-    .mentor-workspace {
-      display: block;
-      position: sticky;
-      top: var(--ds-space-2);
-      align-self: start;
-    }
-  }
-  .workspace-card {
-    padding: 0;
-    overflow: hidden;
-  }
-  .workspace-header {
-    display: flex;
-    align-items: center;
-    gap: var(--ds-space-1);
-    padding: var(--ds-space-1) var(--ds-space-2);
-    border-bottom: 1px solid var(--ds-border-default);
-    font-size: var(--ds-text-xs);
-    font-weight: 600;
-    color: var(--ds-text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
-  .workspace-body {
-    max-height: 60vh;
-    overflow-y: auto;
-  }
-  .workspace-content {
-    padding: var(--ds-space-2);
-    font-size: var(--ds-text-sm);
-    line-height: 1.7;
-    color: var(--ds-text-secondary);
-    min-height: 8rem;
-  }
-  .workspace-empty {
-    font-size: var(--ds-text-xs);
-    color: var(--ds-text-muted);
-    text-align: center;
-    margin: var(--ds-space-4) 0;
-    line-height: 1.6;
-  }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #1a2235; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #2a3449; }
 </style>

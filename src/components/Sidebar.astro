@@ -11,455 +11,105 @@ interface NavLink {
   href: string;
   label: string;
   icon: string;
-  section: 'primary' | 'review' | 'tools';
 }
 
 const links: NavLink[] = [
-  {
-    href: '/daily',
-    label: 'Daily Log',
-    icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>',
-    section: 'primary',
-  },
-  {
-    href: '/dashboard',
-    label: 'Dashboard',
-    icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>',
-    section: 'primary',
-  },
-  {
-    href: '/weekly',
-    label: 'Reviews',
-    icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/></svg>',
-    section: 'review',
-  },
-  {
-    href: '/syllabus',
-    label: 'Syllabus',
-    icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect width="6" height="4" x="9" y="3" rx="1"/><path d="M9 14l2 2 4-4"/></svg>',
-    section: 'review',
-  },
-  {
-    href: '/mentor',
-    label: 'AI Mentor',
-    icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><path d="M16 14H8a4 4 0 0 0-4 4v2h16v-2a4 4 0 0 0-4-4z"/></svg>',
-    section: 'tools',
-  },
-  {
-    href: '/timer',
-    label: 'Timer',
-    icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
-    section: 'tools',
-  },
-  {
-    href: '/settings',
-    label: 'Settings',
-    icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>',
-    section: 'tools',
-  },
+  { href: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
+  { href: '/daily', label: 'Daily Log', icon: 'event_note' },
+  { href: '/syllabus', label: 'Syllabus', icon: 'assignment' },
+  { href: '/timer', label: 'Timer', icon: 'timer' },
+  { href: '/mentor', label: 'AI Mentor', icon: 'smart_toy' },
+  { href: '/weekly', label: 'Weekly Review', icon: 'calendar_month' },
+  { href: '/settings', label: 'Settings', icon: 'settings' },
 ];
 
 function isActive(href: string): boolean {
   if (href === '/daily') return currentPath === '/daily';
+  if (href === '/dashboard') return currentPath === '/dashboard';
   return currentPath.startsWith(href);
 }
 ---
 
-<aside class="sidebar">
-  <!-- Logo -->
-  <div class="logo-area">
-    <a href="/" class="logo-link">
-      <div class="logo-icon">SL</div>
-      <span class="logo-text">StudyLog</span>
-    </a>
+<!-- Desktop Sidebar — Stitch style -->
+<aside class="fixed left-0 top-0 h-full w-20 lg:w-64 bg-[#0d1321] border-r border-white/5 flex flex-col py-8 z-50 transition-all duration-300 ease-in-out hidden md:flex">
+  <!-- Brand -->
+  <div class="px-6 mb-10 flex items-center gap-3">
+    <div class="w-8 h-8 rounded bg-indigo-500/20 text-indigo-500 flex items-center justify-center shrink-0">
+      <span class="material-symbols-outlined filled-icon">menu_book</span>
+    </div>
+    <div class="hidden lg:block">
+      <h1 class="font-headline font-black text-indigo-500 tracking-tight leading-none text-xl">StudyLog</h1>
+      <p class="text-neutral-500 text-xs font-label uppercase tracking-wider mt-0.5">IIT-JEE Prep</p>
+    </div>
   </div>
 
-  <!-- Navigation -->
-  <nav class="nav-area">
-    <div class="nav-group">
-      <span class="nav-group-label">Study</span>
-      {links.filter(l => l.section === 'primary').map(link => (
-        <a href={link.href} class:list={{ 'nav-link': true, 'nav-link-active': isActive(link.href) }}>
-          <span class="nav-indicator"></span>
-          <span class="nav-icon" set:html={link.icon}></span>
-          <span>{link.label}</span>
-        </a>
-      ))}
-    </div>
+  <!-- Main Nav -->
+  <div class="flex-1 px-4 space-y-1">
+    {links.map(link => (
+      <a
+        href={link.href}
+        class:list={{
+          'flex items-center gap-4 px-3 py-2.5 rounded-lg font-label text-sm uppercase tracking-wider transition-all group': true,
+          'bg-indigo-500/10 text-indigo-400 border-r-4 border-indigo-500 font-bold': isActive(link.href),
+          'text-neutral-500 hover:text-neutral-300 hover:bg-white/5': !isActive(link.href),
+        }}
+      >
+        <span
+          class="material-symbols-outlined"
+          class:list={{ 'filled-icon': isActive(link.href) }}
+        >{link.icon}</span>
+        <span class="hidden lg:block">{link.label}</span>
+      </a>
+    ))}
+  </div>
 
-    <div class="nav-group">
-      <span class="nav-group-label">Review</span>
-      {links.filter(l => l.section === 'review').map(link => (
-        <a href={link.href} class:list={{ 'nav-link': true, 'nav-link-active': isActive(link.href) }}>
-          <span class="nav-indicator"></span>
-          <span class="nav-icon" set:html={link.icon}></span>
-          <span>{link.label}</span>
-        </a>
-      ))}
+  <!-- Footer: Start Focus button + User -->
+  <div class="px-4 mt-auto space-y-1">
+    <div class="px-3 mb-4 hidden lg:block">
+      <a href="/timer" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-label text-sm uppercase tracking-wider py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2">
+        <span class="material-symbols-outlined text-[18px] filled-icon">play_arrow</span>
+        Start Focus
+      </a>
     </div>
-
-    <div class="nav-group">
-      <span class="nav-group-label">Tools</span>
-      {links.filter(l => l.section === 'tools').map(link => (
-        <a href={link.href} class:list={{ 'nav-link': true, 'nav-link-active': isActive(link.href) }}>
-          <span class="nav-indicator"></span>
-          <span class="nav-icon" set:html={link.icon}></span>
-          <span>{link.label}</span>
-        </a>
-      ))}
+    <div class="flex items-center gap-3 px-3 py-2 rounded-lg">
+      <div class="w-8 h-8 rounded-full bg-indigo-500/10 border border-white/10 flex items-center justify-center text-indigo-400 font-semibold text-sm shrink-0">
+        {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+      </div>
+      <div class="hidden lg:block min-w-0 flex-1">
+        <p class="text-sm font-semibold text-white truncate">{user?.name || 'Student'}</p>
+        <p class="text-[10px] text-neutral-500 truncate">{user?.email || 'Tier 1 Elite Track'}</p>
+      </div>
     </div>
-  </nav>
-
-  <!-- User section -->
-  <div class="user-area">
-    {user && isGuest ? (
-      <>
-        <div class="user-info">
-          <div class="user-avatar user-avatar--guest">G</div>
-          <div class="user-text">
-            <span class="user-name">Guest</span>
-            <span class="user-status">Temporary session</span>
-          </div>
-        </div>
-        <div class="user-actions">
-          <button class="user-action-btn primary" onclick="window.openAuthPopup('signup')">Sign Up</button>
-          <button class="user-action-btn" onclick="window.openAuthPopup('login')">Log In</button>
-          <button id="exit-guest-btn" class="user-action-btn danger">✕ Exit</button>
-        </div>
-      </>
-    ) : user ? (
-      <>
-        <div class="user-info">
-          <div class="user-avatar">{user.name.charAt(0).toUpperCase()}</div>
-          <div class="user-text">
-            <span class="user-name">{user.name}</span>
-            <span class="user-status">{user.email}</span>
-          </div>
-        </div>
-        <div class="user-actions" style="display:flex;gap:var(--ds-space-1);margin-top:var(--ds-space-1);">
-          <a href="/settings" class="user-action-btn" style="flex:1;text-align:center;text-decoration:none;">Study Profile</a>
-          <button id="logout-btn" class="user-action-btn danger" style="flex:1;">Log out</button>
-        </div>
-      </>
-    ) : (
-      <a href="/dashboard" class="user-action-btn primary" style="text-align:center;text-decoration:none;">Log in</a>
-    )}
   </div>
 </aside>
 
-<!-- Mobile bottom nav (5 core items only, + overflow) -->
-<nav class="mobile-nav">
+<!-- Mobile Bottom Nav — Stitch style -->
+<nav class="fixed bottom-0 w-full z-50 md:hidden bg-[#050b18] border-t border-slate-800 shadow-[0_-4px_10px_rgba(0,0,0,0.3)] rounded-t-xl h-16 flex justify-around items-center px-4">
   {links.slice(0, 5).map(link => (
-    <a href={link.href} class:list={{ 'mobile-nav-link': true, 'mobile-nav-link-active': isActive(link.href) }}>
-      <span class="mobile-nav-icon" set:html={link.icon}></span>
-      <span>{link.label}</span>
-      <span class="mobile-nav-dot"></span>
+    <a
+      href={link.href}
+      class:list={{
+        'flex flex-col items-center justify-center transition-all active:scale-90 duration-200': true,
+        'text-[#60a5fa] font-bold': isActive(link.href),
+        'text-slate-500 hover:text-slate-200': !isActive(link.href),
+      }}
+    >
+      <span
+        class="material-symbols-outlined"
+        class:list={{ 'filled-icon': isActive(link.href) }}
+      >{link.icon}</span>
+      <span class="font-body text-[10px] font-label-sm uppercase mt-1">{link.label}</span>
     </a>
   ))}
-  <a href="/settings" class:list={{ 'mobile-nav-link': true, 'mobile-nav-link--compact': true, 'mobile-nav-link-active': isActive('/settings') }}>
-    <span class="mobile-nav-icon">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-    </span>
-    <span>Settings</span>
-    <span class="mobile-nav-dot"></span>
-  </a>
 </nav>
 
 <script>
-  async function handleLogout() {
+  document.getElementById('logout-btn')?.addEventListener('click', async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
     window.location.href = '/';
-  }
-  async function handleExitGuest() {
+  });
+  document.getElementById('exit-guest-btn')?.addEventListener('click', async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
     window.location.href = '/';
-  }
-  document.getElementById('logout-btn')?.addEventListener('click', handleLogout);
-  document.getElementById('exit-guest-btn')?.addEventListener('click', handleExitGuest);
+  });
 </script>
-
-<style>
-  /* ── Sidebar container ── */
-  .sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: var(--ds-sidebar-width);
-    background: var(--ds-bg-surface);
-    border-right: 1px solid var(--ds-border-subtle);
-    display: flex;
-    flex-direction: column;
-    z-index: var(--ds-z-nav);
-  }
-  @media (max-width: 767px) {
-    .sidebar { display: none; }
-  }
-
-  /* ── Logo ── */
-  .logo-area {
-    padding: var(--ds-space-3) var(--ds-space-2) var(--ds-space-2);
-    border-bottom: 1px solid var(--ds-border-subtle);
-  }
-  .logo-link {
-    display: flex;
-    align-items: center;
-    gap: var(--ds-space-1);
-    text-decoration: none;
-    transition: opacity 0.2s ease;
-  }
-  .logo-link:hover {
-    opacity: 0.8;
-  }
-  .logo-icon {
-    width: 1.75rem;
-    height: 1.75rem;
-    border-radius: var(--ds-radius-md);
-    background: var(--ds-accent-600);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: var(--ds-text-xs);
-    font-weight: var(--ds-weight-bold);
-    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .logo-link:hover .logo-icon {
-    transform: scale(1.05);
-  }
-  .logo-text {
-    font-size: var(--ds-text-md);
-    font-weight: var(--ds-weight-semibold);
-    color: white;
-    letter-spacing: var(--ds-tracking-tight);
-  }
-
-  /* ── Navigation ── */
-  .nav-area {
-    flex: 1;
-    overflow-y: auto;
-    padding: var(--ds-space-1) var(--ds-space-1);
-    display: flex;
-    flex-direction: column;
-    gap: var(--ds-space-1);
-  }
-  .nav-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.125rem;
-  }
-  .nav-group-label {
-    padding: var(--ds-space-1) var(--ds-space-2) 0.25rem var(--ds-space-2);
-    font-size: var(--ds-text-2xs);
-    font-weight: var(--ds-weight-semibold);
-    color: var(--ds-text-muted);
-    text-transform: uppercase;
-    letter-spacing: var(--ds-tracking-wider);
-  }
-
-  /* Premium nav link with left indicator bar */
-  .nav-link {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: var(--ds-space-2);
-    padding: var(--ds-space-1) var(--ds-space-2);
-    margin: 0 0.25rem;
-    border-radius: var(--ds-radius-md);
-    font-size: var(--ds-text-sm);
-    font-weight: var(--ds-weight-normal);
-    color: var(--ds-text-tertiary);
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    text-decoration: none;
-    overflow: hidden;
-  }
-  .nav-link:hover {
-    color: var(--ds-text-secondary);
-    background: var(--ds-bg-hover);
-  }
-  .nav-link:hover .nav-icon {
-    color: var(--ds-text-secondary);
-  }
-  .nav-link-active {
-    color: var(--ds-text-primary);
-    background: var(--ds-accent-bg);
-    font-weight: var(--ds-weight-medium);
-  }
-  .nav-link-active .nav-icon {
-    color: var(--ds-accent-400);
-  }
-
-  /* Left accent bar (slides in on active) */
-  .nav-indicator {
-    position: absolute;
-    left: 0;
-    top: 50%;
-    width: 3px;
-    height: 0;
-    border-radius: 0 2px 2px 0;
-    background: var(--ds-accent-500);
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    transform: translateY(-50%);
-  }
-  .nav-link-active .nav-indicator {
-    height: 1.25rem;
-  }
-
-  .nav-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.25rem;
-    height: 1.25rem;
-    flex-shrink: 0;
-    transition: color 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .nav-link:hover .nav-icon {
-    transform: translateX(1px);
-  }
-
-  /* ── User area ── */
-  .user-area {
-    padding: var(--ds-space-1);
-    border-top: 1px solid var(--ds-border-subtle);
-  }
-  .user-info {
-    display: flex;
-    align-items: center;
-    gap: var(--ds-space-1);
-    margin-bottom: var(--ds-space-1);
-  }
-  .user-avatar {
-    width: 1.75rem;
-    height: 1.75rem;
-    border-radius: var(--ds-radius-md);
-    background: var(--ds-accent-bg);
-    color: var(--ds-accent-400);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: var(--ds-text-xs);
-    font-weight: var(--ds-weight-bold);
-    flex-shrink: 0;
-  }
-  .user-avatar--guest {
-    background: var(--ds-warning-bg);
-    color: var(--ds-warning-text);
-  }
-  .user-text {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-  }
-  .user-name {
-    font-size: var(--ds-text-sm);
-    font-weight: var(--ds-weight-medium);
-    color: var(--ds-text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .user-status {
-    font-size: var(--ds-text-2xs);
-    color: var(--ds-text-muted);
-  }
-  .user-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-  .user-action-btn {
-    display: block;
-    width: 100%;
-    padding: var(--ds-space-1) var(--ds-space-1);
-    border-radius: var(--ds-radius-md);
-    font-size: var(--ds-text-xs);
-    font-weight: var(--ds-weight-medium);
-    border: none;
-    cursor: pointer;
-    transition: all var(--ds-transition-base);
-    background: transparent;
-    color: var(--ds-text-tertiary);
-    text-align: left;
-    font-family: var(--ds-font-sans);
-  }
-  .user-action-btn:hover {
-    background: var(--ds-bg-hover);
-    color: var(--ds-text-secondary);
-  }
-  .user-action-btn.primary {
-    background: var(--ds-accent-bg);
-    color: var(--ds-accent-300);
-  }
-  .user-action-btn.primary:hover {
-    background: rgba(99, 102, 241, 0.15);
-  }
-  .user-action-btn.danger {
-    color: var(--ds-danger-text);
-  }
-  .user-action-btn.danger:hover {
-    background: var(--ds-danger-bg);
-  }
-
-  /* ── Mobile bottom nav ── */
-  .mobile-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: var(--ds-bg-surface);
-    border-top: 1px solid var(--ds-border-subtle);
-    display: flex;
-    justify-content: space-around;
-    z-index: var(--ds-z-nav);
-    padding: var(--ds-space-1) 0;
-    padding-bottom: max(var(--ds-space-1), env(safe-area-inset-bottom));
-  }
-  @media (min-width: 768px) {
-    .mobile-nav { display: none; }
-  }
-  .mobile-nav-link {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.125rem;
-    padding: var(--ds-space-1);
-    font-size: var(--ds-text-2xs);
-    color: var(--ds-text-muted);
-    transition: color 0.2s ease, transform 0.15s ease;
-    text-decoration: none;
-  }
-  .mobile-nav-link:hover {
-    color: var(--ds-text-secondary);
-  }
-  .mobile-nav-link:active {
-    transform: scale(0.95);
-  }
-  .mobile-nav-link--compact {
-    padding: var(--ds-space-1) 0.5rem;
-  }
-  .mobile-nav-link-active {
-    color: var(--ds-accent-400);
-  }
-
-  /* Active dot indicator for mobile */
-  .mobile-nav-dot {
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background: transparent;
-    transition: background 0.2s ease;
-  }
-  .mobile-nav-link-active .mobile-nav-dot {
-    background: var(--ds-accent-500);
-  }
-
-  .mobile-nav-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.25rem;
-    height: 1.25rem;
-  }
-</style>

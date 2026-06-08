@@ -1,6 +1,5 @@
 ---
 import StudyRings from './StudyRings.astro';
-import StreakDisplay from './StreakDisplay.astro';
 
 export interface Props {
   coveragePercent: number;
@@ -20,13 +19,17 @@ export interface Props {
 const {
   coveragePercent, consistencyPercent, masteryPercent,
   readinessScore, readinessLabel,
-  streak, weekDays, entriesThisWeek, studyDaysPerWeek,
+  streak, weekDays,
   upcomingExams, syllabusPercent, user,
 } = Astro.props;
 
+const dayNames = ['M','T','W','T','F','S','S'];
+const todayIndex = new Date().getDay();
+const mondayIndex = todayIndex === 0 ? 6 : todayIndex - 1;
+
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
 
 function daysUntil(dateStr: string): number {
@@ -35,77 +38,120 @@ function daysUntil(dateStr: string): number {
   const diff = target.getTime() - now.getTime();
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
-
-function getReadinessColor(score: number): string {
-  if (score >= 70) return 'var(--ds-success-text)';
-  if (score >= 40) return 'var(--ds-warning-text)';
-  return 'var(--ds-danger-text)';
-}
 ---
 
-<div class="left-column animate-stagger">
-  <!-- Study Rings — Signature Visual -->
-  <div class="ds-card-glass rings-card card-lift" style="--stagger-index:0">
-    <div class="rings-section-header">
-      <span class="rings-section-label">Readiness Score</span>
-      <span class="readiness-badge" style="color: {getReadinessColor(readinessScore)};">
-        {readinessScore}%
+<div class="flex flex-col gap-8 animate-stagger">
+
+  <!-- Profile Header -->
+  <header class="flex items-center justify-between" style="--stagger-index:0">
+    <div class="flex items-center gap-3">
+      <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-indigo-500/20 bg-indigo-500/10 flex items-center justify-center text-indigo-400 text-lg font-bold">
+        {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+      </div>
+      <div>
+        <h2 class="text-sm font-semibold text-white">{user?.name || 'Student'}</h2>
+        <p class="text-xs text-neutral-500">Tier 1 Elite Track</p>
+      </div>
+    </div>
+    <button class="w-10 h-10 rounded-lg hover:bg-white/5 flex items-center justify-center transition-colors">
+      <span class="material-symbols-outlined text-neutral-400">notifications</span>
+    </button>
+  </header>
+
+  <!-- Featured Progress Ring -->
+  <div class="flex flex-col items-center mb-2" style="--stagger-index:1">
+    <div class="relative mb-6">
+      <StudyRings
+        coveragePercent={coveragePercent}
+        consistencyPercent={consistencyPercent}
+        masteryPercent={masteryPercent}
+        readinessScore={readinessScore}
+        readinessLabel={readinessLabel}
+      />
+    </div>
+    <h3 class="text-lg font-bold text-white mb-1">Exam Readiness</h3>
+    <p class="text-sm text-neutral-500 text-center px-4 italic">
+      {readinessScore >= 80
+        ? "You're in the top tier of prep this week."
+        : readinessScore >= 50
+        ? 'Good progress! Keep the momentum going.'
+        : 'Start building momentum with daily sessions.'}
+    </p>
+  </div>
+
+  <!-- Streak Strip -->
+  <div style="--stagger-index:2">
+    <div class="flex items-center justify-between mb-4">
+      <h4 class="text-xs font-label uppercase tracking-widest text-neutral-400">Current Streak</h4>
+      <span class="text-xs font-bold text-[#F59E0B] flex items-center gap-1">
+        {streak} DAYS <span class="material-symbols-outlined text-sm filled-icon">local_fire_department</span>
       </span>
     </div>
-    <StudyRings
-      coveragePercent={coveragePercent}
-      consistencyPercent={consistencyPercent}
-      masteryPercent={masteryPercent}
-      readinessScore={readinessScore}
-      readinessLabel={readinessLabel}
-    />
-  </div>
-
-  <!-- Week Strip — Streak with fire icon -->
-  <div class="ds-card-glass streak-card card-lift" style="--stagger-index:1">
-    <div class="streak-row">
-      <div class="streak-fire">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--ds-warning-400)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-        </svg>
-        <span class="streak-count count-up">{streak}</span>
-        <span class="streak-label">day streak</span>
-      </div>
+    <div class="grid grid-cols-7 gap-2">
+      {Array.from({ length: 7 }).map((_, i) => {
+        const dayAbbr = dayNames[i];
+        const isCompleted = weekDays[i]?.completed ?? false;
+        const isToday = i === mondayIndex;
+        return (
+          <div
+            class={`aspect-square rounded-lg flex flex-col items-center justify-center transition-all duration-300 ${
+              isCompleted
+                ? 'bg-[#F59E0B]/10 border border-[#F59E0B]/20'
+                : 'bg-white/5 border border-white/5'
+            } ${isToday ? 'ring-2 ring-indigo-500/30' : ''}`}
+          >
+            <span class={`text-[10px] mb-1 ${isCompleted ? 'text-[#F59E0B]' : 'text-neutral-600'}`}>
+              {dayAbbr}
+            </span>
+            {isCompleted ? (
+              <span class="material-symbols-outlined text-xs text-[#F59E0B] filled-icon">local_fire_department</span>
+            ) : (
+              <span class="w-1.5 h-1.5 rounded-full bg-neutral-700"></span>
+            )}
+          </div>
+        );
+      })}
     </div>
-    <StreakDisplay
-      streak={streak}
-      weekDays={weekDays}
-      entriesThisWeek={entriesThisWeek}
-      studyDaysPerWeek={studyDaysPerWeek}
-    />
   </div>
 
-  <!-- Upcoming Exams with Countdown Badges -->
+  <!-- Upcoming Tests -->
   {upcomingExams.length > 0 && (
-    <div class="ds-card-glass card-lift" style="--stagger-index:2">
-      <div class="section-header">
-        <h3 class="section-title">Upcoming Tests</h3>
+    <div style="--stagger-index:3">
+      <div class="flex items-center justify-between mb-4">
+        <h4 class="text-xs font-label uppercase tracking-widest text-neutral-400">Upcoming Tests</h4>
+        <a href="/daily" class="text-[10px] text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1">
+          View Schedule <span class="material-symbols-outlined text-[12px]">arrow_forward</span>
+        </a>
       </div>
-      <div class="test-list">
-        {upcomingExams.map((exam, i) => {
+      <div class="space-y-3">
+        {upcomingExams.map((exam) => {
           const days = daysUntil(exam.date);
+          const iconMap = {
+            'physics': 'science',
+            'chemistry': 'science',
+            'maths': 'calculate',
+            'mathematics': 'calculate',
+            'biology': 'biotech',
+            'english': 'book',
+          };
+          const icon = Object.entries(iconMap).find(([key]) =>
+            exam.label.toLowerCase().includes(key)
+          )?.[1] || 'history_edu';
+          const isUrgent = days <= 3;
           return (
-            <div class="test-item card-lift" style={`--stagger-index:${i + 2};animation-delay:calc(0.05s * var(--stagger-index))`}>
-              <div class="test-info">
-                <span class="test-name">{exam.label}</span>
-                <span class="test-desc">{formatDate(exam.date)}</span>
+            <div class="p-3 obsidian-glass rounded-xl flex items-center justify-between group cursor-pointer hover:bg-white/5 transition-all">
+              <div class="flex items-center gap-3">
+                <div class={`w-10 h-10 rounded-lg ${isUrgent ? 'bg-red-500/10 text-red-500' : 'bg-emerald-500/10 text-emerald-500'} flex items-center justify-center`}>
+                  <span class="material-symbols-outlined text-lg">{icon}</span>
+                </div>
+                <div>
+                  <h5 class="text-sm font-medium text-white group-hover:text-indigo-400 transition-colors">{exam.label}</h5>
+                  <p class="text-[10px] text-neutral-500 uppercase tracking-wide">{formatDate(exam.date)}</p>
+                </div>
               </div>
-              <div class="test-countdown">
-                {days === 0 ? (
-                  <span class="countdown-badge countdown-today">Today</span>
-                ) : days === 1 ? (
-                  <span class="countdown-badge countdown-soon">Tomorrow</span>
-                ) : (
-                  <span class="countdown-badge" style={`--cd-color: ${days <= 7 ? 'var(--ds-warning-text)' : 'var(--ds-accent-400)'}`}>
-                    {days}d
-                  </span>
-                )}
-              </div>
+              <span class={`px-2 py-1 rounded-md text-[9px] font-bold ${days === 0 ? 'bg-red-500/20 text-red-400' : 'bg-white/5 text-neutral-400'}`}>
+                {days === 0 ? 'TODAY' : days === 1 ? 'TOMORROW' : `${days} DAYS`}
+              </span>
             </div>
           );
         })}
@@ -113,192 +159,39 @@ function getReadinessColor(score: number): string {
     </div>
   )}
 
-  <!-- Syllabus Progress with animated bar -->
-  <div class="ds-card-glass card-lift" style="--stagger-index:3">
-    <div class="syllabus-header">
-      <span class="section-title-sm">Overall Syllabus Progress</span>
-      <span class="syllabus-pct animate-pop">{syllabusPercent}%</span>
+  <!-- Syllabus Progress -->
+  <div style="--stagger-index:4">
+    <div class="flex items-center justify-between mb-2">
+      <h4 class="text-xs font-label uppercase tracking-widest text-neutral-400">Syllabus Progress</h4>
+      <span class="text-xs font-bold text-white">{syllabusPercent}%</span>
     </div>
-    <div class="ds-progress ds-progress-lg">
+    <div class="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
       <div
-        class="ds-progress-bar bar-fill"
+        class="h-full rounded-full transition-all duration-1000 ease-out"
         class:list={{
-          'ds-progress-bar--success': syllabusPercent >= 70,
-          'ds-progress-bar--warning': syllabusPercent >= 40 && syllabusPercent < 70,
-          'ds-progress-bar--danger': syllabusPercent < 40,
+          'bg-indigo-500': syllabusPercent >= 40,
+          'bg-amber-500': syllabusPercent >= 20 && syllabusPercent < 40,
+          'bg-red-500': syllabusPercent < 20,
         }}
         style={`width:${syllabusPercent}%`}
+        id="syllabus-bar"
       ></div>
-    </div>
-    <div class="syllabus-footer">
-      <span class="syllabus-sub">
-        {syllabusPercent >= 70 ? '🌟 Strong progress' : syllabusPercent >= 40 ? '📈 Keep going' : '🎯 Start building momentum'}
-      </span>
     </div>
   </div>
 </div>
 
-<style>
-  .left-column {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ds-space-3);
-  }
-  .rings-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: var(--ds-space-3);
-  }
-  .rings-section-header {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 0.75rem;
-  }
-  .rings-section-label {
-    font-size: var(--ds-text-xs);
-    font-weight: 500;
-    color: var(--ds-text-tertiary);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-  .readiness-badge {
-    font-size: var(--ds-text-sm);
-    font-weight: 700;
-    font-family: var(--ds-font-mono);
-  }
-
-  /* ── Streak Card ── */
-  .streak-card {
-    padding: var(--ds-space-2) var(--ds-space-3);
-  }
-  .streak-row {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 0.75rem;
-  }
-  .streak-fire {
-    display: flex;
-    align-items: center;
-    gap: 0.375rem;
-  }
-  .streak-count {
-    font-size: var(--ds-text-2xl);
-    font-weight: 800;
-    color: var(--ds-warning-400);
-    font-family: var(--ds-font-mono);
-    line-height: 1;
-  }
-  .streak-label {
-    font-size: var(--ds-text-xs);
-    color: var(--ds-text-tertiary);
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  /* ── Section Header ── */
-  .section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1rem;
-  }
-  .section-title {
-    font-size: var(--ds-text-xs);
-    font-weight: 600;
-    color: var(--ds-text-primary);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin: 0;
-  }
-  .section-title-sm {
-    font-size: var(--ds-text-xs);
-    color: var(--ds-text-tertiary);
-    font-weight: 500;
-  }
-  .test-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  .test-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.75rem;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--ds-radius-lg);
-    transition: background var(--ds-transition-base);
-    cursor: pointer;
-  }
-  .test-item:hover {
-    background: rgba(255, 255, 255, 0.06);
-  }
-  .test-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.125rem;
-  }
-  .test-name {
-    font-size: var(--ds-text-sm);
-    font-weight: 600;
-    color: var(--ds-text-primary);
-  }
-  .test-desc {
-    font-size: var(--ds-text-xs);
-    color: var(--ds-text-tertiary);
-  }
-  .test-countdown {
-    text-align: right;
-    flex-shrink: 0;
-  }
-  .countdown-badge {
-    display: inline-block;
-    padding: 0.25rem 0.5rem;
-    border-radius: var(--ds-radius-full);
-    font-size: var(--ds-text-xs);
-    font-weight: 700;
-    font-family: var(--ds-font-mono);
-    color: var(--cd-color, var(--ds-accent-400));
-    background: rgba(96, 165, 250, 0.1);
-    border: 1px solid rgba(96, 165, 250, 0.2);
-    min-width: 2.5rem;
-    text-align: center;
-  }
-  .countdown-today {
-    color: var(--ds-danger-text);
-    background: var(--ds-danger-bg);
-    border-color: var(--ds-danger-border);
-  }
-  .countdown-soon {
-    color: var(--ds-warning-text);
-    background: var(--ds-warning-bg);
-    border-color: var(--ds-warning-border);
-  }
-
-  /* ── Syllabus ── */
-  .syllabus-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 0.5rem;
-  }
-  .syllabus-pct {
-    font-size: var(--ds-text-sm);
-    font-weight: 700;
-    color: var(--ds-accent-400);
-    font-family: var(--ds-font-mono);
-  }
-  .syllabus-footer {
-    margin-top: 0.5rem;
-  }
-  .syllabus-sub {
-    font-size: var(--ds-text-2xs);
-    color: var(--ds-text-muted);
-  }
-</style>
+<script>
+  window.addEventListener('load', () => {
+    const bar = document.getElementById('syllabus-bar');
+    if (bar) {
+      const finalWidth = bar.style.width;
+      bar.style.width = '0%';
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          bar.style.transition = 'width 1s cubic-bezier(0.4, 0, 0.2, 1)';
+          bar.style.width = finalWidth;
+        });
+      });
+    }
+  });
+</script>

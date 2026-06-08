@@ -16,146 +16,151 @@ const { todayEntry, defaultExamType } = Astro.props;
 const isEditing = !!todayEntry;
 const initialExamType = todayEntry?.examType || defaultExamType || '';
 
+const EXAM_TYPES = [
+  'JEE', 'JEE Main', 'JEE Advanced', 'NEET', 'CET',
+  'Boards (PCM)', 'Boards (PCB)', 'Boards (Commerce)',
+  'CUET', 'GATE', 'CAT', 'UPSC', 'Other'
+];
+
 const STUDY_TYPES = [
-  { value: 'theory', label: '📖 Theory' },
-  { value: 'problem_solving', label: '✍️ Problem Solving' },
-  { value: 'revision', label: '🔄 Revision' },
-  { value: 'test', label: '📝 Test' },
+  { value: 'theory', label: 'Theory 📖' },
+  { value: 'problem_solving', label: 'Problem Solving ✍️' },
+  { value: 'revision', label: 'Revision 🔄' },
+  { value: 'test', label: 'Test 📝' },
   { value: 'other', label: 'Other' },
 ];
+
+const SUBJECTS = ['Physics', 'Chemistry', 'Maths', 'Biology'];
+const SUBJECT_COLORS: Record<string, string> = {
+  Physics: 'bg-blue-400',
+  Chemistry: 'bg-emerald-400',
+  Maths: 'bg-amber-400',
+  Biology: 'bg-rose-400',
+};
 ---
 
-<div class="ds-card-glass entry-form-card card-lift animate-slide-up" id="entry-form-container">
-  <div class="form-header">
-    <div class="form-header-left">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ds-accent-400)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/>
-        <path d="M14 2v4a2 2 0 0 0 2 2h4"/>
-        <path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>
-      </svg>
-      <h2 class="form-title">
-        {isEditing ? "Update today's log" : 'What did you study today?'}
-      </h2>
-    </div>
-    {todayEntry && (
-      <span class="editing-badge">Editing</span>
-    )}
-  </div>
-
-  <form id="entry-form">
+<div id="entry-form-container">
+  <form id="entry-form" class="space-y-8">
     <input type="hidden" name="id" value={todayEntry?.id || ''} />
 
-    <!-- Main content textarea -->
+    <!-- Subject Chips -->
     <div>
+      <label class="block text-sm font-label text-[#8b919d] mb-4">Subject Studied</label>
+      <input type="hidden" name="subject" id="subject-input" value="" />
+      <div class="flex flex-wrap gap-3">
+        {SUBJECTS.map(subject => (
+          <button
+            type="button"
+            class="subject-chip px-5 py-2.5 rounded-full border border-slate-700 bg-[#050b18] text-[#dce2f5] hover:border-[#60a5fa]/50 transition-all font-label text-sm flex items-center gap-2 group"
+            data-selected="false"
+            data-subject={subject}
+          >
+            <span class={`w-2 h-2 rounded-full ${SUBJECT_COLORS[subject] || 'bg-slate-400'}`}></span>
+            {subject}
+          </button>
+        ))}
+      </div>
+    </div>
+
+    <!-- Hours + Focus Rating Row -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <!-- Hours Studied -->
+      <div>
+        <label class="block text-sm font-label text-[#8b919d] mb-2" for="hours">Hours Studied</label>
+        <div class="relative">
+          <input
+            type="number"
+            id="hours"
+            name="hoursStudied"
+            min="0"
+            max="24"
+            step="0.5"
+            placeholder="e.g. 4.5"
+            value={todayEntry?.hoursStudied || ''}
+            class="w-full bg-[#050b18] border border-slate-700 rounded-xl px-4 py-3 text-[#dce2f5] focus:outline-none focus:ring-2 focus:ring-[#60a5fa] transition-all placeholder:text-slate-600"
+          />
+          <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[#8b919d] font-label text-sm">hrs</span>
+        </div>
+      </div>
+
+      <!-- Focus Rating -->
+      <div>
+        <label class="block text-sm font-label text-[#8b919d] mb-2">Focus Rating</label>
+        <input type="hidden" name="focusRating" id="focus-rating-input" value={todayEntry?.focusRating || 0} />
+        <div class="flex gap-2" id="focus-rating-group">
+          {[1, 2, 3, 4, 5].map(n => (
+            <button
+              type="button"
+              class="focus-segment w-full h-10 rounded-lg bg-[#050b18] border border-slate-700 hover:border-[#60a5fa]/50 transition-all flex items-center justify-center text-lg font-bold text-[#dce2f5]"
+              data-val={n}
+              class:list={{
+                'bg-[#60a5fa] text-[#050b18] border-[#60a5fa]': n <= (todayEntry?.focusRating || 0),
+                'bg-[#050b18] text-[#dce2f5] border-slate-700': n > (todayEntry?.focusRating || 0),
+              }}
+            >{n}</button>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <!-- Study Type + Exam Select -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <label class="block text-sm font-label text-[#8b919d] mb-2" for="study-type">Study Type</label>
+        <select id="study-type" name="studyType" class="w-full bg-[#050b18] border border-slate-700 rounded-xl px-4 py-3 text-[#dce2f5] focus:outline-none focus:ring-2 focus:ring-[#60a5fa] transition-all">
+          {STUDY_TYPES.map(st => (
+            <option value={st.value} selected={todayEntry?.studyType === st.value}>{st.label}</option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-label text-[#8b919d] mb-2" for="exam-type">Exam</label>
+        <select id="exam-type" name="examType" class="w-full bg-[#050b18] border border-slate-700 rounded-xl px-4 py-3 text-[#dce2f5] focus:outline-none focus:ring-2 focus:ring-[#60a5fa] transition-all">
+          <option value="">— Select —</option>
+          {EXAM_TYPES.map(ex => (
+            <option value={ex} selected={initialExamType === ex}>{ex}</option>
+          ))}
+        </select>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div>
+      <label class="block text-sm font-label text-[#8b919d] mb-2" for="entry-content">What did you accomplish today?</label>
       <textarea
         id="entry-content"
         name="content"
         rows="4"
-        placeholder="e.g. Studied Physics chapter 3 — Kinematics. Covered motion in 1D and 2D, solved 15 problems..."
-        class="ds-input"
+        placeholder="Solved 20 HC Verma problems, revised electrostatics..."
+        class="w-full bg-[#050b18] border border-slate-700 rounded-xl px-4 py-3 text-[#dce2f5] focus:outline-none focus:ring-2 focus:ring-[#60a5fa] transition-all placeholder:text-slate-600 resize-none"
         required
         minlength="10"
         maxlength="10000"
       >{todayEntry?.content || ''}</textarea>
-      <div class="char-row">
-        <p class="char-hint" id="char-count">{todayEntry?.content?.length || 0} / 10000</p>
-        <p class="char-hint">Min 10 characters</p>
+      <div class="flex justify-between mt-1">
+        <span class="text-xs text-slate-600" id="char-count">{todayEntry?.content?.length || 0} / 10000</span>
       </div>
     </div>
 
-    <!-- Row 1: Hours + Study Type -->
-    <div class="field-row">
-      <div class="field-group">
-        <label for="hours" class="field-label">Hours</label>
-        <input
-          type="number"
-          id="hours"
-          name="hoursStudied"
-          min="0"
-          max="24"
-          step="0.5"
-          placeholder="e.g. 4.5"
-          value={todayEntry?.hoursStudied || ''}
-          class="ds-input"
-          style="font-family:var(--ds-font-mono);text-align:center;"
-        />
-      </div>
-
-      <div class="field-group">
-        <label for="study-type" class="field-label">Study type</label>
-        <select id="study-type" name="studyType" class="ds-input ds-select">
-          {STUDY_TYPES.map(st => (
-            <option value={st.value} selected={todayEntry?.studyType === st.value}>
-              {st.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div class="field-group">
-        <label for="exam-type" class="field-label">Exam</label>
-        <select id="exam-type" name="examType" class="ds-input ds-select">
-          <option value="">— Select —</option>
-          <option value="JEE" selected={initialExamType === 'JEE'}>JEE</option>
-          <option value="JEE Main" selected={initialExamType === 'JEE Main'}>JEE Main</option>
-          <option value="JEE Advanced" selected={initialExamType === 'JEE Advanced'}>JEE Advanced</option>
-          <option value="NEET" selected={initialExamType === 'NEET'}>NEET</option>
-          <option value="CET" selected={initialExamType === 'CET'}>CET</option>
-          <option value="Boards (PCM)" selected={initialExamType === 'Boards (PCM)'}>Boards (PCM)</option>
-          <option value="Boards (PCB)" selected={initialExamType === 'Boards (PCB)'}>Boards (PCB)</option>
-          <option value="Boards (Commerce)" selected={initialExamType === 'Boards (Commerce)'}>Boards (Commerce)</option>
-          <option value="CUET" selected={initialExamType === 'CUET'}>CUET</option>
-          <option value="GATE" selected={initialExamType === 'GATE'}>GATE</option>
-          <option value="CAT" selected={initialExamType === 'CAT'}>CAT</option>
-          <option value="UPSC" selected={initialExamType === 'UPSC'}>UPSC</option>
-          <option value="Other" selected={initialExamType === 'Other'}>Other</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Row 2: Focus Rating -->
+    <!-- Syllabus chapter selection (collapsible) -->
     <div>
-      <label class="field-label">Focus rating</label>
-      <div class="star-rating" id="star-rating" data-rating={todayEntry?.focusRating || 0}>
-        {[1, 2, 3, 4, 5].map(n => (
-          <button
-            type="button"
-            class:list={{ 'star': true, 'filled': n <= (todayEntry?.focusRating || 0) }}
-            data-value={n}
-            aria-label={`${n} star${n > 1 ? 's' : ''}`}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-            </svg>
-          </button>
-        ))}
-      </div>
-      <input type="hidden" name="focusRating" id="focus-rating-input" value={todayEntry?.focusRating || 0} />
-    </div>
-
-    <!-- Syllabus chapter selection -->
-    <div id="syllabus-section" class="syllabus-section">
-      <button type="button" id="syllabus-toggle" class="syllabus-toggle">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron"><path d="m9 18 6-6-6-6"/></svg>
+      <button type="button" id="syllabus-toggle" class="text-[#8b919d] hover:text-[#60a5fa] text-sm font-label transition-colors flex items-center gap-2">
+        <span class="material-symbols-outlined text-sm chevron">chevron_right</span>
         Update syllabus progress
       </button>
-      <div id="syllabus-panel" class="syllabus-panel hidden">
-        <p id="syllabus-loading" style="color:#64748b;font-size:0.8rem;padding:0.5rem 0;">Loading chapters...</p>
+      <div id="syllabus-panel" class="hidden mt-3 bg-[#050b18] border border-slate-700 rounded-xl p-4 max-h-80 overflow-y-auto">
+        <p id="syllabus-loading" class="text-sm text-[#8b919d]">Loading chapters...</p>
         <div id="syllabus-chapters"></div>
       </div>
     </div>
 
-    <!-- Submit -->
-    <div class="submit-row">
-      <button
-        type="submit"
-        id="submit-btn"
-        class="ds-btn ds-btn-primary"
-      >
-        {isEditing ? 'Update Entry' : 'Log Entry'}
-      </button>
-      <div id="form-error" class="error hidden"></div>
-    </div>
+    <!-- Submit Button — Stitch style -->
+    <button type="submit" id="submit-btn" class="w-full bg-[#60a5fa] hover:bg-[#60a5fa]/90 text-[#050b18] font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2 active:scale-[0.98]">
+      <span class="material-symbols-outlined filled-icon">save</span>
+      {isEditing ? 'Update Entry' : 'Save Daily Log'}
+    </button>
+
+    <div id="form-error" class="hidden mt-2 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg p-3"></div>
   </form>
 </div>
 
@@ -166,38 +171,66 @@ const STUDY_TYPES = [
   const submitBtn = document.getElementById('submit-btn');
   const errorDiv = document.getElementById('form-error');
   const idInput = form.querySelector('input[name="id"]');
-  const starRating = document.getElementById('star-rating');
   const focusInput = document.getElementById('focus-rating-input');
   const hoursInput = document.getElementById('hours');
   const studyTypeSelect = document.getElementById('study-type');
   const examTypeInput = document.getElementById('exam-type');
+  const subjectInput = document.getElementById('subject-input');
 
   // Char count
   textarea.addEventListener('input', () => {
     charCount.textContent = `${textarea.value.length} / 10000`;
   });
 
-  // Star rating
-  starRating.querySelectorAll('.star').forEach(star => {
-    star.addEventListener('click', () => {
-      const value = parseInt(star.getAttribute('data-value') || '0');
-      focusInput.value = value.toString();
-      starRating.querySelectorAll('.star').forEach(s => {
-        const sv = parseInt(s.getAttribute('data-value') || '0');
-        s.classList.toggle('filled', sv <= value);
-      });
+  // Subject Chips — toggle selection
+  const subjectChips = document.querySelectorAll('.subject-chip');
+  subjectChips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      const isSelected = chip.getAttribute('data-selected') === 'true';
+      chip.setAttribute('data-selected', !isSelected);
+      if (!isSelected) {
+        chip.classList.remove('bg-[#050b18]', 'text-[#dce2f5]', 'border-slate-700');
+        chip.classList.add('bg-[#60a5fa]', 'text-[#050b18]', 'border-[#60a5fa]');
+        const dot = chip.querySelector('span');
+        dot.classList.remove('bg-blue-400', 'bg-emerald-400', 'bg-amber-400', 'bg-rose-400');
+        dot.classList.add('bg-white');
+      } else {
+        chip.classList.add('bg-[#050b18]', 'text-[#dce2f5]', 'border-slate-700');
+        chip.classList.remove('bg-[#60a5fa]', 'text-[#050b18]', 'border-[#60a5fa]');
+        const dot = chip.querySelector('span');
+        dot.classList.remove('bg-white');
+        const subject = chip.dataset.subject;
+        const subjectColors = { Physics: 'bg-blue-400', Chemistry: 'bg-emerald-400', Maths: 'bg-amber-400', Biology: 'bg-rose-400' };
+        dot.className = `w-2 h-2 rounded-full ${subjectColors[subject] || 'bg-slate-400'}`;
+      }
+      updateSubjectInput();
     });
+  });
 
-    star.addEventListener('mouseenter', () => {
-      const value = parseInt(star.getAttribute('data-value') || '0');
-      starRating.querySelectorAll('.star').forEach(s => {
-        const sv = parseInt(s.getAttribute('data-value') || '0');
-        s.classList.toggle('hover', sv <= value);
-      });
+  function updateSubjectInput() {
+    const selected = [];
+    document.querySelectorAll('.subject-chip[data-selected="true"]').forEach(chip => {
+      selected.push(chip.dataset.subject);
     });
+    subjectInput.value = selected.join(', ');
+  }
 
-    star.addEventListener('mouseleave', () => {
-      starRating.querySelectorAll('.star').forEach(s => s.classList.remove('hover'));
+  // Focus Segment Selection — toggle buttons
+  const focusSegments = document.querySelectorAll('#focus-rating-group .focus-segment');
+  focusSegments.forEach(segment => {
+    segment.addEventListener('click', () => {
+      const val = parseInt(segment.dataset.val);
+      focusInput.value = val;
+      focusSegments.forEach(s => {
+        const sv = parseInt(s.dataset.val);
+        if (sv <= val) {
+          s.classList.remove('bg-[#050b18]', 'text-[#dce2f5]', 'border-slate-700');
+          s.classList.add('bg-[#60a5fa]', 'text-[#050b18]', 'border-[#60a5fa]');
+        } else {
+          s.classList.add('bg-[#050b18]', 'text-[#dce2f5]', 'border-slate-700');
+          s.classList.remove('bg-[#60a5fa]', 'text-[#050b18]', 'border-[#60a5fa]');
+        }
+      });
     });
   });
 
@@ -211,14 +244,16 @@ const STUDY_TYPES = [
 
   syllabusToggle.addEventListener('click', () => {
     const isHidden = syllabusPanel.classList.toggle('hidden');
-    syllabusToggle.querySelector('.chevron').classList.toggle('open', !isHidden);
+    const chevron = syllabusToggle.querySelector('.chevron');
+    if (chevron) {
+      chevron.textContent = isHidden ? 'chevron_right' : 'expand_more';
+    }
     if (!isHidden && !syllabusData) {
       loadSyllabus();
     }
   });
 
   examTypeInput.addEventListener('change', () => {
-    // Reset syllabus when exam changes
     syllabusData = null;
     syllabusChapters.innerHTML = '';
     if (!syllabusPanel.classList.contains('hidden')) {
@@ -234,7 +269,6 @@ const STUDY_TYPES = [
       return;
     }
 
-    // Map UI exam names to syllabus DB keys
     const examMap = {
       'JEE': 'JEE', 'JEE Main': 'JEE', 'JEE Advanced': 'JEE',
       'NEET': 'NEET', 'CET': 'MHT_CET',
@@ -270,7 +304,6 @@ const STUDY_TYPES = [
   }
 
   function renderSyllabus(chapters, progress) {
-    // Group by subject
     const subjects = {};
     for (const ch of chapters) {
       if (!subjects[ch.subject]) subjects[ch.subject] = [];
@@ -289,7 +322,6 @@ const STUDY_TYPES = [
       const subjectDiv = document.createElement('div');
       subjectDiv.style.marginBottom = '0.75rem';
 
-      // Subject header
       const header = document.createElement('div');
       header.style.display = 'flex';
       header.style.alignItems = 'center';
@@ -301,31 +333,21 @@ const STUDY_TYPES = [
       const nameSpan = document.createElement('span');
       nameSpan.style.fontSize = '0.8rem';
       nameSpan.style.fontWeight = '600';
-      nameSpan.style.color = '#e2e8f0';
+      nameSpan.style.color = '#dce2f5';
       nameSpan.textContent = subject;
       header.appendChild(nameSpan);
       const pctSpan = document.createElement('span');
       pctSpan.className = 'syl-pct';
       pctSpan.style.fontSize = '0.7rem';
       pctSpan.style.fontFamily = 'monospace';
-      pctSpan.style.color = '#64748b';
+      pctSpan.style.color = '#8b919d';
       pctSpan.textContent = `${pct}%`;
       header.appendChild(pctSpan);
       subjectDiv.appendChild(header);
 
-      // Chapters
       const STATUS_LIST = ['not_started', 'studied', 'revision_1', 'revision_2', 'revision_3', 'mastered'];
-      const STATUS_STYLES = {
-        not_started: { color: '#cbd5e1', deco: 'none' },
-        studied: { color: '#fcd34d', deco: 'none' },
-        revision_1: { color: '#93c5fd', deco: 'none' },
-        revision_2: { color: '#c4b5fd', deco: 'none' },
-        revision_3: { color: '#f9a8d4', deco: 'none' },
-        mastered: { color: '#64748b', deco: 'line-through' },
-      };
 
       for (const ch of chs) {
-        const st = STATUS_STYLES[ch.status] || STATUS_STYLES.not_started;
         const row = document.createElement('div');
         row.dataset.sylRow = ch.id;
         row.style.display = 'flex';
@@ -336,7 +358,6 @@ const STUDY_TYPES = [
         row.addEventListener('mouseenter', () => { row.style.background = 'rgba(51,65,85,0.3)'; });
         row.addEventListener('mouseleave', () => { row.style.background = 'transparent'; });
 
-        // Six status buttons as a slider group
         const btnGroup = document.createElement('div');
         btnGroup.style.display = 'flex';
         btnGroup.style.borderRadius = '0.35rem';
@@ -348,17 +369,14 @@ const STUDY_TYPES = [
         }
         row.appendChild(btnGroup);
 
-        // Chapter name
         const chName = document.createElement('span');
         chName.className = 'syl-ch-name';
         chName.style.fontSize = '0.78rem';
-        chName.style.color = st.color;
+        chName.style.color = '#dce2f5';
         chName.style.flex = '1';
-        if (st.deco !== 'none') chName.style.textDecoration = st.deco;
         chName.textContent = ch.chapter;
         row.appendChild(chName);
 
-        // Class level badge
         if (ch.classLevel) {
           const badge = document.createElement('span');
           badge.style.fontSize = '0.6rem';
@@ -373,11 +391,9 @@ const STUDY_TYPES = [
 
         subjectDiv.appendChild(row);
       }
-
       syllabusChapters.appendChild(subjectDiv);
     }
 
-    // Add click handlers to status buttons
     syllabusChapters.querySelectorAll('.syl-status-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         const chapterId = btn.dataset.chapterId;
@@ -385,7 +401,6 @@ const STUDY_TYPES = [
         const row = btn.closest('[data-syl-row]');
         if (!chapterId || !status) return;
 
-        // Disable all buttons in this row during update
         const rowBtns = row.querySelectorAll('.syl-status-btn');
         rowBtns.forEach(b => b.disabled = true);
 
@@ -397,7 +412,6 @@ const STUDY_TYPES = [
           });
           if (!res.ok) throw new Error('Update failed');
 
-          // Update button visuals
           const ACTIVE_COLORS = {
             not_started: '#64748b', studied: '#f59e0b', revision_1: '#3b82f6',
             revision_2: '#8b5cf6', revision_3: '#ec4899', mastered: '#22c55e',
@@ -410,23 +424,6 @@ const STUDY_TYPES = [
             b.style.fontWeight = isActive ? '600' : '400';
           });
 
-          // Update chapter name style
-          const nameSpan = row.querySelector('.syl-ch-name');
-          if (nameSpan) {
-            const STYLE_MAP = {
-              not_started: { color: '#cbd5e1', deco: 'none' },
-              studied: { color: '#fcd34d', deco: 'none' },
-              revision_1: { color: '#93c5fd', deco: 'none' },
-              revision_2: { color: '#c4b5fd', deco: 'none' },
-              revision_3: { color: '#f9a8d4', deco: 'none' },
-              mastered: { color: '#64748b', deco: 'line-through' },
-            };
-            const s = STYLE_MAP[status] || STYLE_MAP.not_started;
-            nameSpan.style.color = s.color;
-            nameSpan.style.textDecoration = s.deco;
-          }
-
-          // Reload to refresh percentages
           const exam = examTypeInput.value.trim();
           const examMap = { 'JEE': 'JEE', 'JEE Main': 'JEE', 'JEE Advanced': 'JEE', 'NEET': 'NEET', 'CET': 'MHT_CET', 'Boards (PCM)': 'CBSE_12', 'Boards (PCB)': 'CBSE_12', 'Boards (Commerce)': 'CBSE_12', 'CUET': 'CUET', 'GATE': 'GATE', 'CAT': 'CAT', 'UPSC': 'UPSC' };
           const examKey = examMap[exam] || exam;
@@ -434,9 +431,7 @@ const STUDY_TYPES = [
           if (res2.ok) {
             const data2 = await res2.json();
             if (data2.progress) {
-              // Update subject percentages
               data2.progress.forEach(p => {
-                // Find the subject header
                 const headers = syllabusChapters.querySelectorAll('[data-syl-subject]');
                 headers.forEach(h => {
                   if (h.dataset.sylSubject === p.subject) {
@@ -510,7 +505,7 @@ const STUDY_TYPES = [
     const focusRating = parseInt(focusInput.value) || 0;
 
     submitBtn.disabled = true;
-    submitBtn.textContent = idInput.value ? 'Updating...' : 'Saving...';
+    submitBtn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> Saving...';
 
     try {
       const isEditing = !!idInput.value;
@@ -534,15 +529,25 @@ const STUDY_TYPES = [
         throw new Error(err.error || `HTTP ${res.status}`);
       }
 
-      window.location.reload();
-      // Track for getting-started checklist
+      showSuccess();
       try { localStorage.setItem('sl-checklist-entry', '1'); } catch(e) {}
     } catch (err) {
       showError(err instanceof Error ? err.message : 'Something went wrong');
       submitBtn.disabled = false;
-      submitBtn.textContent = idInput.value ? 'Update Entry' : 'Log Entry';
+      submitBtn.innerHTML = '<span class="material-symbols-outlined">save</span> ' + (idInput.value ? 'Update Entry' : 'Save Daily Log');
     }
   });
+
+  function showSuccess() {
+    submitBtn.innerHTML = '<span class="material-symbols-outlined">check_circle</span> Saved Successfully!';
+    submitBtn.classList.remove('bg-[#60a5fa]');
+    submitBtn.classList.add('bg-emerald-500');
+    setTimeout(() => {
+      submitBtn.classList.remove('bg-emerald-500');
+      submitBtn.classList.add('bg-[#60a5fa]');
+      window.location.reload();
+    }, 1500);
+  }
 
   function showError(msg) {
     errorDiv.textContent = msg;
@@ -551,147 +556,12 @@ const STUDY_TYPES = [
 </script>
 
 <style>
-  .entry-form-card {
-    padding: var(--ds-space-3);
+  .hidden { display: none !important; }
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
   }
-  .form-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: var(--ds-space-3);
-  }
-  .form-header-left {
-    display: flex;
-    align-items: center;
-    gap: var(--ds-space-1);
-  }
-  .form-title {
-    font-size: var(--ds-text-md);
-    font-weight: var(--ds-weight-semibold);
-    color: var(--ds-text-primary);
-    margin: 0;
-  }
-  .editing-badge {
-    font-size: var(--ds-text-2xs);
-    font-weight: var(--ds-weight-semibold);
-    padding: 0.15rem 0.5rem;
-    border-radius: var(--ds-radius-full);
-    background: var(--ds-success-bg);
-    color: var(--ds-success-text);
-    border: 1px solid var(--ds-success-border);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-  .field-row {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--ds-space-2);
-    margin-bottom: var(--ds-space-2);
-  }
-  @media (min-width: 640px) {
-    .field-row {
-      grid-template-columns: repeat(3, 1fr);
-    }
-  }
-  .field-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.375rem;
-  }
-  .field-label {
-    display: block;
-    font-size: var(--ds-text-xs);
-    font-weight: var(--ds-weight-medium);
-    color: var(--ds-text-secondary);
-  }
-  .char-row {
-    display: flex;
-    justify-content: space-between;
-    margin-top: var(--ds-space-1);
-  }
-  .char-hint {
-    font-size: var(--ds-text-2xs);
-    color: var(--ds-text-muted);
-    margin: 0;
-  }
-  .star-rating {
-    display: flex;
-    gap: 0.25rem;
-    padding: var(--ds-space-1) 0;
-  }
-  .star {
-    background: none;
-    border: none;
-    padding: 0.2rem;
-    cursor: pointer;
-    color: var(--ds-bg-elevated);
-    transition: color 0.15s, transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .star.filled {
-    color: var(--ds-warning-400);
-  }
-  .star.hover {
-    color: var(--ds-warning-400);
-  }
-  .star:hover {
-    transform: scale(1.2);
-    color: var(--ds-warning-400);
-  }
-  .error {
-    color: var(--ds-danger-400);
-    font-size: var(--ds-text-xs);
-    padding: var(--ds-space-1) var(--ds-space-2);
-    background: var(--ds-danger-bg);
-    border: 1px solid var(--ds-danger-border);
-    border-radius: var(--ds-radius-md);
-  }
-
-  /* Syllabus section */
-  .syllabus-section {
-    margin-top: var(--ds-space-1);
-    margin-bottom: var(--ds-space-2);
-  }
-  .syllabus-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    background: var(--ds-bg-elevated);
-    border: 1px solid var(--ds-border-default);
-    color: var(--ds-text-tertiary);
-    font-size: var(--ds-text-xs);
-    padding: 0.4rem 0.75rem;
-    border-radius: var(--ds-radius-md);
-    cursor: pointer;
-    font-family: var(--ds-font-sans);
-    transition: all 0.15s;
-  }
-  .syllabus-toggle:hover {
-    color: var(--ds-text-secondary);
-    border-color: var(--ds-border-strong);
-  }
-  .chevron {
-    transition: transform 0.2s ease;
-  }
-  .chevron.open {
-    transform: rotate(90deg);
-  }
-  .syllabus-panel {
-    margin-top: var(--ds-space-2);
-    background: var(--ds-bg-surface);
-    border: 1px solid var(--ds-border-default);
-    border-radius: var(--ds-radius-lg);
-    padding: var(--ds-space-2);
-    max-height: 400px;
-    overflow-y: auto;
-  }
-
-  .submit-row {
-    display: flex;
-    align-items: center;
-    gap: var(--ds-space-2);
-    margin-top: var(--ds-space-1);
-  }
-  .hidden {
-    display: none !important;
+  .animate-spin {
+    animation: spin 1s linear infinite;
   }
 </style>

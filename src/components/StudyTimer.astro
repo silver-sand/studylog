@@ -4,525 +4,113 @@ export interface Props {
 }
 
 const { subjects = ['Physics', 'Chemistry', 'Mathematics', 'Biology'] } = Astro.props;
+
+const subjectColors: Record<string, string> = {
+  Physics: '#6366f1',
+  Chemistry: '#22c55e',
+  Mathematics: '#f59e0b',
+  Maths: '#f59e0b',
+  Biology: '#ec4899',
+};
 ---
 
-<div class="timer-wrapper animate-slide-up" style="--stagger-index:0;">
-  <div class="ds-card-glass timer-card card-lift" id="study-timer">
-    <!-- SVG Circular Progress Ring -->
-    <div class="timer-ring-container">
-      <svg class="timer-ring" viewBox="0 0 200 200" aria-hidden="true">
-        <!-- Track ring -->
-        <circle
-          cx="100" cy="100" r="88"
-          fill="none"
-          stroke="var(--ds-bg-elevated)"
-          stroke-width="6"
-        />
-        <!-- Progress ring -->
-        <circle
-          id="timer-progress-ring"
-          cx="100" cy="100" r="88"
-          fill="none"
-          stroke="var(--ds-accent-500)"
-          stroke-width="6"
-          stroke-linecap="round"
-          stroke-dasharray="553"
-          stroke-dashoffset="553"
-          transform="rotate(-90 100 100)"
-          style="transition: stroke-dashoffset 0.25s linear;"
-        />
-      </svg>
-      <div class="timer-display-group">
-        <div class="timer-display" id="timer-display">00:00:00</div>
-        <div class="timer-state-label" id="timer-state-label">Ready</div>
-      </div>
-    </div>
+<div class="bg-[#0d1321] border border-white/5 rounded-2xl p-6 w-full animate-slide-up">
+  <h4 class="text-sm font-headline font-semibold text-[#f8fafc] mb-5">Session Details</h4>
 
-    <!-- Controls -->
-    <div class="timer-controls" id="timer-controls">
-      <div class="controls-row">
-        <div class="timer-field">
-          <label for="timer-subject" class="timer-label">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-            </svg>
-            Subject
-          </label>
-          <select id="timer-subject" class="ds-select">
-            <option value="">— Select subject —</option>
-            {subjects.map(s => (
-              <option value={s}>{s}</option>
-            ))}
-          </select>
-        </div>
-        <div class="timer-field">
-          <label for="timer-topic" class="timer-label">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
-            </svg>
-            Topic
-          </label>
-          <input
-            type="text"
-            id="timer-topic"
-            class="ds-input"
-            placeholder="e.g. Kinematics"
-          />
-        </div>
-      </div>
-
-      <!-- Action buttons -->
-      <div class="timer-actions">
-        <button id="timer-start-btn" class="ds-btn ds-btn-primary press-effect">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-            <polygon points="5 3 19 12 5 21 5 3"/>
-          </svg>
-          Start
-        </button>
-        <button id="timer-pause-btn" class="ds-btn press-effect hidden" style="background:var(--ds-warning);color:white;border:none;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-            <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
-          </svg>
-          Pause
-        </button>
-        <button id="timer-resume-btn" class="ds-btn ds-btn-secondary press-effect hidden">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-            <polygon points="5 3 19 12 5 21 5 3"/>
-          </svg>
-          Resume
-        </button>
-        <button id="timer-stop-btn" class="ds-btn press-effect hidden" style="background:var(--ds-danger);color:white;border:none;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-            <rect x="6" y="6" width="12" height="12" rx="1"/>
-          </svg>
-          Stop
-        </button>
-      </div>
-    </div>
-
-    <!-- Session Summary -->
-    <div id="timer-summary" class="timer-summary hidden">
-      <div class="summary-divider"></div>
-      <div class="summary-content">
-        <div class="summary-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--ds-success-500)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-            <polyline points="22 4 12 14.01 9 11.01"/>
-          </svg>
-        </div>
-        <p class="summary-title">Session Complete</p>
-        <div class="summary-details">
-          <div class="summary-stat-row">
-            <span class="summary-stat-label">Duration</span>
-            <span class="summary-stat-value" id="summary-duration">00:00:00</span>
-          </div>
-          <div class="summary-stat-row" id="summary-subject-row" style="display:none;">
-            <span class="summary-stat-label">Subject</span>
-            <span class="summary-stat-value" id="summary-subject">—</span>
-          </div>
-          <div class="summary-stat-row" id="summary-topic-row" style="display:none;">
-            <span class="summary-stat-label">Topic</span>
-            <span class="summary-stat-value" id="summary-topic">—</span>
-          </div>
-        </div>
-        <div class="summary-actions">
-          <button id="save-entry-btn" class="ds-btn ds-btn-primary press-effect">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-              <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
-            </svg>
-            Save as Entry
+  <!-- Subject Chips -->
+  <div class="mb-5">
+    <label class="text-xs font-label text-slate-400 uppercase tracking-wider mb-3 block">Subject</label>
+    <div class="flex flex-wrap gap-2" id="timer-subject-chips">
+      {subjects.map((s) => {
+        const color = subjectColors[s] || '#6366f1';
+        return (
+          <button
+            type="button"
+            data-subject={s}
+            data-color={color}
+            class="subject-chip px-4 py-2 rounded-full border border-slate-700 bg-[#050b18] text-slate-300 text-sm font-medium transition-all hover:border-slate-500 hover:text-[#f8fafc]"
+          >
+            <span class="w-2 h-2 rounded-full inline-block mr-2" style={`background-color: ${color}`}></span>
+            {s}
           </button>
-          <button id="discard-btn" class="ds-btn ds-btn-ghost press-effect">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-            Discard
-          </button>
-        </div>
-      </div>
+        );
+      })}
     </div>
   </div>
+
+  <!-- Topic Input -->
+  <div class="mb-6">
+    <label for="timer-topic-input" class="text-xs font-label text-slate-400 uppercase tracking-wider mb-3 block">Topic (optional)</label>
+    <input
+      type="text"
+      id="timer-topic-input"
+      placeholder="e.g. Kinematics, Organic Chemistry, Calculus..."
+      class="w-full bg-[#050b18] border border-slate-700 rounded-xl px-4 py-3 text-sm text-[#f8fafc] placeholder-slate-500 focus:outline-none focus:border-[#6366f1] focus:ring-1 focus:ring-[#6366f1]/30 transition-all"
+    />
+  </div>
+
+  <!-- Start Button -->
+  <button id="timer-start-btn" class="w-full bg-[#6366f1] hover:bg-[#818cf8] text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 active:scale-[0.98] shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2">
+    <span class="material-symbols-outlined text-lg filled-icon">play_arrow</span>
+    Start Focus Session
+  </button>
+
+  <p class="text-xs text-slate-500 mt-3 text-center">Choose a subject and optionally enter a topic</p>
 </div>
 
 <script>
   (function() {
-    const RING_CIRCUMFERENCE = 553; // ≈ 2 * π * 88
-    const TARGET_SECONDS = 3600;    // 1 hour default target for ring fill
-
-    const display = document.getElementById('timer-display');
-    const ring = document.getElementById('timer-progress-ring');
-    const stateLabel = document.getElementById('timer-state-label');
+    const chips = document.querySelectorAll('#timer-subject-chips .subject-chip');
+    const topicInput = document.getElementById('timer-topic-input');
     const startBtn = document.getElementById('timer-start-btn');
-    const pauseBtn = document.getElementById('timer-pause-btn');
-    const resumeBtn = document.getElementById('timer-resume-btn');
-    const stopBtn = document.getElementById('timer-stop-btn');
-    const subjectSelect = document.getElementById('timer-subject');
-    const topicInput = document.getElementById('timer-topic');
-    const summary = document.getElementById('timer-summary');
-    const summaryDuration = document.getElementById('summary-duration');
-    const summarySubject = document.getElementById('summary-subject');
-    const summaryTopic = document.getElementById('summary-topic');
-    const summarySubjectRow = document.getElementById('summary-subject-row');
-    const summaryTopicRow = document.getElementById('summary-topic-row');
-    const saveBtn = document.getElementById('save-entry-btn');
-    const discardBtn = document.getElementById('discard-btn');
-    const controls = document.getElementById('timer-controls');
+    let selectedSubject = '';
 
-    let startTime = 0;
-    let elapsed = 0;
-    let running = false;
-    let paused = false;
-    let intervalId = null;
+    // Chip toggle
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        chips.forEach(c => {
+          c.classList.remove('bg-[#6366f1]', 'text-[#050b18]', 'border-[#6366f1]');
+          c.classList.add('bg-[#050b18]', 'text-slate-300', 'border-slate-700');
+        });
+        chip.classList.remove('bg-[#050b18]', 'text-slate-300', 'border-slate-700');
+        chip.classList.add('bg-[#6366f1]', 'text-[#050b18]', 'border-[#6366f1]');
+        selectedSubject = chip.dataset.subject || '';
+      });
+    });
 
-    function formatTime(ms) {
-      const totalSec = Math.floor(ms / 1000);
-      const h = Math.floor(totalSec / 3600);
-      const m = Math.floor((totalSec % 3600) / 60);
-      const s = totalSec % 60;
-      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    }
-
-    function getCurrentElapsed() {
-      if (running && !paused) {
-        return elapsed + (Date.now() - startTime);
-      }
-      return elapsed;
-    }
-
-    function updateRing(ms) {
-      const progress = Math.min(ms / (TARGET_SECONDS * 1000), 1);
-      const offset = RING_CIRCUMFERENCE * (1 - progress);
-      if (ring) ring.style.strokeDashoffset = String(offset);
-
-      // Color transition: accent → warning → success as time passes
-      if (ring) {
-        if (progress >= 0.9) {
-          ring.style.stroke = 'var(--ds-success-500)';
-        } else if (progress >= 0.6) {
-          ring.style.stroke = 'var(--ds-warning-500, #f59e0b)';
-        } else {
-          ring.style.stroke = 'var(--ds-accent-500)';
-        }
-      }
-    }
-
-    function updateDisplay() {
-      const ms = getCurrentElapsed();
-      display.textContent = formatTime(ms);
-      updateRing(ms);
-    }
-
-    function tick() {
-      updateDisplay();
-    }
-
-    function setState(state) {
-      // state: 'idle', 'running', 'paused', 'stopped'
-      startBtn.classList.toggle('hidden', state !== 'idle');
-      pauseBtn.classList.toggle('hidden', state !== 'running');
-      resumeBtn.classList.toggle('hidden', state !== 'paused');
-      stopBtn.classList.toggle('hidden', state === 'idle' || state === 'stopped');
-      summary.classList.toggle('hidden', state !== 'stopped');
-
-      // State label
-      const labels = { idle: 'Ready', running: 'Studying', paused: 'Paused', stopped: 'Done' };
-      if (stateLabel) stateLabel.textContent = labels[state] || '';
-
-      // Animate controls visibility
-      if (controls) {
-        controls.style.opacity = state === 'stopped' ? '0' : '1';
-        controls.style.pointerEvents = state === 'stopped' ? 'none' : 'auto';
-      }
-    }
-
-    function startTimer() {
-      const subject = subjectSelect.value;
-      if (!subject) {
-        subjectSelect.focus();
-        subjectSelect.style.borderColor = 'var(--ds-danger)';
-        setTimeout(() => { subjectSelect.style.borderColor = ''; }, 2000);
+    // Start session
+    startBtn.addEventListener('click', () => {
+      if (!selectedSubject) {
+        // Highlight to show it's required
+        chips.forEach(c => c.style.animation = 'shake 0.4s ease');
+        setTimeout(() => chips.forEach(c => c.style.animation = ''), 500);
         return;
       }
-
-      startTime = Date.now();
-      elapsed = 0;
-      running = true;
-      paused = false;
-
-      subjectSelect.disabled = true;
-      topicInput.disabled = true;
-
-      setState('running');
-      intervalId = setInterval(tick, 200);
-    }
-
-    function pauseTimer() {
-      if (!running || paused) return;
-      elapsed += Date.now() - startTime;
-      paused = true;
-      if (intervalId) { clearInterval(intervalId); intervalId = null; }
-      setState('paused');
-    }
-
-    function resumeTimer() {
-      if (!running || !paused) return;
-      startTime = Date.now();
-      paused = false;
-      setState('running');
-      intervalId = setInterval(tick, 200);
-    }
-
-    function stopTimer() {
-      if (!running) return;
-
-      if (!paused) {
-        elapsed += Date.now() - startTime;
-      }
-      running = false;
-      paused = false;
-      if (intervalId) { clearInterval(intervalId); intervalId = null; }
-
-      updateDisplay();
-
-      subjectSelect.disabled = false;
-      topicInput.disabled = false;
-
-      const subject = subjectSelect.value;
       const topic = topicInput.value.trim();
 
-      summaryDuration.textContent = formatTime(elapsed);
-      if (subject) {
-        summarySubject.textContent = subject;
-        summarySubjectRow.style.display = '';
-      } else {
-        summarySubjectRow.style.display = 'none';
-      }
-      if (topic) {
-        summaryTopic.textContent = topic;
-        summaryTopicRow.style.display = '';
-      } else {
-        summaryTopicRow.style.display = 'none';
-      }
-
-      setState('stopped');
-    }
-
-    function resetTimer() {
-      subjectSelect.disabled = false;
-      topicInput.disabled = false;
-      elapsed = 0;
-      display.textContent = '00:00:00';
-      updateRing(0);
-      setState('idle');
-    }
-
-    function saveAsEntry() {
-      const hours = elapsed / (1000 * 60 * 60);
-      const subject = subjectSelect.value;
-      const topic = topicInput.value.trim();
-
-      const timerData = { hours: hours.toFixed(2), subject };
-      if (topic) timerData.topic = topic;
-      sessionStorage.setItem('studyTimerData', JSON.stringify(timerData));
-
-      // Fire custom event for recent sessions
-      document.dispatchEvent(new CustomEvent('timer-session-saved', {
-        detail: {
-          subject,
-          topic,
-          duration: formatTime(elapsed),
-          hours: hours.toFixed(2),
-        }
+      // Fire the timer start event with subject/topic
+      document.dispatchEvent(new CustomEvent('timer-start-session', {
+        detail: { subject: selectedSubject, topic }
       }));
-
-      window.location.href = '/';
-    }
-
-    // ── Event listeners ──
-    if (startBtn) startBtn.addEventListener('click', startTimer);
-    if (pauseBtn) pauseBtn.addEventListener('click', pauseTimer);
-    if (resumeBtn) resumeBtn.addEventListener('click', resumeTimer);
-    if (stopBtn) stopBtn.addEventListener('click', stopTimer);
-    if (saveBtn) saveBtn.addEventListener('click', saveAsEntry);
-    if (discardBtn) discardBtn.addEventListener('click', resetTimer);
-
-    // Init ring to 0
-    updateRing(0);
+    });
   })();
 </script>
 
 <style>
-  .timer-wrapper {
-    max-width: 32rem;
-    margin: 0 auto;
-  }
-
-  .timer-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: var(--ds-space-3);
-    gap: var(--ds-space-2);
-  }
-
-  /* ── Circular Ring + Timer Display ── */
-  .timer-ring-container {
-    position: relative;
-    width: 14rem;
-    height: 14rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .timer-ring {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-  }
-  .timer-display-group {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.25rem;
-  }
-  .timer-display {
-    font-family: var(--ds-font-mono);
-    font-size: 3.5rem;
-    font-weight: 700;
-    color: var(--ds-text-primary);
-    letter-spacing: 0.04em;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-  }
-  .timer-state-label {
-    font-size: var(--ds-text-xs);
-    font-weight: 500;
-    color: var(--ds-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-
-  /* ── Controls ── */
-  .timer-controls {
-    width: 100%;
-    transition: opacity 0.3s ease;
-  }
-  .controls-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--ds-space-2);
-    margin-bottom: var(--ds-space-2);
-  }
-  @media (max-width: 480px) {
-    .controls-row {
-      grid-template-columns: 1fr;
-    }
-  }
-  .timer-field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-  .timer-field .timer-label {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-size: var(--ds-text-xs);
-    font-weight: 500;
-    color: var(--ds-text-tertiary);
-  }
-  .timer-field select,
-  .timer-field input {
-    width: 100%;
-  }
-  .timer-field select:disabled,
-  .timer-field input:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  /* ── Action Buttons ── */
-  .timer-actions {
-    display: flex;
-    gap: var(--ds-space-1);
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  .timer-actions .ds-btn {
-    gap: 0.35rem;
-    font-size: var(--ds-text-sm);
-  }
-
-  /* ── Session Summary ── */
-  .timer-summary {
-    width: 100%;
+  .animate-slide-up {
     animation: slide-up-fade 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
-  .summary-divider {
-    width: 100%;
-    height: 1px;
-    background: var(--ds-border-subtle);
-    margin: var(--ds-space-1) 0;
-  }
-  .summary-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--ds-space-1);
-    padding: var(--ds-space-1) 0;
-  }
-  .summary-icon {
-    opacity: 0;
-    animation: scale-in-glow 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards;
-  }
-  .summary-title {
-    font-size: var(--ds-text-base);
-    font-weight: var(--ds-weight-semibold);
-    color: var(--ds-text-primary);
-    margin: 0;
-  }
-  .summary-details {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    width: 100%;
-    max-width: 16rem;
-  }
-  .summary-stat-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.25rem 0.5rem;
-    background: var(--ds-bg-base);
-    border-radius: var(--ds-radius-md);
-  }
-  .summary-stat-label {
-    font-size: var(--ds-text-xs);
-    color: var(--ds-text-tertiary);
-  }
-  .summary-stat-value {
-    font-size: var(--ds-text-xs);
-    font-weight: var(--ds-weight-semibold);
-    color: var(--ds-text-primary);
-    font-family: var(--ds-font-mono);
-  }
-  .summary-actions {
-    display: flex;
-    gap: var(--ds-space-1);
-    margin-top: var(--ds-space-1);
-  }
-  .summary-actions .ds-btn {
-    gap: 0.35rem;
-    font-size: var(--ds-text-sm);
+
+  @keyframes slide-up-fade {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
-  .hidden { display: none !important; }
-
-  /* ── Ring glow on active ── */
-  #timer-progress-ring {
-    filter: drop-shadow(0 0 4px color-mix(in srgb, var(--ds-accent-500) 30%, transparent));
-    transition: stroke-dashoffset 0.2s linear, stroke 0.4s ease;
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-4px); }
+    40% { transform: translateX(4px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
   }
 </style>

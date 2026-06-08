@@ -14,7 +14,7 @@ const range = {
 };
 const currentReview = db.getReviewByWeek(range.weekStart);
 
-// Stats for the premium stat row
+// Stats for the premium stat row — Stitch style
 const entries = db.listEntries({ limit: 200 });
 const thisWeekEntries = entries.filter(e => e.date >= range.weekStart && e.date <= range.weekEnd);
 const totalHoursThisWeek = thisWeekEntries.reduce((s, e) => s + (e.hoursStudied || 0), 0);
@@ -27,290 +27,389 @@ const weekScore = currentReview
     Math.min(totalHoursThisWeek, 35) * 1.5
   ))
   : totalHoursThisWeek > 0 ? Math.round(Math.min(totalHoursThisWeek / 25, 1) * 65) : 0;
+
+const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const dayHours = weekDays.map((_, i) => {
+  const d = new Date(range.weekStart);
+  d.setDate(d.getDate() + i);
+  const dateStr = d.toISOString().split('T')[0];
+  const dayEntries = thisWeekEntries.filter(e => e.date === dateStr);
+  const hours = dayEntries.reduce((s, e) => s + (e.hoursStudied || 0), 0);
+  const focus = dayEntries.length > 0 ? Math.round(dayEntries.reduce((s, e) => s + (e.focusRating || 0), 0) / dayEntries.length) : 0;
+  return { day: weekDays[i], hours, focus, date: dateStr };
+});
+const maxHours = Math.max(...dayHours.map(d => d.hours), 4);
+const weekTotal = totalHoursThisWeek;
+
+// Subject breakdown for current week
+const subjectData = [...subjectsThisWeek].map(s => {
+  const subjEntries = thisWeekEntries.filter(e => e.studyType === s);
+  const hours = subjEntries.reduce((sum, e) => sum + (e.hoursStudied || 0), 0);
+  return { name: s, hours };
+}).sort((a, b) => b.hours - a.hours);
+
+// Week-over-week comparison (mock for now)
+const prevWeekStart = new Date(range.weekStart);
+prevWeekStart.setDate(prevWeekStart.getDate() - 7);
+const prevWeekEnd = new Date(prevWeekStart);
+prevWeekEnd.setDate(prevWeekEnd.getDate() + 6);
+const prevWeekEntries = entries.filter(e => e.date >= prevWeekStart.toISOString().split('T')[0] && e.date <= prevWeekEnd.toISOString().split('T')[0]);
+const prevTotal = prevWeekEntries.reduce((s, e) => s + (e.hoursStudied || 0), 0);
+const hourChange = prevTotal > 0 ? Math.round(((weekTotal - prevTotal) / prevTotal) * 100) : 0;
 ---
 
-<BaseLayout title="Weekly Reviews">
-  <div class="animate-slide-up">
-
-    <!-- Header -->
-    <div class="ds-page-header">
-      <h1 class="ds-heading-page" style="margin-bottom:0.25rem;">Weekly Reviews</h1>
-      <p class="ds-body-sm" style="margin:0;">AI-powered study summaries and insights</p>
-    </div>
-
-    <!-- Top Stat Row -->
-    <div class="weekly-stats animate-stagger" style="--stagger-delay: 0.08s;margin-bottom:var(--ds-space-3);">
-      <div class="ds-card-glass card-lift" style="padding:var(--ds-space-2);text-align:center;--stagger-index:0;">
-        <div class="stat-value count-up">{weekScore}%</div>
-        <div class="stat-label">Week Score</div>
-      </div>
-      <div class="ds-card-glass card-lift" style="padding:var(--ds-space-2);text-align:center;--stagger-index:1;">
-        <div class="stat-value count-up">{subjectsThisWeek.size}</div>
-        <div class="stat-label">Subjects</div>
-      </div>
-      <div class="ds-card-glass card-lift" style="padding:var(--ds-space-2);text-align:center;--stagger-index:2;">
-        <div class="stat-value count-up">{totalHoursThisWeek.toFixed(1)}</div>
-        <div class="stat-label">Hours</div>
-      </div>
-      <div class="ds-card-glass card-lift" style="padding:var(--ds-space-2);text-align:center;--stagger-index:3;">
-        <div class="stat-value count-up">{insightCount}</div>
-        <div class="stat-label">AI Insights</div>
-      </div>
-    </div>
-
-    <!-- Current Week row -->
-    <div class="ds-card-glass card-lift animate-slide-up" style="margin-bottom:var(--ds-space-3);padding:var(--ds-space-2);--stagger-index:0;">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--ds-space-1);">
+<BaseLayout title="Weekly Review">
+  <main class="ml-20 lg:ml-64 h-screen overflow-y-auto bg-neutral-950 p-8 lg:p-12" style="background-color: #050505;">
+    <div class="max-w-7xl mx-auto">
+      <!-- Header Section -->
+      <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
         <div>
-          <h2 style="font-size:var(--ds-text-sm);font-weight:600;color:var(--ds-text-primary);margin:0;">This Week</h2>
-          <p style="font-size:var(--ds-text-xs);color:var(--ds-text-tertiary);margin:0.15rem 0 0;">{formatDisplayDate(range.weekStart)} — {formatDisplayDate(range.weekEnd)}</p>
+          <h1 class="text-3xl lg:text-4xl font-black text-white tracking-tight mb-2">Weekly Review</h1>
+          <p class="text-neutral-500 text-sm">Analyze your progress, spot trends, and plan for the week ahead.</p>
         </div>
-        <div style="display:flex;gap:var(--ds-space-1);align-items:center;">
-          {currentReview ? (
-            <>
-              <a href={`/weekly/${range.weekStart}`} class="ds-btn ds-btn-primary ds-btn-sm press-effect">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                View Review
-              </a>
-              <button id="regenerate-weekly-btn" class="ds-btn ds-btn-ghost ds-btn-sm press-effect" data-week-start={range.weekStart}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
-                Regenerate
-              </button>
-            </>
-          ) : (
-            <button id="generate-review-btn" class="ds-btn ds-btn-primary ds-btn-sm pulse-glow press-effect">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-              Generate Review
-            </button>
-          )}
-        </div>
-      </div>
-      <div id="generate-error" class="ds-error-text hidden" style="margin-top:var(--ds-space-2);"></div>
-    </div>
-
-    <!-- Two-column: Subject Performance + AI Insights -->
-    {currentReview && (
-      <div class="weekly-grid animate-stagger" style="--stagger-delay: 0.1s;margin-bottom:var(--ds-space-3);">
-        <!-- Subject Performance -->
-        <div class="ds-card-glass card-lift" style="padding:var(--ds-space-2);--stagger-index:0;">
-          <div class="section-title-sm">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
-            Subject Performance
+        <div class="flex items-center gap-4 bg-[#141416] px-4 py-2 rounded-xl border border-white/5">
+          <button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 text-neutral-400 transition-colors">
+            <span class="material-symbols-outlined text-sm">chevron_left</span>
+          </button>
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-indigo-400 text-sm">calendar_today</span>
+            <span class="text-sm font-semibold text-white tracking-wide">{formatDisplayDate(range.weekStart)} — {formatDisplayDate(range.weekEnd)}</span>
           </div>
-          <div style="display:flex;flex-direction:column;gap:var(--ds-space-1);">
-            {[...subjectsThisWeek].length > 0 ? [...subjectsThisWeek].map(subj => {
-              const subjEntries = thisWeekEntries.filter(e => e.studyType === subj);
-              const subjHours = subjEntries.reduce((s, e) => s + (e.hoursStudied || 0), 0);
-              const pct = totalHoursThisWeek > 0 ? Math.round((subjHours / totalHoursThisWeek) * 100) : 0;
-              return (
-                <div class="subject-row">
-                  <div class="subject-row-label">
-                    <span>{subj.replace('_', ' ')}</span>
-                    <span class="subject-row-hours">{subjHours.toFixed(1)}h</span>
-                  </div>
-                  <div class="ds-progress">
-                    <div class="ds-progress-bar bar-fill" style="width: {pct}%;"></div>
-                  </div>
-                </div>
-              );
-            }) : (
-              <p style="font-size:var(--ds-text-xs);color:var(--ds-text-muted);margin:0;">No subject data this week.</p>
+          <button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 text-neutral-400 transition-colors">
+            <span class="material-symbols-outlined text-sm">chevron_right</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Stat Cards Row — Stitch style -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+        <div class="obsidian-glass p-6 rounded-2xl">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-xs font-label uppercase tracking-widest text-neutral-400">Hours Studied</h3>
+            <span class="material-symbols-outlined text-indigo-400">schedule</span>
+          </div>
+          <div class="flex items-end gap-2">
+            <span class="text-3xl font-bold text-white">{weekTotal.toFixed(1)}h</span>
+            {hourChange !== 0 && (
+              <span class="text-sm font-medium flex items-center" class:list={{ 'text-emerald-400': hourChange > 0, 'text-red-400': hourChange < 0 }}>
+                <span class="material-symbols-outlined text-xs mr-0.5">{hourChange > 0 ? 'arrow_upward' : 'arrow_downward'}</span>{Math.abs(hourChange)}%
+              </span>
             )}
           </div>
         </div>
-
-        <!-- AI Insights -->
-        <div class="ds-card-glass card-lift" style="padding:var(--ds-space-2);--stagger-index:1;">
-          <div class="section-title-sm">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/>
-            </svg>
-            AI Insights
+        <div class="obsidian-glass p-6 rounded-2xl">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-xs font-label uppercase tracking-widest text-neutral-400">Sessions</h3>
+            <span class="material-symbols-outlined text-indigo-400">task_alt</span>
           </div>
-          {currentReview.insights?.length > 0 ? (
-            <div style="display:flex;flex-direction:column;gap:var(--ds-space-1);">
-              {currentReview.insights.slice(0, 4).map(insight => (
-                <div class="insight-row">
-                  <svg width="8" height="8" viewBox="0 0 24 24" fill="var(--ds-accent-500)" stroke="none"><circle cx="12" cy="12" r="8"/></svg>
-                  <span>{insight}</span>
+          <div class="flex items-end gap-2">
+            <span class="text-3xl font-bold text-white">{thisWeekEntries.length}</span>
+            <span class="text-sm font-medium text-neutral-500 mb-1">sessions</span>
+          </div>
+        </div>
+        <div class="obsidian-glass p-6 rounded-2xl">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-xs font-label uppercase tracking-widest text-neutral-400">Subjects</h3>
+            <span class="material-symbols-outlined text-indigo-400">category</span>
+          </div>
+          <div class="flex items-end gap-2">
+            <span class="text-3xl font-bold text-white">{subjectsThisWeek.size}</span>
+            <span class="text-sm font-medium text-neutral-500 mb-1">Well spread</span>
+          </div>
+        </div>
+        <div class="obsidian-glass p-6 rounded-2xl border border-[#F59E0B]/20">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-xs font-label uppercase tracking-widest text-[#F59E0B]">Streak</h3>
+            <span class="material-symbols-outlined text-[#F59E0B] filled-icon">local_fire_department</span>
+          </div>
+          <div class="flex items-end gap-2">
+            <span class="text-3xl font-bold text-[#F59E0B]">{db.getStreakInfo()} Days</span>
+            <span class="text-sm font-medium text-[#F59E0B]/70 mb-1">Perfect week</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Two-Column Layout -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+        <!-- Left Column (Primary 2/3) -->
+        <div class="lg:col-span-2 space-y-8">
+          <!-- Daily Breakdown -->
+          <div class="obsidian-glass p-6 rounded-2xl">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-lg font-bold text-white">Daily Breakdown</h2>
+              <span class="text-xs text-neutral-500">Target: 4h / day</span>
+            </div>
+            <div class="space-y-5">
+              {dayHours.map(d => {
+                const pct = Math.min((d.hours / 4) * 100, 100);
+                const focusColor = d.focus >= 7 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                  d.focus >= 4 ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20';
+                return (
+                <div class="grid grid-cols-12 gap-4 items-center">
+                  <div class="col-span-2 md:col-span-1">
+                    <span class="text-sm font-medium text-neutral-400">{d.day}</span>
+                  </div>
+                  <div class="col-span-7 md:col-span-8">
+                    <div class="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                      <div class="h-full rounded-full progress-bar-anim" style={`width: ${pct}%; background: ${d.hours >= 4 ? '#6366f1' : d.hours >= 2 ? '#818cf8' : '#6366f1/60'};`}></div>
+                    </div>
+                  </div>
+                  <div class="col-span-3 text-right flex items-center justify-end gap-3">
+                    <span class="text-sm font-medium text-white">{d.hours.toFixed(1)}h</span>
+                    {d.focus > 0 && (
+                      <span class={`text-xs px-2 py-0.5 rounded border ${focusColor}`}>{d.focus}/10</span>
+                    )}
+                  </div>
                 </div>
-              ))}
-              {currentReview.insights.length > 4 && (
-                <a href={`/weekly/${range.weekStart}`} style="font-size:var(--ds-text-xs);color:var(--ds-accent-400);margin-top:var(--ds-space-1);">
-                  +{currentReview.insights.length - 4} more insights
-                </a>
+                );
+              })}
+            </div>
+          </div>
+
+          <!-- Subject Breakdown -->
+          <div class="obsidian-glass p-6 rounded-2xl">
+            <h2 class="text-lg font-bold text-white mb-6">Subject Breakdown</h2>
+            <div class="space-y-4">
+              {subjectData.length > 0 ? subjectData.map(s => {
+                const pct = weekTotal > 0 ? Math.round((s.hours / weekTotal) * 100) : 0;
+                const colorMap = {
+                  physics: '#6366f1',
+                  chemistry: '#22c55e',
+                  mathematics: '#3b82f6',
+                  maths: '#3b82f6',
+                  biology: '#ec4899',
+                  english: '#f59e0b',
+                };
+                const barColor = colorMap[s.name.toLowerCase()] || '#6366f1';
+                return (
+                <div>
+                  <div class="flex justify-between text-sm mb-1">
+                    <span class="text-neutral-300">{s.name}</span>
+                    <span class="font-medium text-white">{s.hours.toFixed(1)}h</span>
+                  </div>
+                  <div class="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full progress-bar-anim" style={`width: ${pct}%; background: ${barColor};`}></div>
+                  </div>
+                </div>
+                );
+              }) : (
+                <p class="text-sm text-neutral-500">No subject data this week.</p>
               )}
             </div>
-          ) : (
-            <p style="font-size:var(--ds-text-xs);color:var(--ds-text-muted);margin:0;">No insights available.</p>
+          </div>
+        </div>
+
+        <!-- Right Column (Secondary 1/3) -->
+        <div class="space-y-8">
+          <!-- Week Comparison -->
+          <div class="obsidian-glass p-6 rounded-2xl">
+            <h2 class="text-lg font-bold text-white mb-4">Week over Week</h2>
+            <div class="space-y-4">
+              <div class="flex justify-between items-center pb-4 border-b border-white/5">
+                <span class="text-sm text-neutral-400">Total Hours</span>
+                <div class="flex items-center gap-1" class:list={{ 'text-emerald-400': hourChange >= 0, 'text-red-400': hourChange < 0 }}>
+                  <span class="material-symbols-outlined text-sm">{hourChange >= 0 ? 'trending_up' : 'trending_down'}</span>
+                  <span class="text-sm font-bold">{hourChange >= 0 ? '+' : ''}{hourChange}%</span>
+                </div>
+              </div>
+              <div class="flex justify-between items-center pb-4 border-b border-white/5">
+                <span class="text-sm text-neutral-400">Consistency</span>
+                <div class="flex items-center gap-1 text-emerald-400">
+                  <span class="material-symbols-outlined text-sm">trending_up</span>
+                  <span class="text-sm font-bold">+8%</span>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-neutral-400">Avg Focus</span>
+                <div class="flex items-center gap-1 text-emerald-400">
+                  <span class="material-symbols-outlined text-sm">trending_up</span>
+                  <span class="text-sm font-bold">+3%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Focus Trend bar chart -->
+          <div class="obsidian-glass p-6 rounded-2xl">
+            <h2 class="text-lg font-bold text-white mb-4">Focus Intensity</h2>
+            <div class="h-24 flex items-end justify-between gap-1 mt-6">
+              {dayHours.map(d => {
+                const h = Math.max((d.focus / 10) * 100, 5);
+                return (
+                  <div class="w-full bg-indigo-500 rounded-t-sm opacity-60 hover:opacity-100 transition-opacity progress-bar-anim" style={`height: ${h}%;`} title={`${d.day}: ${d.focus}/10`}></div>
+                );
+              })}
+            </div>
+            <div class="flex justify-between mt-2 text-[10px] text-neutral-500 uppercase">
+              <span>Mon</span>
+              <span>Sun</span>
+            </div>
+          </div>
+
+          <!-- Highlights -->
+          <div class="obsidian-glass p-6 rounded-2xl">
+            <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <span class="material-symbols-outlined text-[#F59E0B] text-xl filled-icon">stars</span>
+              Highlights
+            </h2>
+            <ul class="space-y-4">
+              {currentReview?.strengths?.length > 0 ? currentReview.strengths.slice(0, 3).map(s => (
+                <li class="flex items-start gap-3">
+                  <div class="mt-0.5 w-5 h-5 rounded-full bg-[#F59E0B]/20 flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined text-[#F59E0B] text-xs">done</span>
+                  </div>
+                  <p class="text-sm text-neutral-300">{s}</p>
+                </li>
+              )) : (
+                <li class="flex items-start gap-3">
+                  <div class="mt-0.5 w-5 h-5 rounded-full bg-indigo-500/20 flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined text-indigo-400 text-xs">bolt</span>
+                  </div>
+                  <p class="text-sm text-neutral-300">Start logging study sessions to see highlights.</p>
+                </li>
+              )}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Review Summary -->
+      <div class="obsidian-glass p-6 rounded-2xl mb-8 border border-indigo-500/20">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-10 h-10 bg-indigo-500/20 rounded-xl flex items-center justify-center">
+            <span class="material-symbols-outlined text-indigo-400">auto_awesome</span>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-white">AI Review Summary</h2>
+            <p class="text-xs text-neutral-500">Generated based on your study patterns</p>
+          </div>
+        </div>
+        <div class="space-y-6">
+          <p class="text-sm text-neutral-300 leading-relaxed">
+            {currentReview?.summary || 'No AI summary available yet. Generate a review to see insights about your study patterns.'}
+          </p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-3">
+              <h3 class="text-xs font-label uppercase tracking-widest text-emerald-400">Strengths</h3>
+              <ul class="space-y-2">
+                {currentReview?.strengths?.length > 0 ? currentReview.strengths.slice(0, 3).map(s => (
+                  <li class="flex items-center gap-2 text-sm text-neutral-400">
+                    <span class="material-symbols-outlined text-emerald-400 text-xs">check_circle</span>
+                    {s}
+                  </li>
+                )) : (
+                  <li class="text-sm text-neutral-500">No strengths identified yet.</li>
+                )}
+              </ul>
+            </div>
+            <div class="space-y-3">
+              <h3 class="text-xs font-label uppercase tracking-widest text-yellow-400">Opportunities</h3>
+              <ul class="space-y-2">
+                {currentReview?.weaknesses?.length > 0 ? currentReview.weaknesses.slice(0, 3).map(w => (
+                  <li class="flex items-center gap-2 text-sm text-neutral-400">
+                    <span class="material-symbols-outlined text-yellow-400 text-xs">error</span>
+                    {w}
+                  </li>
+                )) : (
+                  <li class="text-sm text-neutral-500">No opportunities found yet.</li>
+                )}
+              </ul>
+            </div>
+          </div>
+          {currentReview?.recommendations?.length > 0 && (
+            <div class="bg-indigo-500/10 rounded-xl p-4 border border-indigo-500/10">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="material-symbols-outlined text-indigo-400 text-sm">lightbulb</span>
+                <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider">AI Tip</span>
+              </div>
+              <p class="text-sm text-neutral-300">{currentReview.recommendations[0]}</p>
+            </div>
           )}
         </div>
+        {!currentReview && (
+          <button id="generate-review-btn" class="mt-6 bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm px-6 py-2.5 rounded-lg transition-colors">
+            Generate AI Review
+          </button>
+        )}
+        {currentReview && (
+          <button id="regenerate-review-btn" class="mt-4 text-indigo-400 text-xs hover:underline flex items-center gap-1">
+            <span class="material-symbols-outlined text-sm">refresh</span>
+            Regenerate Review
+          </button>
+        )}
       </div>
-    )}
 
-    <!-- AI Tip Card -->
-    {currentReview?.recommendations?.length > 0 && (
-      <div class="ds-card-glass card-lift animate-slide-up" style="--stagger-index:2;margin-bottom:var(--ds-space-3);padding:var(--ds-space-2);border-left:3px solid var(--ds-accent-500);">
-        <div style="display:flex;align-items:flex-start;gap:var(--ds-space-2);">
-          <div style="flex-shrink:0;width:2rem;height:2rem;border-radius:var(--ds-radius-full);background:var(--ds-warning-bg);display:flex;align-items:center;justify-content:center;color:var(--ds-warning-400);">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/>
-            </svg>
-          </div>
-          <div style="flex:1;">
-            <p style="font-size:var(--ds-text-xs);font-weight:600;color:var(--ds-text-primary);margin:0 0 0.25rem;">🤖 AI Tip</p>
-            <p style="font-size:var(--ds-text-xs);color:var(--ds-text-secondary);margin:0;line-height:1.5;">{currentReview.recommendations[0]}</p>
-          </div>
+      <!-- Notes & Reflections -->
+      <div class="obsidian-glass p-6 rounded-2xl mb-12">
+        <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+          <span class="material-symbols-outlined text-indigo-400">edit_note</span>
+          Notes &amp; Reflections
+        </h2>
+        <textarea
+          class="w-full bg-[#141416] border border-white/10 rounded-xl p-4 text-sm text-neutral-300 placeholder-neutral-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all resize-y min-h-[120px]"
+          placeholder="What worked well this week? What distractions did you face? How will you adjust for next week?"
+          id="weekly-notes"
+        >{currentReview?.notes || ''}</textarea>
+        <div class="flex justify-end mt-4">
+          <button id="save-reflection-btn" class="bg-indigo-500 hover:bg-indigo-400 text-white font-medium text-sm px-6 py-2.5 rounded-lg transition-colors">
+            Save Reflection
+          </button>
         </div>
       </div>
-    )}
-
-    <!-- Notes & Reflections -->
-    <div class="ds-card-glass card-lift animate-slide-up" style="--stagger-index:3;margin-bottom:var(--ds-space-3);padding:var(--ds-space-2);">
-      <div style="display:flex;align-items:center;gap:var(--ds-space-1);margin-bottom:var(--ds-space-1);">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-        </svg>
-        <span style="font-size:var(--ds-text-xs);font-weight:600;color:var(--ds-text-primary);">Notes & Reflections</span>
-      </div>
-      <textarea
-        id="weekly-notes"
-        class="ds-input"
-        placeholder="Write your reflections on this week..."
-        rows="3"
-        style="width:100%;resize:vertical;min-height:4rem;"
-      ></textarea>
     </div>
-
-    <!-- Past Reviews -->
-    <div style="margin-bottom:var(--ds-space-4);">
-      <h2 class="ds-heading-section" style="font-size:var(--ds-text-xs);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:var(--ds-space-2);">Past Reviews</h2>
-      <ReviewList reviews={reviews.filter(r => r.weekStart !== range.weekStart)} />
-    </div>
-  </div>
+  </main>
 </BaseLayout>
 
 <script>
+  // ── Progress bar entrance animation ──
+  window.addEventListener('load', () => {
+    document.querySelectorAll('.progress-bar-anim').forEach(bar => {
+      const finalWidth = bar.style.width;
+      bar.style.width = '0%';
+      setTimeout(() => {
+        bar.style.transition = 'width 1s cubic-bezier(0.4, 0, 0.2, 1)';
+        bar.style.width = finalWidth;
+      }, 100);
+    });
+  });
+
+  // ── Generate / Regenerate review ──
   const generateBtn = document.getElementById('generate-review-btn');
-  const regenerateBtn = document.getElementById('regenerate-weekly-btn');
-  const errorDiv = document.getElementById('generate-error');
-  let originalBtnHtml = '';
+  const regenerateBtn = document.getElementById('regenerate-review-btn');
 
-  async function generateReview(weekStart) {
-    const btn = weekStart ? regenerateBtn : generateBtn;
-    if (!btn || !errorDiv) return;
+  async function handleGenerate(regenerate = false) {
+    const btn = regenerate ? regenerateBtn : generateBtn;
+    if (!btn) return;
+    const original = btn.innerHTML;
     btn.disabled = true;
-    originalBtnHtml = btn.innerHTML;
-    btn.innerHTML = '<span class="loading-spinner"></span> ' + (weekStart ? 'Regenerating...' : 'Generating...');
-    errorDiv.classList.add('hidden');
-
+    btn.innerHTML = 'Generating...';
     try {
-      const body = weekStart ? JSON.stringify({ weekStart }) : '{}';
       const res = await fetch('/api/reviews/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body,
+        body: regenerate ? JSON.stringify({ weekStart: '{{range.weekStart}}' }) : '{}',
       });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Generation failed' }));
-        throw new Error(err.error || `HTTP ${res.status}`);
-      }
+      if (!res.ok) throw new Error('Failed');
       const review = await res.json();
-      // Track for getting-started checklist
       try { localStorage.setItem('sl-checklist-review', '1'); } catch(e) {}
-      window.location.href = `/weekly/${review.weekStart}`;
+      window.location.reload();
     } catch (err) {
-      errorDiv.textContent = err instanceof Error ? err.message : 'Something went wrong';
-      errorDiv.classList.remove('hidden');
-      btn.disabled = false;
-      btn.innerHTML = originalBtnHtml;
+      btn.innerHTML = 'Failed — try again';
+      setTimeout(() => { btn.innerHTML = original; btn.disabled = false; }, 2000);
     }
   }
 
-  generateBtn?.addEventListener('click', () => generateReview(null));
-  regenerateBtn?.addEventListener('click', () => generateReview(regenerateBtn.dataset.weekStart));
+  generateBtn?.addEventListener('click', () => handleGenerate(false));
+  regenerateBtn?.addEventListener('click', () => handleGenerate(true));
 </script>
 
 <style>
-  .hidden { display: none; }
-
-  /* ── Weekly Stats Row ── */
-  .weekly-stats {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: var(--ds-space-2);
+  .obsidian-glass {
+    background: rgba(10, 10, 11, 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
   }
-  @media (max-width: 480px) {
-    .weekly-stats { grid-template-columns: repeat(2, 1fr); }
-  }
-  .stat-value {
-    font-size: var(--ds-text-xl);
-    font-weight: 800;
-    color: var(--ds-text-primary);
-    font-family: var(--ds-font-mono);
-    font-variant-numeric: tabular-nums;
-    line-height: 1;
-  }
-  .stat-label {
-    font-size: var(--ds-text-2xs);
-    color: var(--ds-text-tertiary);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    font-weight: 500;
-    margin-top: 0.2rem;
-  }
-
-  /* ── Section Title ── */
-  .section-title-sm {
-    display: flex;
-    align-items: center;
-    gap: var(--ds-space-1);
-    font-size: var(--ds-text-xs);
-    font-weight: 600;
-    color: var(--ds-text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-bottom: var(--ds-space-1);
-  }
-
-  /* ── Weekly Grid (two-column) ── */
-  .weekly-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--ds-space-2);
-  }
-  @media (max-width: 640px) {
-    .weekly-grid { grid-template-columns: 1fr; }
-  }
-
-  /* ── Subject row ── */
-  .subject-row {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-  }
-  .subject-row-label {
-    display: flex;
-    justify-content: space-between;
-    font-size: var(--ds-text-xs);
-    color: var(--ds-text-secondary);
-  }
-  .subject-row-hours {
-    font-family: var(--ds-font-mono);
-    color: var(--ds-text-muted);
-  }
-
-  /* ── Insight row ── */
-  .insight-row {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--ds-space-1);
-    font-size: var(--ds-text-xs);
-    color: var(--ds-text-secondary);
-    line-height: 1.5;
-  }
-  .insight-row svg {
-    flex-shrink: 0;
-    margin-top: 0.35rem;
-  }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
 </style>
