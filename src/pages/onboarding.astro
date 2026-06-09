@@ -119,11 +119,16 @@ const CLASS_LEVELS = [
         <input type="hidden" id="onboarding-exams" />
       </div>
 
-      <!-- Step 2: Coaching + Weak Subjects -->
+      <!-- Step 2: Coaching + Subject Selection + Weak Subjects -->
       <div class="step-content hidden" data-step="2">
         <p class="ds-caption" style="margin:0 0 var(--ds-space-1);color:var(--ds-accent-400);font-size:var(--ds-text-xs);">Step 3 of 5</p>
         <h2 class="ds-heading-section" style="font-size:var(--ds-text-xl);margin:0 0 0.25rem;">Your study setup 💪</h2>
-        <p class="ds-caption" style="margin:0 0 var(--ds-space-2);">Do you attend coaching, and which subjects need extra attention?</p>
+        <p class="ds-caption" style="margin:0 0 var(--ds-space-2);">Pick your subjects, coaching type, and flag tough topics.</p>
+
+        <label class="ds-label-form" style="margin-bottom:var(--ds-space-1);">Subjects you study</label>
+        <p class="ds-caption" style="margin:0 0 var(--ds-space-1);font-size:var(--ds-text-2xs);">Toggle on the ones you're actually taking. (PCM/PCB/PCMB/Full)</p>
+        <div class="subject-toggle-grid" id="subject-toggle-grid" style="display:flex;flex-wrap:wrap;gap:var(--ds-space-1);margin-bottom:var(--ds-space-2);"></div>
+        <input type="hidden" id="onboarding-subjects" />
 
         <label class="ds-label-form" style="margin-bottom:var(--ds-space-1);">Coaching</label>
         <div style="display:flex;flex-direction:column;gap:var(--ds-space-1);margin-bottom:var(--ds-space-2);">
@@ -192,6 +197,7 @@ const CLASS_LEVELS = [
           <div class="review-row"><span class="review-label">Exams</span><span class="review-value" id="review-exams"></span></div>
           <div class="review-row"><span class="review-label">Coaching</span><span class="review-value" id="review-coaching"></span></div>
           <div class="review-row"><span class="review-label">Weak Subjects</span><span class="review-value" id="review-weak"></span></div>
+          <div class="review-row"><span class="review-label">Subjects</span><span class="review-value" id="review-subjects"></span></div>
           <div class="review-row"><span class="review-label">Goal</span><span class="review-value" id="review-target"></span></div>
           <div class="review-row"><span class="review-label">Commitment</span><span class="review-value" id="review-commitment"></span></div>
         </div>
@@ -281,10 +287,12 @@ const CLASS_LEVELS = [
         return { valid: true, data: { exams: Array.from(selected).map(c => c.dataset.exam) } };
       }
       case 2: {
+        const selectedSubjects = Array.from(document.querySelectorAll('#subject-toggle-grid .weak-subject-chip.selected')).map(c => c.dataset.subject);
+        if (selectedSubjects.length === 0) return { valid: false, msg: 'Please select at least one subject you study.' };
         const coaching = document.getElementById('onboarding-coaching').value;
         if (!coaching) return { valid: false, msg: 'Please tell me about your coaching setup.' };
         const weakSubjects = Array.from(document.querySelectorAll('#weak-subjects-grid .weak-subject-chip.selected')).map(c => c.dataset.subject);
-        return { valid: true, data: { coaching, weakSubjects } };
+        return { valid: true, data: { subjects: selectedSubjects, coaching, weakSubjects } };
       }
       case 3: {
         const target = document.getElementById('onboarding-target').value.trim();
@@ -338,6 +346,30 @@ const CLASS_LEVELS = [
       grid.appendChild(chip);
     });
     updateWeakCount();
+  }
+
+  function loadSubjectToggles(subjects) {
+    const grid = document.getElementById('subject-toggle-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    subjects.forEach(subject => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'weak-subject-chip selected';
+      chip.dataset.subject = subject;
+      chip.textContent = subject;
+      chip.addEventListener('click', () => {
+        chip.classList.toggle('selected');
+        updateSubjectToggleCount();
+      });
+      grid.appendChild(chip);
+    });
+    updateSubjectToggleCount();
+  }
+
+  function updateSubjectToggleCount() {
+    const selected = document.querySelectorAll('#subject-toggle-grid .weak-subject-chip.selected');
+    document.getElementById('onboarding-subjects').value = Array.from(selected).map(c => c.dataset.subject).join(',');
   }
 
   function updateWeakCount() {
@@ -396,6 +428,8 @@ const CLASS_LEVELS = [
     document.getElementById('review-coaching').textContent = COACHING_LABELS[coachingVal] || 'Not specified';
     const weak = Array.from(document.querySelectorAll('#weak-subjects-grid .weak-subject-chip.selected')).map(c => c.dataset.subject);
     document.getElementById('review-weak').textContent = weak.length > 0 ? weak.join(', ') : 'None';
+    const selectedSubjects = Array.from(document.querySelectorAll('#subject-toggle-grid .weak-subject-chip.selected')).map(c => c.dataset.subject);
+    document.getElementById('review-subjects').textContent = selectedSubjects.length > 0 ? selectedSubjects.join(', ') : 'None';
     document.getElementById('review-target').textContent = document.getElementById('onboarding-target').value.trim() || 'Not specified';
     const hours = document.getElementById('onboarding-hours').value;
     const days = document.getElementById('onboarding-days').value;
@@ -434,7 +468,9 @@ const CLASS_LEVELS = [
       selectedExams.forEach(key => {
         if (EXAMS[key]) EXAMS[key].forEach(s => subjects.add(s));
       });
-      loadWeakSubjects([...subjects]);
+      const allSubjects = [...subjects];
+      loadSubjectToggles(allSubjects);
+      loadWeakSubjects(allSubjects);
     }
 
     if (currentStep === 3) {
@@ -461,11 +497,14 @@ const CLASS_LEVELS = [
         const targetHours = document.getElementById('onboarding-hours').value;
         const studyDays = document.getElementById('onboarding-days').value;
 
+        const subjects = Array.from(document.querySelectorAll('#subject-toggle-grid .weak-subject-chip.selected')).map(c => c.dataset.subject);
+
         const res = await fetch('/api/onboarding', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             name, classLevel, stream, selectedExams: exams,
+            subjects,
             coaching, weakSubjects, targetRank,
             targetHours, studyDaysPerWeek: studyDays,
           }),

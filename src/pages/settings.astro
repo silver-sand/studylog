@@ -464,17 +464,6 @@ if (settings.examDate) {
     });
   });
 
-  // ── Subject toggle (PCM/PCB/PCMB selection) ──
-  document.querySelectorAll('#active-subjects-grid button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      btn.classList.toggle('border-indigo-500');
-      btn.classList.toggle('bg-indigo-500/10');
-      btn.classList.toggle('text-indigo-400');
-      btn.classList.toggle('border-slate-700');
-      btn.classList.toggle('text-[#94a3b8]');
-    });
-  });
-
   // ── Logout ──
   document.getElementById('account-logout-btn')?.addEventListener('click', async () => {
     try {

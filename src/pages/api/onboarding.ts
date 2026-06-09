@@ -18,7 +18,7 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: 'Not authenticated' }), { status: 401 });
     }
 
-    const { name, stream, classLevel, selectedExams, targetHours, studyDaysPerWeek, weakSubjects, coaching, targetRank } = await request.json();
+    const { name, stream, classLevel, selectedExams, targetHours, studyDaysPerWeek, weakSubjects, coaching, targetRank, subjects } = await request.json();
     const db = getDb();
 
     // Update user profile
@@ -39,8 +39,8 @@ export const POST: APIRoute = async ({ request }) => {
 
       // Use explicitly selected exams, fall back to stream defaults
       const exams = selectedExams?.length ? selectedExams : (stream ? getExamsForStream(stream) : (current.selectedExams?.length ? current.selectedExams : ['JEE']));
-      // Auto-compute subjects from selected exams
-      const computedSubjects = getSubjectsForExamKeys(exams);
+      // Use explicit subjects if provided, otherwise auto-compute from selected exams
+      const computedSubjects = subjects?.length ? subjects : getSubjectsForExamKeys(exams);
 
       db.updateSettings({
         targetHoursPerWeek: targetHours ? Number(targetHours) : current.targetHoursPerWeek,
