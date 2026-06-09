@@ -4,8 +4,7 @@ import { getSessionUser, getTokenFromCookie } from '../services/auth-service';
 import '../styles/design-system.css';
 
 const user = getSessionUser(getTokenFromCookie(Astro.request));
-const isGuest = user?.userType === 'guest';
-const isAuthenticated = !!user && !isGuest;
+const isAuthenticated = !!user;
 ---
 
 <!DOCTYPE html>
@@ -70,8 +69,8 @@ const isAuthenticated = !!user && !isGuest;
           </a>
         ) : (
           <>
-            <button id="start-guest-btn" class="ds-btn ds-btn-primary ds-btn-lg lp-cta-btn">
-              Start Tracking Free
+            <button onclick="window.openAuthPopup('signup')" class="ds-btn ds-btn-primary ds-btn-lg lp-cta-btn">
+              Get Started Free
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </button>
             <button onclick="window.openAuthPopup('signup')" class="ds-btn ds-btn-outline ds-btn-lg">Create Account</button>
@@ -185,8 +184,8 @@ const isAuthenticated = !!user && !isGuest;
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </a>
       ) : (
-        <button id="cta-guest-btn" class="ds-btn ds-btn-primary ds-btn-lg lp-cta-btn" style="gap:var(--ds-space-2);">
-          Start Tracking Free
+        <button onclick="window.openAuthPopup('signup')" class="ds-btn ds-btn-primary ds-btn-lg lp-cta-btn" style="gap:var(--ds-space-2);">
+          Get Started Free
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </button>
       )}
@@ -207,24 +206,7 @@ const isAuthenticated = !!user && !isGuest;
   <AuthPopup />
 
   <script>
-    async function createGuestSession() {
-      try {
-        const res = await fetch('/api/auth/guest', { method: 'POST' });
-        window.location.href = '/daily';
-      } catch {
-        window.location.href = '/daily';
-      }
-    }
-
-    document.getElementById('start-guest-btn')?.addEventListener('click', (e) => {
-      e.preventDefault();
-      createGuestSession();
-    });
-
-    document.getElementById('cta-guest-btn')?.addEventListener('click', (e) => {
-      e.preventDefault();
-      createGuestSession();
-    });
+    // Guest creation removed — all users must sign up
   </script>
 
   <style is:global>

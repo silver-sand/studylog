@@ -1,16 +1,21 @@
 import { defineMiddleware } from 'astro/middleware';
 import { getDb } from './db';
-import { getTokenFromCookie, createGuestUser, getSessionUser } from './services/auth-service';
+import { getTokenFromCookie, getSessionUser } from './services/auth-service';
 
-// Asset extensions that should never trigger guest creation
-const SKIP_GUEST_PATHS = ['/_astro/', '/favicon', '.css', '.js', '.svg', '.png', '.jpg', '.ico', '.woff', '.woff2'];
+// Paths accessible without authentication
+const PUBLIC_PATHS = new Set(['/', '/api/auth/login', '/api/auth/signup']);
 
-function shouldSkipGuestCreation(pathname: string): boolean {
-  return SKIP_GUEST_PATHS.some(p => pathname.includes(p));
+function isPublicPath(pathname: string): boolean {
+  if (PUBLIC_PATHS.has(pathname)) return true;
+  // API routes are also public (individual handlers do their own auth)
+  if (pathname.startsWith('/api/')) return true;
+  // Static assets
+  if (pathname.startsWith('/_astro/') || pathname.startsWith('/favicon')) return true;
+  return false;
 }
 
 export const onRequest = defineMiddleware(async (context, next) => {
-  const { request, cookies } = context;
+  const { request, cookies, redirect } = context;
   const url = new URL(request.url);
 
   // Check for existing valid session
@@ -20,30 +25,14 @@ export const onRequest = defineMiddleware(async (context, next) => {
   if (user) {
     // Existing valid session — scope DB to this user
     getDb().setCurrentUser(user.id);
-    const response = await next();
-    return response;
+    return next();
   }
 
-  // No valid session — only create guest for actual page navigations,
-  // not for static assets (CSS, JS, images, fonts) that fire in parallel
-  // and would create dozens of orphaned guest users on first page load.
-  const accept = request.headers.get('accept') || '';
-  const isPageRequest = accept.includes('text/html') && !url.pathname.startsWith('/api/');
-
-  if (isPageRequest && !shouldSkipGuestCreation(url.pathname)) {
-    const guest = createGuestUser();
-    getDb().setCurrentUser(guest.user.id);
-
-    cookies.set('session_token', guest.token, {
-      path: '/',
-      httpOnly: true,
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-    });
+  // No session — allow public paths, redirect everything else to landing page
+  if (!isPublicPath(url.pathname)) {
+    return redirect('/');
   }
 
-  // Proceed — API routes and static assets without sessions will be handled
-  // by scopeDbToUser() calls in individual handlers
   const response = await next();
   return response;
 });

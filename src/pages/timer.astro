@@ -42,8 +42,14 @@ const streak = db.getStreak();
           <!-- Subtle background decoration -->
           <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-lg bg-indigo-500/5 blur-[100px] rounded-full pointer-events-none"></div>
 
-          <!-- Mode Selector Tabs -->
-          <div class="flex bg-[#050b18] border border-white/5 rounded-full p-1 mb-12 z-10">
+          <!-- Timer / Stopwatch Mode Toggle -->
+          <div class="flex bg-[#050b18] border border-white/5 rounded-full p-1 mb-4 z-10">
+            <button class="px-6 py-2 rounded-full bg-[#6366f1] text-white font-medium text-sm transition-all shadow-sm" id="mode-timer" data-timer-type="timer">Timer</button>
+            <button class="px-6 py-2 rounded-full text-slate-400 hover:text-slate-200 font-medium text-sm transition-all hover:bg-white/5" id="mode-stopwatch" data-timer-type="stopwatch">Stopwatch</button>
+          </div>
+
+          <!-- Countdown Mode Selector Tabs (hidden in stopwatch mode) -->
+          <div id="countdown-mode-tabs" class="flex bg-[#050b18] border border-white/5 rounded-full p-1 mb-12 z-10">
             <button class="px-6 py-2 rounded-full bg-[#6366f1] text-white font-medium text-sm transition-all shadow-sm" data-mode="focus">Focus 25m</button>
             <button class="px-6 py-2 rounded-full text-slate-400 hover:text-slate-200 font-medium text-sm transition-all hover:bg-white/5" data-mode="short">Short Break 5m</button>
             <button class="px-6 py-2 rounded-full text-slate-400 hover:text-slate-200 font-medium text-sm transition-all hover:bg-white/5" data-mode="long">Long Break 15m</button>
@@ -79,6 +85,30 @@ const streak = db.getStreak();
           <div id="timer-session-details" class="hidden mt-8 w-full max-w-md z-10">
             <StudyTimer subjects={subjects} />
           </div>
+
+          <!-- Save to Daily Log (shown on session completion) -->
+          <div id="timer-completion-bar" class="hidden mt-6 w-full max-w-md z-10 bg-[#0d1321] border border-emerald-500/20 rounded-xl p-5">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400 shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-white">Session Complete!</p>
+                <p class="text-xs text-[#94a3b8]" id="timer-completion-summary">25 min focused</p>
+              </div>
+            </div>
+            <div class="flex gap-3">
+              <button id="save-to-daily-btn" class="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Save to Daily Log
+              </button>
+              <button id="save-and-go-daily-btn" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                Log &amp; Go to Daily
+              </button>
+            </div>
+            <p class="text-xs text-[#94a3b8] mt-3 text-center" id="timer-save-status"></p>
+          </div>
         </div>
       </div>
 
@@ -105,9 +135,10 @@ const streak = db.getStreak();
 </BaseLayout>
 
 <script>
-  // ═══════════════════════ TIMER ENGINE ═══════════════════════
+  // ═══════════════════════ TIMER & STOPWATCH ENGINE ═══════════════════════
 
   const STORAGE_KEY = 'timer_recent_sessions';
+  const MODE_KEY = 'timer_timer_mode';
   const CIRCUMFERENCE = 2 * Math.PI * 46; // ≈ 289.026
 
   // DOM refs
@@ -124,6 +155,12 @@ const streak = db.getStreak();
   const manualLogBtn = document.getElementById('log-manual-session');
   const todayFocusEl = document.getElementById('today-focus');
   const sessionCountEl = document.getElementById('session-count');
+  const countdownTabs = document.getElementById('countdown-mode-tabs');
+  const completionBar = document.getElementById('timer-completion-bar');
+  const completionSummary = document.getElementById('timer-completion-summary');
+  const saveBtn = document.getElementById('save-to-daily-btn');
+  const saveGoBtn = document.getElementById('save-and-go-daily-btn');
+  const saveStatus = document.getElementById('timer-save-status');
 
   // Mode config
   const MODES = {
@@ -135,17 +172,32 @@ const streak = db.getStreak();
   let currentMode = 'focus';
   let totalSeconds = MODES.focus.duration;
   let remainingSeconds = MODES.focus.duration;
-  let timerState = 'idle'; // idle | running | paused
+  let timerState = 'idle'; // idle | running | paused | completed
   let intervalId = null;
   let lastSubject = '';
   let lastTopic = '';
+  let isStopwatch = false;
+  let stopwatchElapsed = 0;
 
-  // ── Timer core ──
+  // ── Load persisted timer mode ──
+  try {
+    const saved = localStorage.getItem(MODE_KEY);
+    if (saved === 'stopwatch') toggleTimerType('stopwatch');
+    else toggleTimerType('timer');
+  } catch(e) {}
 
   function formatTime(s) {
     const m = Math.floor(s / 60);
     const sec = s % 60;
     return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+  }
+
+  function formatTimeHms(s) {
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    if (h > 0) return `${h}h ${m}m ${sec}s`;
+    return `${m}m ${sec}s`;
   }
 
   function formatDuration(s) {
@@ -154,14 +206,63 @@ const streak = db.getStreak();
     return `${m}m` + (sec > 0 ? ` ${sec}s` : '');
   }
 
+  // ── Timer / Stopwatch mode toggle ──
+
+  function toggleTimerType(type) {
+    isStopwatch = type === 'stopwatch';
+    localStorage.setItem(MODE_KEY, type);
+
+    document.querySelectorAll('[data-timer-type]').forEach(b => {
+      b.classList.remove('bg-[#6366f1]', 'text-white');
+      if (b.dataset.timerType === type) {
+        b.classList.add('bg-[#6366f1]', 'text-white');
+      } else {
+        b.classList.add('text-slate-400');
+      }
+    });
+
+    if (isStopwatch) {
+      countdownTabs?.classList.add('hidden');
+      svgRing?.classList.add('hidden');
+      sessionLabel.textContent = 'Stopwatch';
+      displayEl.textContent = '00:00';
+      totalSeconds = 0;
+      remainingSeconds = 0;
+      stopwatchElapsed = 0;
+    } else {
+      countdownTabs?.classList.remove('hidden');
+      svgRing?.classList.remove('hidden');
+      setMode(currentMode);
+    }
+
+    hideCompletionBar();
+    if (intervalId) clearInterval(intervalId);
+    intervalId = null;
+    timerState = 'idle';
+    playBtn.querySelector('span').textContent = 'play_arrow';
+    if (!isStopwatch) {
+      svgRing.style.transition = 'none';
+      svgRing.style.strokeDashoffset = '0';
+      setTimeout(() => svgRing.style.transition = 'stroke-dashoffset 0.35s', 10);
+    }
+  }
+
+  document.getElementById('mode-timer')?.addEventListener('click', () => toggleTimerType('timer'));
+  document.getElementById('mode-stopwatch')?.addEventListener('click', () => toggleTimerType('stopwatch'));
+
   function updateDisplay() {
-    displayEl.textContent = formatTime(remainingSeconds);
-    const offset = CIRCUMFERENCE * (1 - remainingSeconds / totalSeconds);
-    svgRing.style.strokeDashoffset = offset;
+    if (isStopwatch) {
+      displayEl.textContent = formatTime(stopwatchElapsed);
+    } else {
+      displayEl.textContent = formatTime(remainingSeconds);
+      const offset = CIRCUMFERENCE * (1 - remainingSeconds / totalSeconds);
+      svgRing.style.strokeDashoffset = offset;
+    }
   }
 
   function setMode(modeKey) {
     if (timerState === 'running') stopTimer();
+    hideCompletionBar();
     currentMode = modeKey;
     totalSeconds = MODES[modeKey].duration;
     remainingSeconds = totalSeconds;
@@ -173,23 +274,26 @@ const streak = db.getStreak();
     setTimeout(() => svgRing.style.transition = 'stroke-dashoffset 0.35s', 10);
   }
 
-  function tick() {
-    remainingSeconds--;
-    updateDisplay();
-    if (remainingSeconds <= 0) {
-      completeTimer();
+  function tickTimer() {
+    if (isStopwatch) {
+      stopwatchElapsed++;
+      updateDisplay();
+    } else {
+      remainingSeconds--;
+      updateDisplay();
+      if (remainingSeconds <= 0) completeTimer();
     }
   }
 
   function startTimer() {
-    if (timerState === 'idle') {
-      // Show session details panel on first start
+    if (timerState === 'idle' || timerState === 'completed') {
+      hideCompletionBar();
       sessionDetails?.classList.remove('hidden');
     }
     if (timerState === 'running') return;
     timerState = 'running';
     playBtn.querySelector('span').textContent = 'pause';
-    intervalId = setInterval(tick, 1000);
+    intervalId = setInterval(tickTimer, 1000);
   }
 
   function stopTimer() {
@@ -197,17 +301,26 @@ const streak = db.getStreak();
     intervalId = null;
     timerState = 'paused';
     playBtn.querySelector('span').textContent = 'play_arrow';
+    if (isStopwatch && stopwatchElapsed > 0) {
+      showCompletionBar(stopwatchElapsed);
+    }
   }
 
   function resetTimer() {
+    hideCompletionBar();
     if (intervalId) clearInterval(intervalId);
     intervalId = null;
     timerState = 'idle';
-    remainingSeconds = totalSeconds;
-    updateDisplay();
-    svgRing.style.transition = 'none';
-    svgRing.style.strokeDashoffset = '0';
-    setTimeout(() => svgRing.style.transition = 'stroke-dashoffset 0.35s', 10);
+    if (isStopwatch) {
+      stopwatchElapsed = 0;
+      displayEl.textContent = '00:00';
+    } else {
+      remainingSeconds = totalSeconds;
+      updateDisplay();
+      svgRing.style.transition = 'none';
+      svgRing.style.strokeDashoffset = '0';
+      setTimeout(() => svgRing.style.transition = 'stroke-dashoffset 0.35s', 10);
+    }
     playBtn.querySelector('span').textContent = 'play_arrow';
   }
 
@@ -215,7 +328,6 @@ const streak = db.getStreak();
     if (intervalId) clearInterval(intervalId);
     intervalId = null;
 
-    // Vibration + notification
     try { navigator.vibrate?.(200); } catch(e) {}
     try {
       if ('Notification' in window && Notification.permission === 'granted') {
@@ -223,17 +335,17 @@ const streak = db.getStreak();
       }
     } catch(e) {}
 
-    // Save session if we have subject info from StudyTimer
     const subject = lastSubject || 'Study';
     const topic = lastTopic || '';
-    const duration = totalSeconds;
+    const sessionDuration = totalSeconds;
 
     dispatchEvent(new CustomEvent('timer-session-saved', {
-      detail: { subject, topic, duration }
+      detail: { subject, topic, duration: sessionDuration, type: 'Focus' }
     }));
 
-    // Reset after completion
-    timerState = 'idle';
+    showCompletionBar(sessionDuration);
+
+    timerState = 'completed';
     remainingSeconds = totalSeconds;
     updateDisplay();
     svgRing.style.transition = 'none';
@@ -241,27 +353,99 @@ const streak = db.getStreak();
     setTimeout(() => svgRing.style.transition = 'stroke-dashoffset 0.35s', 10);
     playBtn.querySelector('span').textContent = 'play_arrow';
 
-    // Flash the display
     displayEl.style.color = '#22c55e';
     setTimeout(() => displayEl.style.color = '', 1500);
   }
 
+  // ── Save to Daily Log ──
+
+  function showCompletionBar(elapsedSeconds) {
+    const subject = lastSubject || 'Study';
+    const topic = lastTopic || '';
+    const label = isStopwatch ? 'Stopwatch' : MODES[currentMode].label;
+    completionSummary.textContent = `${formatTimeHms(elapsedSeconds)} — ${subject}${topic ? ': ' + topic : ''}`;
+    completionBar?.classList.remove('hidden');
+
+    completionBar.dataset.duration = elapsedSeconds;
+    completionBar.dataset.subject = subject;
+    completionBar.dataset.topic = topic;
+    completionBar.dataset.label = label;
+
+    saveStatus.textContent = '';
+    saveBtn.disabled = false;
+    saveGoBtn.disabled = false;
+  }
+
+  function hideCompletionBar() {
+    completionBar?.classList.add('hidden');
+    saveStatus.textContent = '';
+  }
+
+  async function saveSessionToDaily(logAndGo = false) {
+    const elapsed = parseInt(completionBar.dataset.duration) || 0;
+    const subject = completionBar.dataset.subject || 'Study';
+    const topic = completionBar.dataset.topic || '';
+    if (elapsed < 60) return;
+
+    const hoursStudied = Math.round((elapsed / 3600) * 100) / 100;
+    const content = `Timer session: ${subject}${topic ? ' - ' + topic : ''}`;
+
+    saveStatus.textContent = 'Saving...';
+    saveBtn.disabled = true;
+    saveGoBtn.disabled = true;
+
+    try {
+      const res = await fetch('/api/entries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content,
+          hoursStudied,
+          studyType: 'other',
+          focusRating: 4,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Failed' }));
+        throw new Error(err.error || 'Failed to save');
+      }
+
+      saveStatus.textContent = '✓ Saved to daily log!';
+      saveStatus.style.color = '#34d399';
+
+      if (logAndGo) {
+        setTimeout(() => { window.location.href = '/daily'; }, 500);
+      } else {
+        setTimeout(() => {
+          saveBtn.disabled = false;
+          saveGoBtn.disabled = false;
+        }, 2000);
+      }
+    } catch (err) {
+      saveStatus.textContent = `✗ ${err instanceof Error ? err.message : 'Save failed'}`;
+      saveStatus.style.color = '#f87171';
+      saveBtn.disabled = false;
+      saveGoBtn.disabled = false;
+    }
+  }
+
+  saveBtn?.addEventListener('click', () => saveSessionToDaily(false));
+  saveGoBtn?.addEventListener('click', () => saveSessionToDaily(true));
+
   // ── Listen for StudyTimer start event ──
   document.addEventListener('timer-start-session', (e) => {
+    if (timerState === 'completed') hideCompletionBar();
     lastSubject = e.detail.subject || '';
     lastTopic = e.detail.topic || '';
-    // Start the timer
-    setMode(currentMode);
+    if (!isStopwatch) setMode(currentMode);
     startTimer();
   });
 
   // ── Button handlers ──
   playBtn?.addEventListener('click', () => {
-    if (timerState === 'running') {
-      stopTimer();
-    } else {
-      startTimer();
-    }
+    if (timerState === 'running') stopTimer();
+    else startTimer();
   });
 
   pauseBtn?.addEventListener('click', () => {
@@ -270,10 +454,10 @@ const streak = db.getStreak();
 
   resetBtn?.addEventListener('click', resetTimer);
 
-  // ── Mode tabs ──
-  document.querySelectorAll('[data-mode]').forEach(btn => {
+  // ── Countdown mode tabs ──
+  document.querySelectorAll('#countdown-mode-tabs [data-mode]').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('[data-mode]').forEach(b => {
+      document.querySelectorAll('#countdown-mode-tabs [data-mode]').forEach(b => {
         b.classList.remove('bg-[#6366f1]', 'text-white');
         b.classList.add('text-slate-400');
       });
@@ -283,7 +467,7 @@ const streak = db.getStreak();
     });
   });
 
-  // ── Recent sessions (localStorage) ──
+  // ── Recent sessions ──
 
   function loadSessions() {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
@@ -303,10 +487,8 @@ const streak = db.getStreak();
     sessions.forEach(s => {
       const card = document.createElement('div');
       card.className = 'bg-[#050b18] border border-white/5 rounded-xl p-4 hover:border-[#6366f1]/30 transition-colors group cursor-default';
-
       const topRow = document.createElement('div');
       topRow.className = 'flex justify-between items-start mb-2';
-
       const subjectInfo = document.createElement('div');
       subjectInfo.className = 'flex items-center gap-2';
       const dot = document.createElement('div');
@@ -318,20 +500,17 @@ const streak = db.getStreak();
       name.textContent = s.subject || 'Study';
       subjectInfo.appendChild(name);
       topRow.appendChild(subjectInfo);
-
       const timeLabel = document.createElement('span');
       timeLabel.className = 'text-xs text-slate-400 font-label';
       timeLabel.textContent = s.time || '';
       topRow.appendChild(timeLabel);
       card.appendChild(topRow);
-
       if (s.topic) {
         const topicEl = document.createElement('div');
         topicEl.className = 'text-sm text-slate-400 mb-3';
         topicEl.textContent = s.topic;
         card.appendChild(topicEl);
       }
-
       const bottomRow = document.createElement('div');
       bottomRow.className = 'flex justify-between items-end';
       const tag = document.createElement('span');
@@ -343,24 +522,22 @@ const streak = db.getStreak();
       duration.textContent = s.duration;
       bottomRow.appendChild(duration);
       card.appendChild(bottomRow);
-
       list.appendChild(card);
     });
   }
 
   document.addEventListener('timer-session-saved', (e) => {
-    const { subject, topic, duration } = e.detail || {};
+    const { subject, topic, duration, type } = e.detail || {};
     if (!subject) return;
     const sessions = loadSessions();
     const colors = { Physics: '#6366f1', Chemistry: '#22c55e', Mathematics: '#f59e0b', Maths: '#f59e0b', Biology: '#ec4899' };
     sessions.unshift({
-      subject,
-      topic,
+      subject, topic,
       duration: formatDuration(duration),
       date: new Date().toISOString(),
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       color: colors[subject] || '#6366f1',
-      tag: 'Focus',
+      tag: type === 'Stopwatch' ? 'Stopwatch' : 'Focus',
     });
     saveSessions(sessions);
     renderSessions();
@@ -376,19 +553,15 @@ const streak = db.getStreak();
 
   // ── Manual Session Logging ──
   let manualFormVisible = false;
-
   manualLogBtn?.addEventListener('click', () => {
     if (manualFormVisible) {
-      // Remove the form
       const form = document.getElementById('manual-log-form');
       if (form) form.remove();
       manualFormVisible = false;
       return;
     }
-
     const colors = { Physics: '#6366f1', Chemistry: '#22c55e', Mathematics: '#f59e0b', Maths: '#f59e0b', Biology: '#ec4899' };
     const subjects = Object.keys(colors);
-
     const form = document.createElement('div');
     form.id = 'manual-log-form';
     form.className = 'bg-[#050b18] border border-white/5 rounded-xl p-4 mt-3 animate-slide-up';
@@ -398,7 +571,7 @@ const streak = db.getStreak();
         <div>
           <label class="text-[10px] text-slate-500 uppercase tracking-wider block mb-1">Subject</label>
           <div class="flex flex-wrap gap-1.5" id="manual-subject-chips">
-            ${subjects.map((s, i) => `<button type="button" class="manual-subj-chip px-3 py-1 rounded-full border text-xs font-medium transition-all border-slate-700 bg-[#050b18] text-slate-300 ${i === 0 ? 'selected' : ''}" data-subject="${s}"><span class="w-1.5 h-1.5 rounded-full inline-block mr-1" style="background:${colors[s]}"></span>${s}</button>`).join('')}
+            ${subjects.map((s, i) => '<button type="button" class="manual-subj-chip px-3 py-1 rounded-full border text-xs font-medium transition-all border-slate-700 bg-[#050b18] text-slate-300 ' + (i === 0 ? 'selected' : '') + '" data-subject="' + s + '"><span class="w-1.5 h-1.5 rounded-full inline-block mr-1" style="background:' + colors[s] + '"></span>' + s + '</button>').join('')}
           </div>
         </div>
         <div>
@@ -422,16 +595,12 @@ const streak = db.getStreak();
     `;
     list.parentElement?.appendChild(form);
     manualFormVisible = true;
-
-    // Manual subject chip toggle
     form.querySelectorAll('.manual-subj-chip').forEach(chip => {
       chip.addEventListener('click', () => {
         form.querySelectorAll('.manual-subj-chip').forEach(c => c.classList.remove('selected'));
         chip.classList.add('selected');
       });
     });
-
-    // Manual submit
     form.querySelector('#manual-submit-btn').addEventListener('click', () => {
       const selectedChip = form.querySelector('.manual-subj-chip.selected');
       const subject = selectedChip?.dataset.subject || 'Study';
@@ -444,7 +613,7 @@ const streak = db.getStreak();
         return;
       }
       dispatchEvent(new CustomEvent('timer-session-saved', {
-        detail: { subject, topic, duration }
+        detail: { subject, topic, duration, type: 'Manual' }
       }));
       form.remove();
       manualFormVisible = false;
@@ -456,13 +625,13 @@ const streak = db.getStreak();
     const sessions = loadSessions();
     const today = new Date().toDateString();
     const todaySessions = sessions.filter(s => new Date(s.date).toDateString() === today);
-    let totalSeconds = 0;
+    let totalSecs = 0;
     todaySessions.forEach(s => {
       const match = (s.duration || '').match(/(\d+)m/);
-      if (match) totalSeconds += parseInt(match[1]) * 60;
+      if (match) totalSecs += parseInt(match[1]) * 60;
     });
-    const hours = Math.floor(totalSeconds / 3600);
-    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const hours = Math.floor(totalSecs / 3600);
+    const mins = Math.floor((totalSecs % 3600) / 60);
     todayFocusEl.textContent = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
     sessionCountEl.textContent = todaySessions.length;
   }

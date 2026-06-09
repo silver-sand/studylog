@@ -63,6 +63,13 @@ export interface Database {
   deleteSession(token: string): boolean;
   deleteExpiredSessions(): number;
 
+  // Export / Import
+  deleteAllUserData(userId: string): void;
+  /** Execute a raw SQL query (SELECT returns rows, DML returns []). Export/import use. */
+  rawQuery(sql: string, params?: any[]): Record<string, any>[];
+  /** Force-flush the in-memory DB to disk. Used after import operations. */
+  flush(): void;
+
   // Stats
   getEntryCount(): number;
   getEntryCountForMonth(year: number, month: number): number;

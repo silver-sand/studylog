@@ -12,7 +12,7 @@ export const POST: APIRoute = async ({ request }) => {
   scopeDbToUser(request);
   try {
     const body = await request.json();
-    const { content, hoursStudied, studyType, focusRating, examType } = body;
+    const { content, hoursStudied, studyType, focusRating, examType, subjects } = body;
 
     if (!content || typeof content !== 'string') {
       return new Response(JSON.stringify({ error: 'Content is required' }), { status: 400 });
@@ -46,11 +46,6 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     const today = formatDate(new Date());
-    const alreadyExists = getDb().getEntryByDate(today);
-
-    if (alreadyExists) {
-      return new Response(JSON.stringify({ error: 'An entry for today already exists. Use edit instead.' }), { status: 409 });
-    }
 
     const entry = await createEntry({
       date: today,

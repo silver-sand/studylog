@@ -874,6 +874,51 @@ export class SQLiteAdapter implements DatabaseInterface {
     return this.getSettings();
   }
 
+  // ── Export / Import ──
+
+  /** Force-flush the in-memory DB to disk. */
+  flush(): void {
+    this.save();
+  }
+
+  rawQuery(sql: string, params?: any[]): Record<string, any>[] {
+    const db = this.getDb();
+    const trimmed = sql.trim().toUpperCase();
+    // For SELECT queries, use prepare/step to return rows
+    if (trimmed.startsWith('SELECT') || trimmed.startsWith('WITH') || trimmed.startsWith('PRAGMA')) {
+      const stmt = db.prepare(sql);
+      stmt.bind(params || []);
+      const rows: Record<string, any>[] = [];
+      while (stmt.step()) {
+        rows.push(stmt.getAsObject());
+      }
+      stmt.free();
+      return rows;
+    }
+    // For DML (INSERT, UPDATE, DELETE), use db.run()
+    db.run(sql, params || []);
+    return [];
+  }
+
+  deleteAllUserData(userId: string): void {
+    const db = this.getDb();
+    db.run('BEGIN TRANSACTION');
+    try {
+      db.run(`DELETE FROM entries WHERE user_id = ?`, [userId]);
+      db.run(`DELETE FROM weekly_reviews WHERE user_id = ?`, [userId]);
+      db.run(`DELETE FROM daily_reviews WHERE user_id = ?`, [userId]);
+      db.run(`DELETE FROM syllabus WHERE user_id = ?`, [userId]);
+      db.run(`DELETE FROM mock_tests WHERE user_id = ?`, [userId]);
+      db.run(`DELETE FROM settings WHERE user_id = ?`, [userId]);
+      db.run(`DELETE FROM sessions WHERE user_id = ?`, [userId]);
+      db.run('COMMIT');
+    } catch (e) {
+      db.run('ROLLBACK');
+      throw e;
+    }
+    this.save();
+  }
+
   // ── Stats ──
 
   getEntryCount(): number {

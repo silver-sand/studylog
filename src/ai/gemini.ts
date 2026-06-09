@@ -414,7 +414,14 @@ YOUR ROLE:
 5. Suggest what to study next based on syllabus gaps
 6. Keep responses under 4 paragraphs — be direct
 
-If the user asks about a specific topic, quiz them on it. If they describe what they studied, ask a follow-up that checks depth of understanding. If they sound stuck, give practical next-step advice.`;
+If the user asks about a specific topic, quiz them on it. If they describe what they studied, ask a follow-up that checks depth of understanding. If they sound stuck, give practical next-step advice.
+
+MATH FORMATTING: When writing mathematical expressions, ALWAYS use LaTeX notation.
+- Inline math: wrap in single dollar signs, e.g. $E = mc^2$, $x^2 + y^2 = z^2$
+- Display math: wrap in double dollar signs, e.g. $$\int_{a}^{b} f(x) dx$$
+- Chemical formulas: H$_2$O, CO$_2$
+- Physics formulas: $F = ma$, $\Delta = b^2 - 4ac$
+- Always use $...$ for variables and inline expressions. Never write math without delimiters.`;
 
     let prompt = `${systemPrompt}\n\n`;
     if (history && history.length > 0) {

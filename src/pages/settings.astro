@@ -56,6 +56,9 @@ if (settings.examDate) {
         <button class="text-left px-4 py-2.5 rounded-lg text-sm font-medium text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#0d1321]/50 transition-colors settings-nav-btn" data-tab="account">
           Account
         </button>
+        <button class="text-left px-4 py-2.5 rounded-lg text-sm font-medium text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#0d1321]/50 transition-colors settings-nav-btn" data-tab="data">
+          Data
+        </button>
       </nav>
 
       <!-- Scrollable Settings Sections -->
@@ -325,6 +328,63 @@ if (settings.examDate) {
           )}
         </section>
 
+        <!-- ═══════ DATA ═══════ -->
+        <section class="bg-[#0d1321] rounded-xl border border-slate-800 p-6 settings-section hidden" id="section-data">
+          <h3 class="text-lg font-headline font-semibold text-[#f1f5f9] mb-6">Data</h3>
+          <p class="text-sm text-[#94a3b8] mb-6">Download your study data as a backup, or restore from a previous backup. Restoring will <strong class="text-red-400">replace all</strong> your current data.</p>
+
+          <!-- Download -->
+          <div class="space-y-4">
+            <div class="bg-[#050b18] rounded-xl border border-slate-700 p-5">
+              <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 shrink-0">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                </div>
+                <div class="flex-1">
+                  <p class="text-sm font-medium text-white">Download Backup</p>
+                  <p class="text-xs text-[#94a3b8]">Save all your entries, reviews, syllabus progress, and settings as a JSON file.</p>
+                </div>
+                <button id="data-download-btn" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg transition-colors shrink-0">
+                  Download
+                </button>
+              </div>
+            </div>
+
+            <!-- Upload / Restore -->
+            <div class="bg-[#050b18] rounded-xl border border-slate-700 p-5">
+              <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 shrink-0">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </div>
+                <div class="flex-1">
+                  <p class="text-sm font-medium text-white">Restore from Backup</p>
+                  <p class="text-xs text-[#94a3b8]">Upload a previously downloaded backup file to restore your data. This replaces all existing data.</p>
+                </div>
+                <button id="data-upload-btn" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium rounded-lg transition-colors shrink-0">
+                  Upload
+                </button>
+              </div>
+              <input type="file" id="data-file-input" accept=".json" class="hidden" />
+            </div>
+
+            <!-- Status area -->
+            <div id="data-status" class="hidden text-sm rounded-lg px-4 py-3"></div>
+
+            <!-- Confirmation dialog (hidden by default) -->
+            <div id="data-confirm-overlay" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/60" style="backdrop-filter:blur(4px);">
+              <div class="bg-[#0d1321] border border-slate-700 rounded-xl p-6 max-w-md mx-4 shadow-2xl">
+                <h4 class="text-lg font-headline font-semibold text-[#f1f5f9] mb-3">Restore Backup?</h4>
+                <div id="data-confirm-preview" class="text-sm text-[#94a3b8] mb-4 space-y-1"></div>
+                <p class="text-sm text-red-400 mb-5 font-medium">This will replace ALL your current data. This cannot be undone.</p>
+                <div class="flex gap-3 justify-end">
+                  <button id="data-confirm-cancel" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium rounded-lg transition-colors">Cancel</button>
+                  <button id="data-confirm-proceed" class="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-sm font-medium rounded-lg transition-colors">Restore Data</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
       </div>
     </div>
   </main>
@@ -465,6 +525,156 @@ if (settings.examDate) {
     } catch (err) {
       btn.textContent = 'Failed — try again';
       setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 2000);
+    }
+  });
+
+  // ── Data: Download Backup ──
+  document.getElementById('data-download-btn')?.addEventListener('click', async () => {
+    const btn = document.getElementById('data-download-btn');
+    const status = document.getElementById('data-status');
+    const original = btn?.textContent || 'Download';
+    if (!btn || !status) return;
+
+    btn.textContent = 'Downloading...';
+    btn.disabled = true;
+    status.classList.add('hidden');
+
+    try {
+      const res = await fetch('/api/export');
+      if (!res.ok) throw new Error('Download failed');
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `studylog-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      status.className = 'text-sm rounded-lg px-4 py-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400';
+      status.textContent = '✓ Backup downloaded successfully.';
+      status.classList.remove('hidden');
+    } catch (err) {
+      status.className = 'text-sm rounded-lg px-4 py-3 bg-red-500/10 border border-red-500/20 text-red-400';
+      status.textContent = '✗ Download failed. Please try again.';
+      status.classList.remove('hidden');
+    } finally {
+      btn.textContent = original;
+      btn.disabled = false;
+    }
+  });
+
+  // ── Data: Upload / Restore ──
+  let pendingImportData: any = null;
+
+  document.getElementById('data-upload-btn')?.addEventListener('click', () => {
+    document.getElementById('data-file-input')?.click();
+  });
+
+  document.getElementById('data-file-input')?.addEventListener('change', async (e) => {
+    const input = e.target as HTMLInputElement;
+    const file = input.files?.[0];
+    const status = document.getElementById('data-status');
+    if (!file || !status) return;
+
+    status.classList.add('hidden');
+    pendingImportData = null;
+
+    if (!file.name.endsWith('.json')) {
+      status.className = 'text-sm rounded-lg px-4 py-3 bg-red-500/10 border border-red-500/20 text-red-400';
+      status.textContent = '✗ Please select a .json file.';
+      status.classList.remove('hidden');
+      input.value = '';
+      return;
+    }
+
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+
+      if (!data.version || !data.data || !Array.isArray(data.data?.entries)) {
+        throw new Error('Invalid backup format');
+      }
+
+      const preview = document.getElementById('data-confirm-preview');
+      if (!preview) return;
+      const entriesCount = data.data.entries?.length || 0;
+      const reviewsCount = data.data.weeklyReviews?.length || 0;
+      const dailyCount = data.data.dailyReviews?.length || 0;
+      const syllabusCount = data.data.syllabus?.length || 0;
+      const mockTestsCount = data.data.mockTests?.length || 0;
+
+      let dateRange = 'N/A';
+      if (entriesCount > 0) {
+        const dates = data.data.entries.map((e: any) => e.date).filter(Boolean).sort();
+        if (dates.length > 0) {
+          dateRange = `${dates[0]} — ${dates[dates.length - 1]}`;
+        }
+      }
+
+      preview.innerHTML = `
+        <p><strong class="text-white">Entries:</strong> ${entriesCount}</p>
+        <p><strong class="text-white">Date range:</strong> ${dateRange}</p>
+        <p><strong class="text-white">Weekly reviews:</strong> ${reviewsCount}</p>
+        <p><strong class="text-white">Daily reviews:</strong> ${dailyCount}</p>
+        <p><strong class="text-white">Syllabus chapters:</strong> ${syllabusCount}</p>
+        <p><strong class="text-white">Mock tests:</strong> ${mockTestsCount}</p>
+      `;
+
+      pendingImportData = data;
+      document.getElementById('data-confirm-overlay')?.classList.remove('hidden');
+      input.value = '';
+    } catch (err) {
+      status.className = 'text-sm rounded-lg px-4 py-3 bg-red-500/10 border border-red-500/20 text-red-400';
+      status.textContent = `✗ Invalid backup file: ${err instanceof Error ? err.message : 'Parse error'}`;
+      status.classList.remove('hidden');
+      input.value = '';
+    }
+  });
+
+  document.getElementById('data-confirm-cancel')?.addEventListener('click', () => {
+    document.getElementById('data-confirm-overlay')?.classList.add('hidden');
+    pendingImportData = null;
+  });
+
+  document.getElementById('data-confirm-proceed')?.addEventListener('click', async () => {
+    const overlay = document.getElementById('data-confirm-overlay');
+    const status = document.getElementById('data-status');
+    const proceedBtn = document.getElementById('data-confirm-proceed');
+    const cancelBtn = document.getElementById('data-confirm-cancel');
+    if (!overlay || !status || !proceedBtn || !cancelBtn) return;
+
+    if (!pendingImportData) return;
+
+    proceedBtn.textContent = 'Restoring...';
+    proceedBtn.disabled = true;
+    cancelBtn.disabled = true;
+
+    try {
+      const res = await fetch('/api/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(pendingImportData),
+      });
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Import failed');
+
+      status.className = 'text-sm rounded-lg px-4 py-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400';
+      status.textContent = `✓ Restored: ${result.entriesImported} entries, ${result.weeklyReviewsImported} weekly reviews, ${result.dailyReviewsImported} daily reviews, ${result.syllabusImported} syllabus chapters, ${result.mockTestsImported} mock tests.`;
+      status.classList.remove('hidden');
+    } catch (err) {
+      status.className = 'text-sm rounded-lg px-4 py-3 bg-red-500/10 border border-red-500/20 text-red-400';
+      status.textContent = `✗ Restore failed: ${err instanceof Error ? err.message : 'Unknown error'}`;
+      status.classList.remove('hidden');
+    } finally {
+      overlay.classList.add('hidden');
+      pendingImportData = null;
+      proceedBtn.textContent = 'Restore Data';
+      proceedBtn.disabled = false;
+      cancelBtn.disabled = false;
     }
   });
 </script>
