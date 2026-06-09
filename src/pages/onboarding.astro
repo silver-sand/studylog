@@ -27,6 +27,7 @@ const existingProfile = user?.classLevel ? {
   coaching: (user as any).coaching || '',
   weakSubjects: (user as any).weakSubjects || [],
   targetRank: (user as any).targetRank || '',
+  subjects: settings.subjects || [],
 } : null;
 
 const CLASS_LEVELS = [
@@ -224,6 +225,7 @@ const CLASS_LEVELS = [
     selectedExams: {JSON.stringify(existingProfile?.selectedExams || [])},
     stream: {JSON.stringify(existingProfile?.stream || '')},
     weakSubjects: {JSON.stringify(existingProfile?.weakSubjects || [])},
+    subjects: {JSON.stringify(existingProfile?.subjects || [])},
   };
 </script>
 
@@ -287,7 +289,7 @@ const CLASS_LEVELS = [
         return { valid: true, data: { exams: Array.from(selected).map(c => c.dataset.exam) } };
       }
       case 2: {
-        const selectedSubjects = Array.from(document.querySelectorAll('#subject-toggle-grid .weak-subject-chip.selected')).map(c => c.dataset.subject);
+        const selectedSubjects = Array.from(document.querySelectorAll('#subject-toggle-grid .subject-toggle-chip.selected')).map(c => c.dataset.subject);
         if (selectedSubjects.length === 0) return { valid: false, msg: 'Please select at least one subject you study.' };
         const coaching = document.getElementById('onboarding-coaching').value;
         if (!coaching) return { valid: false, msg: 'Please tell me about your coaching setup.' };
@@ -352,10 +354,12 @@ const CLASS_LEVELS = [
     const grid = document.getElementById('subject-toggle-grid');
     if (!grid) return;
     grid.innerHTML = '';
+    const saved = window.__PRE_FILL?.subjects || [];
+    const hasSaved = saved.length > 0;
     subjects.forEach(subject => {
       const chip = document.createElement('button');
       chip.type = 'button';
-      chip.className = 'weak-subject-chip selected';
+      chip.className = 'subject-toggle-chip' + ((!hasSaved || saved.includes(subject)) ? ' selected' : '');
       chip.dataset.subject = subject;
       chip.textContent = subject;
       chip.addEventListener('click', () => {
@@ -366,9 +370,8 @@ const CLASS_LEVELS = [
     });
     updateSubjectToggleCount();
   }
-
   function updateSubjectToggleCount() {
-    const selected = document.querySelectorAll('#subject-toggle-grid .weak-subject-chip.selected');
+    const selected = document.querySelectorAll('#subject-toggle-grid .subject-toggle-chip.selected');
     document.getElementById('onboarding-subjects').value = Array.from(selected).map(c => c.dataset.subject).join(',');
   }
 
@@ -428,7 +431,7 @@ const CLASS_LEVELS = [
     document.getElementById('review-coaching').textContent = COACHING_LABELS[coachingVal] || 'Not specified';
     const weak = Array.from(document.querySelectorAll('#weak-subjects-grid .weak-subject-chip.selected')).map(c => c.dataset.subject);
     document.getElementById('review-weak').textContent = weak.length > 0 ? weak.join(', ') : 'None';
-    const selectedSubjects = Array.from(document.querySelectorAll('#subject-toggle-grid .weak-subject-chip.selected')).map(c => c.dataset.subject);
+    const selectedSubjects = Array.from(document.querySelectorAll('#subject-toggle-grid .subject-toggle-chip.selected')).map(c => c.dataset.subject);
     document.getElementById('review-subjects').textContent = selectedSubjects.length > 0 ? selectedSubjects.join(', ') : 'None';
     document.getElementById('review-target').textContent = document.getElementById('onboarding-target').value.trim() || 'Not specified';
     const hours = document.getElementById('onboarding-hours').value;
@@ -497,7 +500,7 @@ const CLASS_LEVELS = [
         const targetHours = document.getElementById('onboarding-hours').value;
         const studyDays = document.getElementById('onboarding-days').value;
 
-        const subjects = Array.from(document.querySelectorAll('#subject-toggle-grid .weak-subject-chip.selected')).map(c => c.dataset.subject);
+        const subjects = Array.from(document.querySelectorAll('#subject-toggle-grid .subject-toggle-chip.selected')).map(c => c.dataset.subject);
 
         const res = await fetch('/api/onboarding', {
           method: 'POST',
@@ -635,5 +638,26 @@ const CLASS_LEVELS = [
     .ds-onboarding-card { padding: var(--ds-space-3) var(--ds-space-2) !important; max-width: 100% !important; }
     .ds-onboarding-card .ds-step { width: 1.5rem; height: 1.5rem; font-size: var(--ds-text-2xs); }
     #step-indicator { flex-wrap: wrap; justify-content: center; }
+  }
+
+  .subject-toggle-chip {
+    padding: 0.3rem 0.75rem;
+    border: 1px solid var(--ds-border-default);
+    border-radius: 999px;
+    background: var(--ds-bg-surface);
+    color: var(--ds-text-tertiary);
+    cursor: pointer;
+    font-size: var(--ds-text-xs);
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .subject-toggle-chip:hover {
+    border-color: var(--ds-border-hover);
+    color: var(--ds-text-primary);
+  }
+  .subject-toggle-chip.selected {
+    background: rgba(99, 102, 241, 0.15);
+    border-color: #6366f1;
+    color: #818cf8;
   }
 </style>
