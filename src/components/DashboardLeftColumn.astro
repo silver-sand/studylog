@@ -6,7 +6,7 @@ export interface Props {
   consistencyPercent: number;
   masteryPercent: number;
   readinessScore: number;
-  readinessLabel: 'on_track' | 'behind' | 'critical';
+  readinessLabel: 'on_track' | 'behind' | 'critical' | 'getting_started';
   streak: number;
   weekDays: { day: string; completed: boolean }[];
   entriesThisWeek: number;
@@ -53,7 +53,7 @@ function daysUntil(dateStr: string): number {
         <p class="text-xs text-neutral-500">{user?.stream || 'Goal Tracker'}</p>
       </div>
     </div>
-    <button class="w-10 h-10 rounded-lg hover:bg-white/5 flex items-center justify-center transition-colors">
+    <button class="w-10 h-10 rounded-lg hover:bg-white/5 flex items-center justify-center transition-colors hidden">
       <span class="material-symbols-outlined text-neutral-400">notifications</span>
     </button>
   </header>
@@ -114,9 +114,14 @@ function daysUntil(dateStr: string): number {
     </div>
   </div>
 
+  <!-- Calendar Activity (Monthly Study Calendar) -->
+  <div style="--stagger-index:3">
+    <slot name="calendar" />
+  </div>
+
   <!-- Upcoming Tests -->
   {upcomingExams.length > 0 && (
-    <div style="--stagger-index:3">
+    <div style="--stagger-index:5">
       <div class="flex items-center justify-between mb-4">
         <h4 class="text-xs font-label uppercase tracking-widest text-neutral-400">Upcoming Tests</h4>
         <a href="/daily" class="text-[10px] text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1">
@@ -160,7 +165,7 @@ function daysUntil(dateStr: string): number {
   )}
 
   <!-- Syllabus Progress -->
-  <div style="--stagger-index:4">
+  <div style="--stagger-index:5">
     <div class="flex items-center justify-between mb-2">
       <h4 class="text-xs font-label uppercase tracking-widest text-neutral-400">Syllabus Progress</h4>
       <span class="text-xs font-bold text-white">{syllabusPercent}%</span>

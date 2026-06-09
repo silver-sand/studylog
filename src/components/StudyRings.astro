@@ -24,11 +24,13 @@ const rings = [
 
 const readinessStatusClass =
   readinessLabel === 'on_track' ? 'status-on-track' :
-  readinessLabel === 'behind' ? 'status-behind' : 'status-critical';
+  readinessLabel === 'behind' ? 'status-behind' :
+  readinessLabel === 'getting_started' ? 'status-getting-started' : 'status-critical';
 
 const readinessText =
   readinessLabel === 'on_track' ? 'On Track' :
-  readinessLabel === 'behind' ? 'Behind' : 'Critical';
+  readinessLabel === 'behind' ? 'Behind' :
+  readinessLabel === 'getting_started' ? 'Getting Started' : 'Critical';
 ---
 
 <div class="rings-wrapper" class:list={{ 'rings-milestone': readinessScore >= 80 }}>
@@ -156,6 +158,7 @@ const readinessText =
   .status-on-track { fill: #4ade80; }
   .status-behind { fill: #fbbf24; }
   .status-critical { fill: #f87171; }
+  .status-getting-started { fill: #94a3b8; }
 
   /* Milestone glow — rings wrapper pulses when readiness >= 80% */
   .rings-milestone {

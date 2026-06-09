@@ -68,9 +68,16 @@ const CLASS_LEVELS = [
 
           <select id="onboarding-classlevel" class="ds-input">
             <option value="">Select your class level</option>
-            {CLASS_LEVELS.map(cl => (
-              <option value={cl.value} selected={existingProfile?.classLevel === cl.value}>{cl.label}</option>
-            ))}
+            {CLASS_LEVELS.map(cl => {
+              const isDisabled = cl.value === 'class_9' || cl.value === 'class_10';
+              return (
+                <option value={cl.value} selected={existingProfile?.classLevel === cl.value}
+                  disabled={isDisabled}
+                  style={isDisabled ? 'opacity:0.5;' : ''}>
+                  {cl.label}{isDisabled ? ' (Coming Soon)' : ''}
+                </option>
+              );
+            })}
           </select>
 
           <label class="ds-label-form" style="margin-bottom:0;">Your stream</label>
@@ -204,6 +211,9 @@ const CLASS_LEVELS = [
   window.__EXAM_SUBJECTS = {
     {EXAM_DEFINITIONS.map(e => `${JSON.stringify(e.key)}: ${JSON.stringify(e.subjects)}`).join(',\n    ')}
   };
+  window.__STREAM_SUBJECTS = {
+    {Object.entries(STREAMS).map(([k, s]) => `${JSON.stringify(k)}: ${JSON.stringify(s.subjects)}`).join(',\n    ')}
+  };
   window.__PRE_FILL = {
     selectedExams: {JSON.stringify(existingProfile?.selectedExams || [])},
     stream: {JSON.stringify(existingProfile?.stream || '')},
@@ -226,7 +236,7 @@ const CLASS_LEVELS = [
   const steps = [0, 1, 2, 3, 4];
   let currentStep = 0;
 
-  const indicators = document.querySelectorAll('.step');
+  const indicators = document.querySelectorAll('.ds-step');
   const stepContents = document.querySelectorAll('.step-content');
   const prevBtn = document.getElementById('prev-btn');
   const nextBtn = document.getElementById('next-btn');
@@ -411,9 +421,16 @@ const CLASS_LEVELS = [
     }
 
     if (currentStep === 1) {
+      const stream = document.getElementById('onboarding-stream').value;
       const selectedExams = Array.from(document.querySelectorAll('#exam-grid .exam-card.selected')).map(c => c.dataset.exam);
       const EXAMS = window.__EXAM_SUBJECTS || {};
+      const STREAMS = window.__STREAM_SUBJECTS || {};
       const subjects = new Set();
+      // Add stream subjects as base set
+      if (stream && STREAMS[stream]) {
+        STREAMS[stream].forEach(s => subjects.add(s));
+      }
+      // Add exam-specific subjects
       selectedExams.forEach(key => {
         if (EXAMS[key]) EXAMS[key].forEach(s => subjects.add(s));
       });

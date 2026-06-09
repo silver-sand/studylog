@@ -9,7 +9,7 @@ const { examType } = Astro.props;
 <div class="action-card" id="daily-action-card">
   <div class="card-header">
     <div class="card-title-row">
-      <span class="card-icon">🎯</span>
+      <span class="card-icon material-symbols-outlined" style="font-size:1.1rem;color:var(--ds-accent-400)">checklist</span>
       <h3 class="card-title">Today's Priority</h3>
     </div>
     <span class="card-date" id="action-date"></span>
@@ -68,14 +68,14 @@ const { examType } = Astro.props;
         const reason = ch.status === 'not_started'
           ? 'Not started yet'
           : days !== null ? `Last revised ${days}d ago` : 'Needs revision';
-        actions.push({ ...ch, priority: 'critical', reason, icon: '🔴' });
+        actions.push({ ...ch, priority: 'critical', reason });
       }
 
       // 2. Warning: chapters with health 20-50
       for (const ch of weakChapters.filter(c => c.health >= 20 && c.health < 50).slice(0, 3)) {
         const days = daysAgo(ch.lastRevisedAt);
         const reason = days !== null ? `Last revised ${days}d ago` : 'Could use a review';
-        actions.push({ ...ch, priority: 'warning', reason, icon: '🟡' });
+        actions.push({ ...ch, priority: 'warning', reason,  });
       }
 
       // 3. If not enough weak chapters, suggest not_started ones
@@ -85,7 +85,7 @@ const { examType } = Astro.props;
           .slice(0, 3 - actions.length);
         for (const ch of notStarted) {
           if (!actions.find(a => a.id === ch.id)) {
-            actions.push({ ...ch, priority: 'info', reason: 'Not started', icon: '⚪', health: 0 });
+            actions.push({ ...ch, priority: 'info', reason: 'Not started', health: 0 });
           }
         }
       }
@@ -94,7 +94,7 @@ const { examType } = Astro.props;
       const top = actions.slice(0, 5);
 
       if (top.length === 0) {
-        body.innerHTML = `<p class="all-good">✅ Everything looks good! No urgent actions needed.</p>`;
+        body.innerHTML = `<p class="all-good">Everything looks good! No urgent actions needed.</p>`;
         return;
       }
 
@@ -110,7 +110,7 @@ const { examType } = Astro.props;
               <span class="action-name">${item.chapter}</span>
               <span class="action-reason">${item.reason}</span>
             </div>
-            <span class="action-badge" style="background:${color}15;color:${color}">${item.icon}</span>
+            <span class="action-badge" style="background:${color}15;color:${color}">${item.priority === "critical" ? "!" : "-"}</span>
           </div>
         `;
       }).join('');

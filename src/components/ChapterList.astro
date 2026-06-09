@@ -41,6 +41,7 @@ const ringClass = chapter.status === 'studied' ? 'ring-1 ring-indigo-500/20 bord
   class="chapter-item flex items-center gap-3 p-3 bg-[#050b18] rounded-xl border transition-all group hover:border-indigo-500/30 {ringClass}"
   data-chapter-id={chapter.id}
   data-status={chapter.status}
+  data-class-level={chapter.classLevel || ''}
 >
   <span
     class="chapter-icon material-symbols-outlined shrink-0"

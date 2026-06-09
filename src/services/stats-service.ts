@@ -53,6 +53,7 @@ export function getDashboardStats() {
     testingPlaceholderPercent * 0.10
   );
   const readinessLabel =
+    readinessScore <= 0 ? 'getting_started' :
     readinessScore >= 70 ? 'on_track' :
     readinessScore >= 40 ? 'behind' : 'critical';
 

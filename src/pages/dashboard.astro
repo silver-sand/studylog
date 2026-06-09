@@ -3,6 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import GettingStarted from '../components/GettingStarted.astro';
 import DashboardLeftColumn from '../components/DashboardLeftColumn.astro';
 import DashboardRightColumn from '../components/DashboardRightColumn.astro';
+import CalendarWidget from '../components/CalendarWidget.astro';
 import { getDashboardStats, getMonthlyEntryDates } from '../services/stats-service';
 import { getDb } from '../db';
 import { scopeDbToUser } from '../services/user-scope';
@@ -14,7 +15,8 @@ const stats = getDashboardStats();
 const settings = db.getSettings();
 const selectedExams = settings.selectedExams?.length ? settings.selectedExams : ['JEE'];
 const examKey = getSyllabusKeyForExam(selectedExams[0]);
-const user = db.getCurrentUser();
+const userId = db.getCurrentUser();
+const user = userId ? db.getUserById(userId) : null;
 const hasEntries = stats.totalHoursThisWeek > 0 || stats.entriesThisMonth > 0;
 
 // Progress for syllabus bar
@@ -23,6 +25,12 @@ const hasAnyProgress = syllProgress.some(p => p.weightedPercent > 0);
 const syllabusPercent = hasAnyProgress
   ? Math.round(syllProgress.reduce((s, p) => s + p.weightedPercent, 0) / syllProgress.length)
   : 0;
+
+// Calendar data
+const now = new Date();
+const thisYear = now.getFullYear();
+const thisMonth = now.getMonth() + 1;
+const entryDates = getMonthlyEntryDates(thisYear, thisMonth);
 ---
 
 <BaseLayout title="Dashboard">
@@ -46,7 +54,11 @@ const syllabusPercent = hasAnyProgress
         upcomingExams={stats.upcomingExams}
         syllabusPercent={syllabusPercent}
         user={user}
-      />
+      >
+        <Fragment slot="calendar">
+          <CalendarWidget entryDates={entryDates} year={thisYear} month={thisMonth} />
+        </Fragment>
+      </DashboardLeftColumn>
     </section>
 
     <!-- Right Column (2/3) — Base bg color, scrollable, flex layout -->

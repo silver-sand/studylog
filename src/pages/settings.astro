@@ -17,7 +17,8 @@ const userStream = user?.stream || 'science';
 const defaultExams = settings.selectedExams?.length
   ? settings.selectedExams
   : EXAM_DEFINITIONS.filter(e => e.groups.includes(userStream)).map(e => e.key).slice(0, 1);
-const activeSubjects = getSubjectsForExamKeys(defaultExams);
+const allSubjects = getSubjectsForExamKeys(defaultExams);
+const activeSubjects = settings.subjects?.length ? settings.subjects : allSubjects;
 const dailyAvg = settings.studyDaysPerWeek > 0
   ? Math.round((settings.targetHoursPerWeek / settings.studyDaysPerWeek) * 10) / 10
   : 7;
@@ -142,17 +143,27 @@ if (settings.examDate) {
               </div>
             </div>
 
-            <!-- Active Subjects -->
+            <!-- Active Subjects (toggleable) -->
             <div>
               <label class="block text-sm font-medium text-[#94a3b8] mb-2">Active Subjects</label>
-              <p class="text-xs text-[#94a3b8] mb-2">Subjects are auto-selected based on your exams.</p>
-              <div class="flex flex-wrap gap-2">
-                {activeSubjects.map(subject => (
-                  <span class="px-3 py-1.5 rounded-full border border-indigo-500 bg-indigo-500/10 text-indigo-400 text-sm font-medium">
-                    {subject}
-                  </span>
-                ))}
-                {activeSubjects.length === 0 && <p class="text-xs text-[#94a3b8]">Select at least one exam to see subjects.</p>}
+              <p class="text-xs text-[#94a3b8] mb-2">Toggle subjects to include in your syllabus tracking. (PCM/PCB/PCMB/Full)</p>
+              <div class="flex flex-wrap gap-2" id="active-subjects-grid">
+                {allSubjects.map(subject => {
+                  const isActive = activeSubjects.includes(subject);
+                  return (
+                    <button
+                      class:list={{
+                        'px-3 py-1.5 rounded-full border text-sm font-medium transition-all': true,
+                        'border-indigo-500 bg-indigo-500/10 text-indigo-400': isActive,
+                        'border-slate-700 text-[#94a3b8] hover:border-slate-500 hover:text-white': !isActive,
+                      }}
+                      data-subject={subject}
+                    >
+                      {subject}
+                    </button>
+                  );
+                })}
+                {allSubjects.length === 0 && <p class="text-xs text-[#94a3b8]">Select at least one exam to see subjects.</p>}
               </div>
             </div>
 
@@ -442,6 +453,28 @@ if (settings.examDate) {
     });
   });
 
+  // ── Subject toggle (PCM/PCB/PCMB selection) ──
+  document.querySelectorAll('#active-subjects-grid button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.classList.toggle('border-indigo-500');
+      btn.classList.toggle('bg-indigo-500/10');
+      btn.classList.toggle('text-indigo-400');
+      btn.classList.toggle('border-slate-700');
+      btn.classList.toggle('text-[#94a3b8]');
+    });
+  });
+
+  // ── Subject toggle (PCM/PCB/PCMB selection) ──
+  document.querySelectorAll('#active-subjects-grid button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.classList.toggle('border-indigo-500');
+      btn.classList.toggle('bg-indigo-500/10');
+      btn.classList.toggle('text-indigo-400');
+      btn.classList.toggle('border-slate-700');
+      btn.classList.toggle('text-[#94a3b8]');
+    });
+  });
+
   // ── Logout ──
   document.getElementById('account-logout-btn')?.addEventListener('click', async () => {
     try {
@@ -497,6 +530,11 @@ if (settings.examDate) {
     const streamEl = document.querySelector('#stream-grid button.border-indigo-500');
     const stream = (streamEl as HTMLElement)?.dataset?.stream || '';
 
+    // Collect active subjects (toggled on)
+    const activeSubjects = Array.from(document.querySelectorAll('#active-subjects-grid button.border-indigo-500'))
+      .map(b => (b as HTMLElement).dataset.subject)
+      .filter(Boolean);
+
     // Collect numeric values
     const targetHoursPerWeek = parseInt((document.getElementById('target-hours') as HTMLInputElement)?.value) || 35;
     const studyDaysPerWeek = parseInt((document.getElementById('study-days') as HTMLInputElement)?.value) || 5;
@@ -514,6 +552,7 @@ if (settings.examDate) {
           targetHoursPerWeek,
           studyDaysPerWeek,
           examDate: examDate || undefined,
+          subjects: activeSubjects.length > 0 ? activeSubjects : undefined,
         }),
       });
       if (!res.ok) {

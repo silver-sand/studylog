@@ -44,12 +44,13 @@ for (const exam of userExamDefs) {
   }
 }
 
-// Build ExamData per syllabus group — filtered to only the user's subjects
+// Build ExamData per syllabus group — filtered to only the user's active subjects
 const exams: ExamData[] = [...syllabusGroups.entries()].map(([syllabusKey, group]) => {
-  const subjects = [...group.subjects];
-  db.seedSyllabusData(syllabusKey, subjects);
-  const progress = db.getSyllabusProgress(syllabusKey, subjects);
-  const chapters = db.getSyllabus(syllabusKey).filter(ch => subjects.includes(ch.subject));
+  const allSubjects = [...group.subjects];
+  const activeSubjects = settings.subjects?.length ? settings.subjects : allSubjects;
+  db.seedSyllabusData(syllabusKey, allSubjects); // seed all to keep progress data
+  const progress = db.getSyllabusProgress(syllabusKey, activeSubjects);
+  const chapters = db.getSyllabus(syllabusKey).filter(ch => activeSubjects.includes(ch.subject));
   const totalChapters = progress.reduce((s, p) => s + p.total, 0);
   const weightedSum = progress.reduce((s, p) => s + p.weightedPercent * p.total, 0);
   const overallPercent = totalChapters > 0 ? Math.round(weightedSum / totalChapters) : 0;
@@ -119,7 +120,7 @@ const subjectIcon: Record<string, string> = {
           const circumference = 440;
           const offset = circumference - (exam.overallPercent / 100) * circumference;
           return (
-          <div class="space-y-8" key={exam.key}>
+          <div class="space-y-8" key={exam.key} data-exam-key={exam.key}>
             <!-- Overall Summary Card -->
             <section class="relative overflow-hidden bg-[#0d1321] rounded-2xl p-6 md:p-8 border border-slate-800 shadow-2xl">
               <div class="relative z-10 grid md:grid-cols-2 gap-8 items-center">
@@ -152,6 +153,14 @@ const subjectIcon: Record<string, string> = {
               </div>
               <div class="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-indigo-600/10 blur-[100px] rounded-full"></div>
             </section>
+
+            <!-- Class Level Filter (for CBSE 11th/12th separation) -->
+            <div class="flex items-center gap-3" data-class-filter>
+              <span class="text-xs font-bold uppercase tracking-widest text-slate-500">Class:</span>
+              <button class="px-3 py-1.5 rounded-lg text-xs font-medium border border-indigo-500 bg-indigo-500/10 text-indigo-400 transition-all" data-level="all">All</button>
+              <button class="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-700 text-[#94a3b8] hover:border-slate-500 transition-all" data-level="11">Class 11</button>
+              <button class="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-700 text-[#94a3b8] hover:border-slate-500 transition-all" data-level="12">Class 12</button>
+            </div>
 
             <!-- Subjects Grid -->
             <div class="space-y-6">
@@ -211,6 +220,81 @@ const subjectIcon: Record<string, string> = {
 </BaseLayout>
 
 <script>
+  // ── STATUS WEIGHTS (mirrors src/types/review.ts) ──
+  const STATUS_WEIGHTS = {
+    not_started: 0,
+    studied: 0.2,
+    revision_1: 0.4,
+    revision_2: 0.6,
+    revision_3: 0.8,
+    mastered: 1,
+  };
+
+  // ── Recalculate a single subject's progress bar ──
+  function recalculateSubjectProgress(section) {
+    const items = section.querySelectorAll('.chapter-item');
+    const total = items.length;
+    let sumWeight = 0;
+    let masteredCount = 0;
+
+    items.forEach(item => {
+      const status = item.dataset.status || 'not_started';
+      sumWeight += STATUS_WEIGHTS[status] || 0;
+      if (status === 'mastered') masteredCount++;
+    });
+
+    const weightedPercent = total > 0 ? Math.round((sumWeight / total) * 100) : 0;
+
+    // Update progress bar
+    const progressBar = section.querySelector('.progress-fill-anim');
+    const percentText = section.querySelector('.flex.justify-between .text-slate-400');
+    const completedText = section.querySelector('.text-sm.text-slate-500');
+
+    if (progressBar) progressBar.style.width = `${weightedPercent}%`;
+    if (percentText) percentText.textContent = `${weightedPercent}%`;
+    if (completedText) completedText.textContent = `${masteredCount} of ${total} Chapters Completed`;
+  }
+
+  // ── Recalculate the overall exam hero section ──
+  function recalculateOverallProgress(examContainer) {
+    const sections = examContainer.querySelectorAll('.subject-section');
+    let totalWeightedSum = 0;
+    let totalChapters = 0;
+    let totalMastered = 0;
+
+    sections.forEach(section => {
+      const items = section.querySelectorAll('.chapter-item');
+      let sumWeight = 0;
+      let mastered = 0;
+      items.forEach(item => {
+        const status = item.dataset.status || 'not_started';
+        sumWeight += STATUS_WEIGHTS[status] || 0;
+        if (status === 'mastered') mastered++;
+      });
+      totalWeightedSum += sumWeight;
+      totalChapters += items.length;
+      totalMastered += mastered;
+    });
+
+    const overallPercent = totalChapters > 0 ? Math.round((totalWeightedSum / totalChapters) * 100) : 0;
+
+    // Update hero: heading
+    const heroTitle = examContainer.querySelector('h2');
+    const heroSubtext = examContainer.querySelector('.text-slate-400.mb-6');
+    const ringCircle = examContainer.querySelector('.progress-ring-circle');
+    const ringPercentText = examContainer.querySelector('.absolute .text-4xl');
+
+    if (heroTitle) heroTitle.textContent = `You've covered ${overallPercent}% of your syllabus.`;
+    if (heroSubtext) heroSubtext.textContent = `Keep up the momentum! You've completed ${totalMastered} of ${totalChapters} chapters.`;
+    if (ringPercentText) ringPercentText.textContent = `${overallPercent}%`;
+
+    if (ringCircle) {
+      const circumference = 440; // 2 * PI * 70
+      const offset = circumference - (overallPercent / 100) * circumference;
+      ringCircle.style.strokeDashoffset = offset;
+    }
+  }
+
   // ── Subject collapse/expand ──
   document.querySelectorAll('.subject-toggle').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -288,6 +372,15 @@ const subjectIcon: Record<string, string> = {
           badge.textContent = STATUS_LABELS[nextStatus as keyof typeof STATUS_LABELS];
           badge.className = `chapter-badge text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wider ${STATUS_BG[nextStatus as keyof typeof STATUS_BG]}`;
         }
+        // Recalculate parent subject section + overall exam progress
+        const section = item.closest('.subject-section');
+        if (section) recalculateSubjectProgress(section);
+
+        const examContainer = item.closest('[data-exam-key]');
+        if (examContainer) recalculateOverallProgress(examContainer);
+
+        // Notify other components (e.g., DailyActionCard)
+        document.dispatchEvent(new CustomEvent('syllabus-updated'));
       } catch (err) {
         // Revert on error
       } finally {
@@ -314,6 +407,42 @@ const subjectIcon: Record<string, string> = {
       } else {
         section.style.display = '';
       }
+    });
+  });
+
+  // ── Class level filter ──
+  document.querySelectorAll('[data-class-filter] button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const container = btn.closest('[data-exam-key]');
+      if (!container) return;
+      const level = btn.dataset.level;
+
+      // Update button states within this exam container
+      const filterBar = container.querySelector('[data-class-filter]');
+      if (!filterBar) return;
+      filterBar.querySelectorAll('button').forEach(b => {
+        b.classList.remove('border-indigo-500', 'bg-indigo-500/10', 'text-indigo-400');
+        b.classList.add('border-slate-700', 'text-[#94a3b8]');
+      });
+      btn.classList.remove('border-slate-700', 'text-[#94a3b8]');
+      btn.classList.add('border-indigo-500', 'bg-indigo-500/10', 'text-indigo-400');
+
+      // Show/hide chapters based on class level
+      container.querySelectorAll('.chapter-item').forEach(item => {
+        const cls = item.dataset.classLevel || '';
+        if (level === 'all' || !cls || cls === level) {
+          item.style.display = '';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+
+      // Show/hide empty subject sections
+      container.querySelectorAll('.subject-section').forEach(section => {
+        const items = section.querySelectorAll('.chapter-item');
+        const visible = Array.from(items).some(item => item.style.display !== 'none');
+        section.style.display = visible ? '' : 'none';
+      });
     });
   });
 </script>
