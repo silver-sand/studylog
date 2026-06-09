@@ -9,6 +9,7 @@ export interface WeeklyReview {
   weaknesses: string[];
   recommendations: string[];
   entryIds: string[];
+  notes: string;
   createdAt: string;
 }
 
@@ -22,6 +23,7 @@ export interface CreateReviewData {
   weaknesses: string[];
   recommendations: string[];
   entryIds: string[];
+  notes?: string;
 }
 
 export interface DailyReview {

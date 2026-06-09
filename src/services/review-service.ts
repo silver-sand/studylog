@@ -54,3 +54,7 @@ export function getReviewByWeek(weekStart: string): WeeklyReview | null {
 export function listReviews(): WeeklyReview[] {
   return getDb().listReviews();
 }
+
+export function updateReviewNotes(id: string, notes: string): WeeklyReview | null {
+  return getDb().updateReviewNotes(id, notes);
+}

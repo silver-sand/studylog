@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS weekly_reviews (
   weaknesses TEXT NOT NULL DEFAULT '[]',
   recommendations TEXT NOT NULL DEFAULT '[]',
   entry_ids TEXT NOT NULL DEFAULT '[]',
+  notes TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

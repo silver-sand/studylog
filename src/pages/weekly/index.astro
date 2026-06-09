@@ -8,9 +8,10 @@ import { scopeDbToUser } from '../../services/user-scope';
 scopeDbToUser(Astro.request);
 const db = getDb();
 const reviews = db.listReviews();
+const weekParam = Astro.url.searchParams.get('week');
 const range = {
-  weekStart: getMonday(),
-  weekEnd: getSunday(),
+  weekStart: weekParam ? getMonday(new Date(weekParam)) : getMonday(),
+  weekEnd: weekParam ? getSunday(new Date(weekParam)) : getSunday(),
 };
 const currentReview = db.getReviewByWeek(range.weekStart);
 
@@ -56,6 +57,24 @@ prevWeekEnd.setDate(prevWeekEnd.getDate() + 6);
 const prevWeekEntries = entries.filter(e => e.date >= prevWeekStart.toISOString().split('T')[0] && e.date <= prevWeekEnd.toISOString().split('T')[0]);
 const prevTotal = prevWeekEntries.reduce((s, e) => s + (e.hoursStudied || 0), 0);
 const hourChange = prevTotal > 0 ? Math.round(((weekTotal - prevTotal) / prevTotal) * 100) : 0;
+
+// Week-over-week consistency — days with ≥1 session vs study days
+const settings = db.getSettings();
+const studyDaysGoal = settings.studyDaysPerWeek || 5;
+const prevDays = new Set(prevWeekEntries.map(e => e.date)).size;
+const currDays = new Set(thisWeekEntries.map(e => e.date)).size;
+const prevConsistency = Math.round((prevDays / studyDaysGoal) * 100);
+const currConsistency = Math.round((currDays / studyDaysGoal) * 100);
+const consistencyChange = prevConsistency > 0 ? currConsistency - prevConsistency : 0;
+
+// Week-over-week focus change
+const prevFocus = prevWeekEntries.length > 0
+  ? Math.round(prevWeekEntries.reduce((s, e) => s + (e.focusRating || 0), 0) / prevWeekEntries.length * 10) / 10
+  : 0;
+const currFocus = thisWeekEntries.length > 0
+  ? Math.round(thisWeekEntries.reduce((s, e) => s + (e.focusRating || 0), 0) / thisWeekEntries.length * 10) / 10
+  : 0;
+const focusChange = prevFocus > 0 ? Math.round(((currFocus - prevFocus) / prevFocus) * 100) : 0;
 ---
 
 <BaseLayout title="Weekly Review">
@@ -68,14 +87,14 @@ const hourChange = prevTotal > 0 ? Math.round(((weekTotal - prevTotal) / prevTot
           <p class="text-neutral-500 text-sm">Analyze your progress, spot trends, and plan for the week ahead.</p>
         </div>
         <div class="flex items-center gap-4 bg-[#141416] px-4 py-2 rounded-xl border border-white/5">
-          <button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 text-neutral-400 transition-colors">
+          <button id="week-prev-btn" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 text-neutral-400 transition-colors">
             <span class="material-symbols-outlined text-sm">chevron_left</span>
           </button>
           <div class="flex items-center gap-2">
             <span class="material-symbols-outlined text-indigo-400 text-sm">calendar_today</span>
             <span class="text-sm font-semibold text-white tracking-wide">{formatDisplayDate(range.weekStart)} — {formatDisplayDate(range.weekEnd)}</span>
           </div>
-          <button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 text-neutral-400 transition-colors">
+          <button id="week-next-btn" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 text-neutral-400 transition-colors">
             <span class="material-symbols-outlined text-sm">chevron_right</span>
           </button>
         </div>
@@ -214,16 +233,16 @@ const hourChange = prevTotal > 0 ? Math.round(((weekTotal - prevTotal) / prevTot
               </div>
               <div class="flex justify-between items-center pb-4 border-b border-white/5">
                 <span class="text-sm text-neutral-400">Consistency</span>
-                <div class="flex items-center gap-1 text-emerald-400">
-                  <span class="material-symbols-outlined text-sm">trending_up</span>
-                  <span class="text-sm font-bold">+8%</span>
+                <div class="flex items-center gap-1" class:list={{ 'text-emerald-400': consistencyChange >= 0, 'text-red-400': consistencyChange < 0 }}>
+                  <span class="material-symbols-outlined text-sm">{consistencyChange >= 0 ? 'trending_up' : 'trending_down'}</span>
+                  <span class="text-sm font-bold">{consistencyChange >= 0 ? '+' : ''}{consistencyChange}%</span>
                 </div>
               </div>
               <div class="flex justify-between items-center">
                 <span class="text-sm text-neutral-400">Avg Focus</span>
-                <div class="flex items-center gap-1 text-emerald-400">
-                  <span class="material-symbols-outlined text-sm">trending_up</span>
-                  <span class="text-sm font-bold">+3%</span>
+                <div class="flex items-center gap-1" class:list={{ 'text-emerald-400': focusChange >= 0, 'text-red-400': focusChange < 0 }}>
+                  <span class="material-symbols-outlined text-sm">{focusChange >= 0 ? 'trending_up' : 'trending_down'}</span>
+                  <span class="text-sm font-bold">{focusChange >= 0 ? '+' : ''}{focusChange}%</span>
                 </div>
               </div>
             </div>
@@ -286,7 +305,7 @@ const hourChange = prevTotal > 0 ? Math.round(((weekTotal - prevTotal) / prevTot
         </div>
         <div class="space-y-6">
           <p class="text-sm text-neutral-300 leading-relaxed">
-            {currentReview?.summary || 'No AI summary available yet. Generate a review to see insights about your study patterns.'}
+            {currentReview?.content || 'No AI review content available yet. Generate a review to see insights about your study patterns.'}
           </p>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="space-y-3">
@@ -360,7 +379,7 @@ const hourChange = prevTotal > 0 ? Math.round(((weekTotal - prevTotal) / prevTot
   </main>
 </BaseLayout>
 
-<script>
+<script define:vars={{ weekStart: range.weekStart, reviewId: currentReview?.id || '' }}>
   // ── Progress bar entrance animation ──
   window.addEventListener('load', () => {
     document.querySelectorAll('.progress-bar-anim').forEach(bar => {
@@ -371,6 +390,23 @@ const hourChange = prevTotal > 0 ? Math.round(((weekTotal - prevTotal) / prevTot
         bar.style.width = finalWidth;
       }, 100);
     });
+  });
+
+  // ── Week navigation ──
+  function getWeekStartOffset(offsetWeeks) {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + offsetWeeks * 7);
+    return d.toISOString().split('T')[0];
+  }
+
+  document.getElementById('week-prev-btn')?.addEventListener('click', () => {
+    const prev = getWeekStartOffset(-1);
+    window.location.href = `/weekly?week=${prev}`;
+  });
+
+  document.getElementById('week-next-btn')?.addEventListener('click', () => {
+    const next = getWeekStartOffset(1);
+    window.location.href = `/weekly?week=${next}`;
   });
 
   // ── Generate / Regenerate review ──
@@ -387,10 +423,9 @@ const hourChange = prevTotal > 0 ? Math.round(((weekTotal - prevTotal) / prevTot
       const res = await fetch('/api/reviews/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: regenerate ? JSON.stringify({ weekStart: '{{range.weekStart}}' }) : '{}',
+        body: regenerate ? JSON.stringify({ weekStart: weekStart }) : '{}',
       });
       if (!res.ok) throw new Error('Failed');
-      const review = await res.json();
       try { localStorage.setItem('sl-checklist-review', '1'); } catch(e) {}
       window.location.reload();
     } catch (err) {
@@ -401,6 +436,32 @@ const hourChange = prevTotal > 0 ? Math.round(((weekTotal - prevTotal) / prevTot
 
   generateBtn?.addEventListener('click', () => handleGenerate(false));
   regenerateBtn?.addEventListener('click', () => handleGenerate(true));
+
+  // ── Save Reflection notes ──
+  document.getElementById('save-reflection-btn')?.addEventListener('click', async () => {
+    if (!reviewId) {
+      alert('No review available yet — generate one first.');
+      return;
+    }
+    const btn = document.getElementById('save-reflection-btn');
+    const notes = document.getElementById('weekly-notes')?.value || '';
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = 'Saving...';
+    try {
+      const res = await fetch('/api/reviews/notes', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: reviewId, notes }),
+      });
+      if (!res.ok) throw new Error('Failed');
+      btn.innerHTML = 'Saved!';
+      setTimeout(() => { btn.innerHTML = original; btn.disabled = false; }, 2000);
+    } catch (err) {
+      btn.innerHTML = 'Failed — try again';
+      setTimeout(() => { btn.innerHTML = original; btn.disabled = false; }, 2000);
+    }
+  });
 </script>
 
 <style>

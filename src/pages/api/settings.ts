@@ -22,7 +22,7 @@ export const PUT: APIRoute = async ({ request }) => {
   scopeDbToUser(request);
   try {
     const body = await request.json();
-    const { targetHoursPerWeek, studyDaysPerWeek, selectedExams, subjects, examDate, theme, stream } = body;
+    const { targetHoursPerWeek, studyDaysPerWeek, selectedExams, subjects, examDate, theme, stream, name } = body;
 
     if (targetHoursPerWeek !== undefined) {
       const h = Number(targetHoursPerWeek);
@@ -91,6 +91,15 @@ export const PUT: APIRoute = async ({ request }) => {
       const currentUserId = db.getCurrentUser();
       if (currentUserId) {
         db.updateUser(currentUserId, { stream });
+      }
+    }
+
+    // Persist name change to user profile
+    if (name !== undefined && typeof name === 'string' && name.trim()) {
+      const db = getDb();
+      const currentUserId = db.getCurrentUser();
+      if (currentUserId) {
+        db.updateUser(currentUserId, { name: name.trim() });
       }
     }
 

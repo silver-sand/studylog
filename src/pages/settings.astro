@@ -88,7 +88,7 @@ if (settings.examDate) {
               <input class="w-full bg-[#050b18] border border-slate-700 rounded-lg px-4 py-2 text-[#f1f5f9] focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" type="email" value={user?.email || ''} />
             </div>
             <div class="pt-2">
-              <button class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors shadow-lg shadow-indigo-500/20">Save Profile</button>
+              <button id="save-profile-btn" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors shadow-lg shadow-indigo-500/20">Save Profile</button>
             </div>
           </div>
         </section>
@@ -385,10 +385,86 @@ if (settings.examDate) {
   // ── Logout ──
   document.getElementById('account-logout-btn')?.addEventListener('click', async () => {
     try {
-      await fetch('/api/session', { method: 'DELETE' });
+      await fetch('/api/auth/logout', { method: 'POST' });
       window.location.href = '/';
     } catch (e) {
       window.location.href = '/';
+    }
+  });
+
+  // ── Save Profile ──
+  document.getElementById('save-profile-btn')?.addEventListener('click', async () => {
+    const btn = document.getElementById('save-profile-btn');
+    if (!btn) return;
+    const nameInput = document.querySelector('#section-profile input[type="text"]') as HTMLInputElement;
+    const emailInput = document.querySelector('#section-profile input[type="email"]') as HTMLInputElement;
+    const original = btn.textContent;
+    btn.textContent = 'Saving...';
+    btn.disabled = true;
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: nameInput?.value?.trim() || undefined,
+          email: emailInput?.value?.trim() || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Failed' }));
+        throw new Error(err.error || 'Failed to save');
+      }
+      btn.textContent = '✓ Saved';
+      setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 2000);
+    } catch (err) {
+      btn.textContent = 'Failed — try again';
+      setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 2000);
+    }
+  });
+
+  // ── Save Preferences ──
+  document.getElementById('save-preferences-btn')?.addEventListener('click', async () => {
+    const btn = document.getElementById('save-preferences-btn');
+    if (!btn) return;
+    const original = btn.textContent;
+
+    // Collect selected exams
+    const selectedExams = Array.from(document.querySelectorAll('#exam-grid button[data-exam].border-indigo-500'))
+      .map(b => (b as HTMLElement).dataset.exam)
+      .filter(Boolean);
+
+    // Collect stream
+    const streamEl = document.querySelector('#stream-grid button.border-indigo-500');
+    const stream = (streamEl as HTMLElement)?.dataset?.stream || '';
+
+    // Collect numeric values
+    const targetHoursPerWeek = parseInt((document.getElementById('target-hours') as HTMLInputElement)?.value) || 35;
+    const studyDaysPerWeek = parseInt((document.getElementById('study-days') as HTMLInputElement)?.value) || 5;
+    const examDate = (document.getElementById('exam-date') as HTMLInputElement)?.value || null;
+
+    btn.textContent = 'Saving...';
+    btn.disabled = true;
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          selectedExams: selectedExams.length > 0 ? selectedExams : undefined,
+          stream: stream || undefined,
+          targetHoursPerWeek,
+          studyDaysPerWeek,
+          examDate: examDate || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Failed' }));
+        throw new Error(err.error || 'Failed to save');
+      }
+      btn.textContent = '✓ Saved';
+      setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 2000);
+    } catch (err) {
+      btn.textContent = 'Failed — try again';
+      setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 2000);
     }
   });
 </script>

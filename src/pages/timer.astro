@@ -105,127 +105,172 @@ const streak = db.getStreak();
 </BaseLayout>
 
 <script>
-  // ── Recent sessions (localStorage) ──
-  (function() {
-    const STORAGE_KEY = 'timer_recent_sessions';
-    const list = document.getElementById('sessions-list');
-    const emptyPlaceholder = document.getElementById('sessions-empty');
-    const clearBtn = document.getElementById('clear-sessions-btn');
+  // ═══════════════════════ TIMER ENGINE ═══════════════════════
 
-    function loadSessions() {
-      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
+  const STORAGE_KEY = 'timer_recent_sessions';
+  const CIRCUMFERENCE = 2 * Math.PI * 46; // ≈ 289.026
+
+  // DOM refs
+  const displayEl = document.getElementById('timer-display-main');
+  const svgRing = document.getElementById('timer-svg-ring');
+  const sessionLabel = document.getElementById('timer-session-label');
+  const playBtn = document.getElementById('timer-play');
+  const pauseBtn = document.getElementById('timer-pause');
+  const resetBtn = document.getElementById('timer-reset');
+  const sessionDetails = document.getElementById('timer-session-details');
+  const list = document.getElementById('sessions-list');
+  const emptyPlaceholder = document.getElementById('sessions-empty');
+  const clearBtn = document.getElementById('clear-sessions-btn');
+  const manualLogBtn = document.getElementById('log-manual-session');
+  const todayFocusEl = document.getElementById('today-focus');
+  const sessionCountEl = document.getElementById('session-count');
+
+  // Mode config
+  const MODES = {
+    focus: { label: 'Focus Session', duration: 25 * 60, defaultDisplay: '25:00' },
+    short: { label: 'Short Break', duration: 5 * 60, defaultDisplay: '5:00' },
+    long: { label: 'Long Break', duration: 15 * 60, defaultDisplay: '15:00' },
+  };
+
+  let currentMode = 'focus';
+  let totalSeconds = MODES.focus.duration;
+  let remainingSeconds = MODES.focus.duration;
+  let timerState = 'idle'; // idle | running | paused
+  let intervalId = null;
+  let lastSubject = '';
+  let lastTopic = '';
+
+  // ── Timer core ──
+
+  function formatTime(s) {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+  }
+
+  function formatDuration(s) {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m}m` + (sec > 0 ? ` ${sec}s` : '');
+  }
+
+  function updateDisplay() {
+    displayEl.textContent = formatTime(remainingSeconds);
+    const offset = CIRCUMFERENCE * (1 - remainingSeconds / totalSeconds);
+    svgRing.style.strokeDashoffset = offset;
+  }
+
+  function setMode(modeKey) {
+    if (timerState === 'running') stopTimer();
+    currentMode = modeKey;
+    totalSeconds = MODES[modeKey].duration;
+    remainingSeconds = totalSeconds;
+    timerState = 'idle';
+    sessionLabel.textContent = MODES[modeKey].label;
+    updateDisplay();
+    svgRing.style.transition = 'none';
+    svgRing.style.strokeDashoffset = '0';
+    setTimeout(() => svgRing.style.transition = 'stroke-dashoffset 0.35s', 10);
+  }
+
+  function tick() {
+    remainingSeconds--;
+    updateDisplay();
+    if (remainingSeconds <= 0) {
+      completeTimer();
     }
+  }
 
-    function saveSessions(sessions) {
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions.slice(0, 10))); } catch(e) {}
+  function startTimer() {
+    if (timerState === 'idle') {
+      // Show session details panel on first start
+      sessionDetails?.classList.remove('hidden');
     }
+    if (timerState === 'running') return;
+    timerState = 'running';
+    playBtn.querySelector('span').textContent = 'pause';
+    intervalId = setInterval(tick, 1000);
+  }
 
-    function formatDuration(seconds) {
-      const m = Math.floor(seconds / 60);
-      const s = seconds % 60;
-      return `${m}m` + (s > 0 ? ` ${s}s` : '');
-    }
+  function stopTimer() {
+    if (intervalId) clearInterval(intervalId);
+    intervalId = null;
+    timerState = 'paused';
+    playBtn.querySelector('span').textContent = 'play_arrow';
+  }
 
-    function renderSessions() {
-      const sessions = loadSessions();
-      list.innerHTML = '';
-      if (sessions.length === 0) {
-        list.appendChild(emptyPlaceholder);
-        return;
+  function resetTimer() {
+    if (intervalId) clearInterval(intervalId);
+    intervalId = null;
+    timerState = 'idle';
+    remainingSeconds = totalSeconds;
+    updateDisplay();
+    svgRing.style.transition = 'none';
+    svgRing.style.strokeDashoffset = '0';
+    setTimeout(() => svgRing.style.transition = 'stroke-dashoffset 0.35s', 10);
+    playBtn.querySelector('span').textContent = 'play_arrow';
+  }
+
+  function completeTimer() {
+    if (intervalId) clearInterval(intervalId);
+    intervalId = null;
+
+    // Vibration + notification
+    try { navigator.vibrate?.(200); } catch(e) {}
+    try {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('StudyLog', { body: `${MODES[currentMode].label} complete!` });
       }
-      sessions.forEach(s => {
-        const card = document.createElement('div');
-        card.className = 'bg-[#050b18] border border-white/5 rounded-xl p-4 hover:border-[#6366f1]/30 transition-colors group cursor-default';
+    } catch(e) {}
 
-        const topRow = document.createElement('div');
-        topRow.className = 'flex justify-between items-start mb-2';
+    // Save session if we have subject info from StudyTimer
+    const subject = lastSubject || 'Study';
+    const topic = lastTopic || '';
+    const duration = totalSeconds;
 
-        const subjectInfo = document.createElement('div');
-        subjectInfo.className = 'flex items-center gap-2';
-        const dot = document.createElement('div');
-        dot.className = 'w-2 h-2 rounded-full';
-        dot.style.background = s.color || '#6366f1';
-        subjectInfo.appendChild(dot);
-        const name = document.createElement('span');
-        name.className = 'font-medium text-[#f8fafc] text-sm';
-        name.textContent = s.subject || 'Study';
-        subjectInfo.appendChild(name);
-        topRow.appendChild(subjectInfo);
+    dispatchEvent(new CustomEvent('timer-session-saved', {
+      detail: { subject, topic, duration }
+    }));
 
-        const timeLabel = document.createElement('span');
-        timeLabel.className = 'text-xs text-slate-400 font-label';
-        timeLabel.textContent = s.time || '';
-        topRow.appendChild(timeLabel);
-        card.appendChild(topRow);
+    // Reset after completion
+    timerState = 'idle';
+    remainingSeconds = totalSeconds;
+    updateDisplay();
+    svgRing.style.transition = 'none';
+    svgRing.style.strokeDashoffset = '0';
+    setTimeout(() => svgRing.style.transition = 'stroke-dashoffset 0.35s', 10);
+    playBtn.querySelector('span').textContent = 'play_arrow';
 
-        if (s.topic) {
-          const topicEl = document.createElement('div');
-          topicEl.className = 'text-sm text-slate-400 mb-3';
-          topicEl.textContent = s.topic;
-          card.appendChild(topicEl);
-        }
+    // Flash the display
+    displayEl.style.color = '#22c55e';
+    setTimeout(() => displayEl.style.color = '', 1500);
+  }
 
-        const bottomRow = document.createElement('div');
-        bottomRow.className = 'flex justify-between items-end';
-        const tag = document.createElement('span');
-        tag.className = 'text-xs font-label px-2 py-1 bg-[#0d1321] rounded-md text-[#f8fafc]';
-        tag.textContent = s.tag || 'Focus';
-        bottomRow.appendChild(tag);
-        const duration = document.createElement('span');
-        duration.className = 'font-headline font-semibold text-[#6366f1]';
-        duration.textContent = s.duration;
-        bottomRow.appendChild(duration);
-        card.appendChild(bottomRow);
+  // ── Listen for StudyTimer start event ──
+  document.addEventListener('timer-start-session', (e) => {
+    lastSubject = e.detail.subject || '';
+    lastTopic = e.detail.topic || '';
+    // Start the timer
+    setMode(currentMode);
+    startTimer();
+  });
 
-        list.appendChild(card);
-      });
+  // ── Button handlers ──
+  playBtn?.addEventListener('click', () => {
+    if (timerState === 'running') {
+      stopTimer();
+    } else {
+      startTimer();
     }
+  });
 
-    document.addEventListener('timer-session-saved', (e) => {
-      const { subject, topic, duration } = e.detail || {};
-      if (!subject) return;
-      const sessions = loadSessions();
-      const colors = { Physics: '#6366f1', Chemistry: '#22c55e', Mathematics: '#f59e0b', Maths: '#f59e0b', Biology: '#ec4899' };
-      sessions.unshift({
-        subject,
-        topic,
-        duration: formatDuration(duration),
-        date: new Date().toISOString(),
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        color: colors[subject] || '#6366f1',
-        tag: 'Focus',
-      });
-      saveSessions(sessions);
-      renderSessions();
-      updateStats();
-    });
+  pauseBtn?.addEventListener('click', () => {
+    if (timerState === 'running') stopTimer();
+  });
 
-    clearBtn?.addEventListener('click', () => {
-      saveSessions([]);
-      renderSessions();
-    });
+  resetBtn?.addEventListener('click', resetTimer);
 
-    renderSessions();
-
-    // Update stats from saved sessions
-    function updateStats() {
-      const sessions = loadSessions();
-      const today = new Date().toDateString();
-      const todaySessions = sessions.filter(s => new Date(s.date).toDateString() === today);
-      let totalSeconds = 0;
-      todaySessions.forEach(s => {
-        const match = (s.duration || '').match(/(\d+)m/);
-        if (match) totalSeconds += parseInt(match[1]) * 60;
-      });
-      const hours = Math.floor(totalSeconds / 3600);
-      const mins = Math.floor((totalSeconds % 3600) / 60);
-      document.getElementById('today-focus').textContent = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
-      document.getElementById('session-count').textContent = todaySessions.length;
-    }
-    updateStats();
-  })();
-
-  // ── Timer Mode Selector ──
+  // ── Mode tabs ──
   document.querySelectorAll('[data-mode]').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('[data-mode]').forEach(b => {
@@ -234,8 +279,199 @@ const streak = db.getStreak();
       });
       btn.classList.remove('text-slate-400');
       btn.classList.add('bg-[#6366f1]', 'text-white');
+      setMode(btn.dataset.mode);
     });
   });
+
+  // ── Recent sessions (localStorage) ──
+
+  function loadSessions() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
+  }
+
+  function saveSessions(sessions) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions.slice(0, 10))); } catch(e) {}
+  }
+
+  function renderSessions() {
+    const sessions = loadSessions();
+    list.innerHTML = '';
+    if (sessions.length === 0) {
+      list.appendChild(emptyPlaceholder);
+      return;
+    }
+    sessions.forEach(s => {
+      const card = document.createElement('div');
+      card.className = 'bg-[#050b18] border border-white/5 rounded-xl p-4 hover:border-[#6366f1]/30 transition-colors group cursor-default';
+
+      const topRow = document.createElement('div');
+      topRow.className = 'flex justify-between items-start mb-2';
+
+      const subjectInfo = document.createElement('div');
+      subjectInfo.className = 'flex items-center gap-2';
+      const dot = document.createElement('div');
+      dot.className = 'w-2 h-2 rounded-full';
+      dot.style.background = s.color || '#6366f1';
+      subjectInfo.appendChild(dot);
+      const name = document.createElement('span');
+      name.className = 'font-medium text-[#f8fafc] text-sm';
+      name.textContent = s.subject || 'Study';
+      subjectInfo.appendChild(name);
+      topRow.appendChild(subjectInfo);
+
+      const timeLabel = document.createElement('span');
+      timeLabel.className = 'text-xs text-slate-400 font-label';
+      timeLabel.textContent = s.time || '';
+      topRow.appendChild(timeLabel);
+      card.appendChild(topRow);
+
+      if (s.topic) {
+        const topicEl = document.createElement('div');
+        topicEl.className = 'text-sm text-slate-400 mb-3';
+        topicEl.textContent = s.topic;
+        card.appendChild(topicEl);
+      }
+
+      const bottomRow = document.createElement('div');
+      bottomRow.className = 'flex justify-between items-end';
+      const tag = document.createElement('span');
+      tag.className = 'text-xs font-label px-2 py-1 bg-[#0d1321] rounded-md text-[#f8fafc]';
+      tag.textContent = s.tag || 'Focus';
+      bottomRow.appendChild(tag);
+      const duration = document.createElement('span');
+      duration.className = 'font-headline font-semibold text-[#6366f1]';
+      duration.textContent = s.duration;
+      bottomRow.appendChild(duration);
+      card.appendChild(bottomRow);
+
+      list.appendChild(card);
+    });
+  }
+
+  document.addEventListener('timer-session-saved', (e) => {
+    const { subject, topic, duration } = e.detail || {};
+    if (!subject) return;
+    const sessions = loadSessions();
+    const colors = { Physics: '#6366f1', Chemistry: '#22c55e', Mathematics: '#f59e0b', Maths: '#f59e0b', Biology: '#ec4899' };
+    sessions.unshift({
+      subject,
+      topic,
+      duration: formatDuration(duration),
+      date: new Date().toISOString(),
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      color: colors[subject] || '#6366f1',
+      tag: 'Focus',
+    });
+    saveSessions(sessions);
+    renderSessions();
+    updateStats();
+  });
+
+  clearBtn?.addEventListener('click', () => {
+    saveSessions([]);
+    renderSessions();
+  });
+
+  renderSessions();
+
+  // ── Manual Session Logging ──
+  let manualFormVisible = false;
+
+  manualLogBtn?.addEventListener('click', () => {
+    if (manualFormVisible) {
+      // Remove the form
+      const form = document.getElementById('manual-log-form');
+      if (form) form.remove();
+      manualFormVisible = false;
+      return;
+    }
+
+    const colors = { Physics: '#6366f1', Chemistry: '#22c55e', Mathematics: '#f59e0b', Maths: '#f59e0b', Biology: '#ec4899' };
+    const subjects = Object.keys(colors);
+
+    const form = document.createElement('div');
+    form.id = 'manual-log-form';
+    form.className = 'bg-[#050b18] border border-white/5 rounded-xl p-4 mt-3 animate-slide-up';
+    form.innerHTML = `
+      <h4 class="text-xs font-label text-slate-400 uppercase tracking-wider mb-3">Log Manual Session</h4>
+      <div class="space-y-3">
+        <div>
+          <label class="text-[10px] text-slate-500 uppercase tracking-wider block mb-1">Subject</label>
+          <div class="flex flex-wrap gap-1.5" id="manual-subject-chips">
+            ${subjects.map((s, i) => `<button type="button" class="manual-subj-chip px-3 py-1 rounded-full border text-xs font-medium transition-all border-slate-700 bg-[#050b18] text-slate-300 ${i === 0 ? 'selected' : ''}" data-subject="${s}"><span class="w-1.5 h-1.5 rounded-full inline-block mr-1" style="background:${colors[s]}"></span>${s}</button>`).join('')}
+          </div>
+        </div>
+        <div>
+          <label class="text-[10px] text-slate-500 uppercase tracking-wider block mb-1">Topic (optional)</label>
+          <input type="text" id="manual-topic" placeholder="e.g. Kinematics" class="w-full bg-[#0d1321] border border-slate-700 rounded-lg px-3 py-2 text-sm text-[#f8fafc] placeholder-slate-500 focus:outline-none focus:border-[#6366f1]" />
+        </div>
+        <div class="flex items-center gap-3">
+          <label class="text-[10px] text-slate-500 uppercase tracking-wider">Duration</label>
+          <div class="flex items-center gap-2">
+            <input type="number" id="manual-hours" min="0" max="12" value="0" class="w-16 bg-[#0d1321] border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-[#f8fafc] text-center focus:outline-none focus:border-[#6366f1]" />
+            <span class="text-xs text-slate-400">h</span>
+            <input type="number" id="manual-minutes" min="0" max="59" value="30" class="w-16 bg-[#0d1321] border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-[#f8fafc] text-center focus:outline-none focus:border-[#6366f1]" />
+            <span class="text-xs text-slate-400">m</span>
+          </div>
+        </div>
+        <button id="manual-submit-btn" class="w-full bg-[#6366f1] hover:bg-[#818cf8] text-white font-semibold py-2 rounded-xl transition-all text-sm flex items-center justify-center gap-2">
+          <span class="material-symbols-outlined text-sm filled-icon">check</span>
+          Log Session
+        </button>
+      </div>
+    `;
+    list.parentElement?.appendChild(form);
+    manualFormVisible = true;
+
+    // Manual subject chip toggle
+    form.querySelectorAll('.manual-subj-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        form.querySelectorAll('.manual-subj-chip').forEach(c => c.classList.remove('selected'));
+        chip.classList.add('selected');
+      });
+    });
+
+    // Manual submit
+    form.querySelector('#manual-submit-btn').addEventListener('click', () => {
+      const selectedChip = form.querySelector('.manual-subj-chip.selected');
+      const subject = selectedChip?.dataset.subject || 'Study';
+      const topic = form.querySelector('#manual-topic').value.trim();
+      const hours = parseInt(form.querySelector('#manual-hours').value) || 0;
+      const mins = parseInt(form.querySelector('#manual-minutes').value) || 0;
+      const duration = (hours * 3600) + (mins * 60);
+      if (duration < 60) {
+        form.querySelector('#manual-submit-btn').textContent = 'Minimum 1 minute';
+        return;
+      }
+      dispatchEvent(new CustomEvent('timer-session-saved', {
+        detail: { subject, topic, duration }
+      }));
+      form.remove();
+      manualFormVisible = false;
+    });
+  });
+
+  // ── Stats ──
+  function updateStats() {
+    const sessions = loadSessions();
+    const today = new Date().toDateString();
+    const todaySessions = sessions.filter(s => new Date(s.date).toDateString() === today);
+    let totalSeconds = 0;
+    todaySessions.forEach(s => {
+      const match = (s.duration || '').match(/(\d+)m/);
+      if (match) totalSeconds += parseInt(match[1]) * 60;
+    });
+    const hours = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    todayFocusEl.textContent = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+    sessionCountEl.textContent = todaySessions.length;
+  }
+  updateStats();
+
+  // ── Request notification permission ──
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
 </script>
 
 <style>
@@ -254,5 +490,17 @@ const streak = db.getStreak();
     transition: stroke-dashoffset 0.35s;
     transform: rotate(-90deg);
     transform-origin: 50% 50%;
+  }
+  .manual-subj-chip.selected {
+    background: #6366f1 !important;
+    color: #050b18 !important;
+    border-color: #6366f1 !important;
+  }
+  .animate-slide-up {
+    animation: slide-up-fade 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes slide-up-fade {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 </style>

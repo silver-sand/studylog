@@ -52,6 +52,7 @@ function toReview(row: Record<string, any>): WeeklyReview {
     weaknesses: parseJSON(row.weaknesses, []),
     recommendations: parseJSON(row.recommendations, []),
     entryIds: parseJSON(row.entry_ids, []),
+    notes: row.notes || '',
     createdAt: row.created_at,
   };
 }
@@ -174,6 +175,8 @@ export class SQLiteAdapter implements DatabaseInterface {
       `ALTER TABLE users ADD COLUMN weak_subjects TEXT NOT NULL DEFAULT '[]'`,
       `ALTER TABLE users ADD COLUMN coaching TEXT`,
       `ALTER TABLE users ADD COLUMN target_rank TEXT`,
+      // Phase 10: notes column for weekly reviews
+      `ALTER TABLE weekly_reviews ADD COLUMN notes TEXT NOT NULL DEFAULT ''`,
     ];
     for (const sql of migrations) {
       try { db.run(sql); } catch { /* column already exists — ignore */ }
@@ -450,6 +453,13 @@ export class SQLiteAdapter implements DatabaseInterface {
 
     this.save();
     return this.getReview(id)!;
+  }
+
+  updateReviewNotes(id: string, notes: string): WeeklyReview | null {
+    const db = this.getDb();
+    db.run(`UPDATE weekly_reviews SET notes = ? WHERE id = ? AND user_id = ?`, [notes || '', id, this.userId]);
+    this.save();
+    return this.getReview(id);
   }
 
   // ── Daily Reviews ──

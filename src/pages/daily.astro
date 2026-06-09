@@ -58,7 +58,7 @@ const dateDisplay = todayDate.toLocaleDateString('en-US', {
         </p>
       </div>
       <div class="hidden md:flex items-center gap-4">
-        <div class="bg-[#0d1321]/50 border border-slate-800 rounded-lg px-4 py-2 flex items-center gap-3">
+        <div id="live-session-badge" class="bg-[#0d1321]/50 border border-slate-800 rounded-lg px-4 py-2 flex items-center gap-3 hidden">
           <span class="w-2 h-2 rounded-full bg-[#60a5fa] animate-pulse"></span>
           <span class="text-xs font-label text-[#8b919d]">Live Study Session Active</span>
         </div>
@@ -198,10 +198,10 @@ const dateDisplay = todayDate.toLocaleDateString('en-US', {
             <p class="text-sm text-[#8b919d] leading-relaxed italic">
               "Taking a 10-minute break every hour increases long-term retention by up to 20%."
             </p>
-            <div class="mt-4 flex items-center gap-2 text-[#60a5fa] text-xs font-bold cursor-pointer group">
+            <a href="https://en.wikipedia.org/wiki/Active_recall" target="_blank" class="mt-4 flex items-center gap-2 text-[#60a5fa] text-xs font-bold group no-underline">
               Learn more about active recall
               <span class="material-symbols-outlined text-xs group-hover:translate-x-1 transition-transform">arrow_forward</span>
-            </div>
+            </a>
           </div>
         </div>
       </div>
@@ -238,6 +238,17 @@ const dateDisplay = todayDate.toLocaleDateString('en-US', {
 
   generateBtn?.addEventListener('click', loadDailyReview);
   refreshBtn?.addEventListener('click', loadDailyReview);
+
+  // ── Show live session badge if timer is active ──
+  (function() {
+    try {
+      const state = JSON.parse(localStorage.getItem('sl-timer-state') || '{}');
+      if (state.isActive) {
+        const badge = document.getElementById('live-session-badge');
+        if (badge) badge.classList.remove('hidden');
+      }
+    } catch (e) {}
+  })();
 
   // Pick up timer data from sessionStorage
   (function() {

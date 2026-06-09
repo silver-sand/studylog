@@ -26,6 +26,7 @@ export interface Database {
   getReviewByWeek(weekStart: string): WeeklyReview | null;
   listReviews(): WeeklyReview[];
   upsertReview(data: CreateReviewData): WeeklyReview;
+  updateReviewNotes(id: string, notes: string): WeeklyReview | null;
 
   // Daily Reviews
   createDailyReview(data: CreateDailyReviewData): DailyReview;
