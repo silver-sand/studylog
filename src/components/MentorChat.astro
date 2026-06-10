@@ -4,46 +4,160 @@ export interface Props {
 }
 
 const { title = 'AI Mentor' } = Astro.props;
+
+const quickActions = [
+  { icon: 'summarize', label: 'Analyze my week', prompt: 'Analyze my study patterns this week and give me insights on what I should focus on.' },
+  { icon: 'science', label: 'Explain a concept', prompt: 'Explain a physics concept I should know for competitive exams.' },
+  { icon: 'calendar_month', label: 'Suggest study plan', prompt: 'Suggest a study plan for the next week based on common competitive exam syllabi.' },
+  { icon: 'quiz', label: 'Quiz me', prompt: 'Quiz me on something I recently studied.' },
+];
 ---
 
 <div class="flex-1 flex flex-col h-full relative" id="mentor-chat">
-  <!-- Chat Messages -->
-  <div class="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth" id="chat-container">
-    <div class="max-w-4xl mx-auto space-y-8 pb-4" id="messages-area">
-      <!-- Messages rendered by JS -->
+  <!-- Chat Messages Canvas -->
+  <div class="flex-1 overflow-y-auto scroll-smooth" id="chat-container">
+    <div class="max-w-4xl mx-auto px-4 md:px-6 lg:px-8" id="messages-area">
+      <!-- ── Empty State ── -->
+      <div id="empty-state" class="flex flex-col items-center justify-center min-h-[65vh] text-center">
+        <!-- Glow avatar -->
+        <div class="relative mb-8">
+          <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500/15 via-purple-500/10 to-indigo-500/5 border border-indigo-500/20 flex items-center justify-center shadow-xl shadow-indigo-500/10">
+            <span class="material-symbols-outlined text-4xl text-indigo-400" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+          </div>
+          <div class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50"></span>
+          </div>
+        </div>
+
+        <h2 class="text-3xl md:text-4xl font-bold text-white mb-3 tracking-tight">
+          What would you like to know?
+        </h2>
+        <p class="text-neutral-500 text-sm md:text-base max-w-md mb-10 leading-relaxed">
+          Get instant answers, personalized insights, and deep explanations — all tailored to your competitive exam journey.
+        </p>
+
+        <!-- Quick Action Grid -->
+        <div class="grid grid-cols-2 gap-3 w-full max-w-xl mb-6">
+          {quickActions.map(action => (
+            <button
+              class="quick-action-btn group relative flex items-center gap-3 p-4 rounded-xl bg-[#0d1321]/60 border border-white/[0.06] hover:border-indigo-500/20 hover:bg-indigo-500/5 transition-all duration-200 text-left"
+              data-prompt={action.prompt}
+            >
+              <div class="w-9 h-9 rounded-lg bg-indigo-500/10 border border-indigo-500/10 flex items-center justify-center shrink-0 group-hover:bg-indigo-500/20 group-hover:border-indigo-500/20 transition-all">
+                <span class="material-symbols-outlined text-lg text-indigo-400">{action.icon}</span>
+              </div>
+              <span class="text-sm font-medium text-neutral-300 group-hover:text-white transition-colors">{action.label}</span>
+            </button>
+          ))}
+        </div>
+
+        <!-- Model selector in empty state -->
+        <div class="flex items-center gap-2 text-xs text-neutral-600">
+          <span>Powered by</span>
+          <div class="relative inline-block">
+            <select id="empty-model-select" class="appearance-none bg-[#0d1321] border border-white/10 rounded-lg px-3 py-1.5 pr-8 text-neutral-300 text-xs cursor-pointer hover:border-indigo-500/30 focus:outline-none focus:border-indigo-500/40 transition-colors">
+              <option value="gemini">Gemini 2.0</option>
+              <option value="groq">Groq</option>
+              <option value="llama">Llama 3</option>
+            </select>
+            <span class="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-500 pointer-events-none material-symbols-outlined text-[14px]">expand_more</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── History Messages ── -->
+      <div id="history-messages" class="py-6 space-y-6" style="display: none;"></div>
     </div>
   </div>
 
-  <!-- Input Area -->
-  <div class="p-4 bg-[#050b18]/90 backdrop-blur-md border-t border-white/5 shrink-0">
+  <!-- ── Input Area ── -->
+  <div class="shrink-0 border-t border-white/[0.04] bg-gradient-to-t from-[#050b18] via-[#050b18]/98 to-transparent pt-4 pb-5 px-4 md:px-6 lg:px-8">
     <div class="max-w-4xl mx-auto">
-      <!-- Suggestion Chips -->
-      <div class="flex flex-wrap gap-2 mb-3" id="chips">
-        <button class="suggestion-chip px-3 py-1.5 rounded-lg bg-[#0d1321] border border-white/5 text-xs text-neutral-400 hover:text-neutral-200 hover:border-indigo-500/30 transition-all" data-prompt="What should I study today?">What to study?</button>
-        <button class="suggestion-chip px-3 py-1.5 rounded-lg bg-[#0d1321] border border-white/5 text-xs text-neutral-400 hover:text-neutral-200 hover:border-indigo-500/30 transition-all" data-prompt="Quiz me on something I studied recently">Quiz me</button>
-        <button class="suggestion-chip px-3 py-1.5 rounded-lg bg-[#0d1321] border border-white/5 text-xs text-neutral-400 hover:text-neutral-200 hover:border-indigo-500/30 transition-all" data-prompt="I'm stuck, help me figure out what to do">I'm stuck</button>
-        <button class="suggestion-chip px-3 py-1.5 rounded-lg bg-[#0d1321] border border-white/5 text-xs text-neutral-400 hover:text-neutral-200 hover:border-indigo-500/30 transition-all" data-prompt="What are my weak areas?">Weak areas</button>
+      <!-- Active Context Chips (shown in chat mode) -->
+      <div id="context-chips" class="flex flex-wrap gap-2 mb-3" style="display: none;">
+        <button class="context-chip px-3 py-1.5 rounded-lg bg-[#0d1321]/60 border border-white/[0.06] text-[11px] text-neutral-500 hover:text-neutral-300 hover:border-indigo-500/20 hover:bg-indigo-500/5 transition-all" data-prompt="Analyze my study patterns this week and give me insights.">
+          <span class="material-symbols-outlined text-[14px] align-middle mr-1">summarize</span>
+          Analyze my week
+        </button>
+        <button class="context-chip px-3 py-1.5 rounded-lg bg-[#0d1321]/60 border border-white/[0.06] text-[11px] text-neutral-500 hover:text-neutral-300 hover:border-indigo-500/20 hover:bg-indigo-500/5 transition-all" data-prompt="Explain a physics concept I should know for competitive exams.">
+          <span class="material-symbols-outlined text-[14px] align-middle mr-1">science</span>
+          Explain concept
+        </button>
+        <button class="context-chip px-3 py-1.5 rounded-lg bg-[#0d1321]/60 border border-white/[0.06] text-[11px] text-neutral-500 hover:text-neutral-300 hover:border-indigo-500/20 hover:bg-indigo-500/5 transition-all" data-prompt="Suggest a study plan for the next week.">
+          <span class="material-symbols-outlined text-[14px] align-middle mr-1">calendar_month</span>
+          Study plan
+        </button>
       </div>
 
-      <div class="relative flex items-end gap-2 bg-[#0d1321] border border-white/10 rounded-2xl p-2 focus-within:border-indigo-500/50 focus-within:ring-1 focus-within:ring-indigo-500/50 transition-all shadow-sm">
-        <button class="p-2 text-neutral-400 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-xl transition-colors shrink-0 group relative" title="Solve Image">
-          <span class="material-symbols-outlined">add_a_photo</span>
-          <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-neutral-800 text-xs text-white rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">Solve Image</span>
+      <!-- Gradient Glass Input -->
+      <div class="gradient-glass-input relative flex items-end gap-1.5 bg-[#0d1321]/80 backdrop-blur-xl border border-white/[0.07] rounded-2xl p-1.5 focus-within:border-indigo-500/25 focus-within:ring-1 focus-within:ring-indigo-500/15 transition-all duration-300 shadow-lg shadow-black/20" id="input-container">
+        <!-- Model Selector Dropdown -->
+        <div class="relative shrink-0" id="model-selector-group">
+          <button id="model-select-btn" class="model-select-btn flex items-center gap-1.5 px-2.5 py-2.5 rounded-xl text-[11px] text-neutral-500 hover:text-neutral-300 hover:bg-white/[0.04] transition-colors border border-transparent hover:border-white/[0.06]">
+            <span class="material-symbols-outlined text-[16px] text-indigo-400/70" id="model-icon">auto_awesome</span>
+            <span id="model-name" class="hidden sm:inline font-medium">Gemini 2.0</span>
+            <span class="material-symbols-outlined text-[14px] -mr-1">expand_more</span>
+          </button>
+          <div id="model-dropdown" class="absolute bottom-full left-0 mb-2 w-48 bg-[#0d1321] border border-white/[0.08] rounded-xl shadow-2xl shadow-black/50 overflow-hidden z-50 backdrop-blur-xl" style="display: none;">
+            <div class="py-1">
+              <button class="model-option flex items-center gap-3 w-full px-4 py-2.5 text-xs text-neutral-400 hover:bg-indigo-500/10 hover:text-indigo-300 transition-colors" data-model="gemini" data-icon="auto_awesome">
+                <span class="material-symbols-outlined text-[18px] text-indigo-400/70">auto_awesome</span>
+                <div class="text-left">
+                  <div class="font-medium">Gemini 2.0</div>
+                  <div class="text-[10px] text-neutral-600">Fast & capable</div>
+                </div>
+                <span class="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-500/60"></span>
+              </button>
+              <button class="model-option flex items-center gap-3 w-full px-4 py-2.5 text-xs text-neutral-400 hover:bg-indigo-500/10 hover:text-indigo-300 transition-colors" data-model="groq" data-icon="bolt">
+                <span class="material-symbols-outlined text-[18px] text-neutral-500">bolt</span>
+                <div class="text-left">
+                  <div class="font-medium">Groq</div>
+                  <div class="text-[10px] text-neutral-600">Lightning fast</div>
+                </div>
+              </button>
+              <button class="model-option flex items-center gap-3 w-full px-4 py-2.5 text-xs text-neutral-400 hover:bg-indigo-500/10 hover:text-indigo-300 transition-colors" data-model="llama" data-icon="psychiatry">
+                <span class="material-symbols-outlined text-[18px] text-neutral-500">psychiatry</span>
+                <div class="text-left">
+                  <div class="font-medium">Llama 3</div>
+                  <div class="text-[10px] text-neutral-600">Deep reasoning</div>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="h-7 w-px bg-white/[0.06] shrink-0"></div>
+
+        <!-- Attachment Button -->
+        <button id="attach-btn" class="p-2.5 text-neutral-600 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-xl transition-all shrink-0 group relative" title="Upload image or file">
+          <span class="material-symbols-outlined text-[20px]">attach_file</span>
+          <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-neutral-800 text-[10px] text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-lg">
+            Upload Image
+          </span>
         </button>
+
+        <!-- Textarea -->
         <textarea
           id="mentor-input"
-          class="w-full bg-transparent border-none text-neutral-200 placeholder-neutral-500 focus:ring-0 resize-none py-2.5 max-h-32 min-h-[44px] text-sm leading-relaxed"
-          placeholder="Ask a question or upload a problem (LaTeX supported)..."
+          class="w-full bg-transparent border-none text-neutral-200 placeholder-neutral-600 focus:ring-0 resize-none py-3 max-h-36 min-h-[44px] text-sm leading-relaxed tracking-wide"
+          placeholder="Ask anything about your studies..."
           rows="1"
         ></textarea>
-        <button id="send-btn" class="p-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition-colors shrink-0 shadow-sm flex items-center justify-center h-[44px] w-[44px]" disabled>
-          <span class="material-symbols-outlined text-[20px]">send</span>
+
+        <!-- Send Button -->
+        <button id="send-btn" class="p-2.5 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-400 text-white rounded-xl transition-all shrink-0 flex items-center justify-center h-[44px] w-[44px] shadow-sm shadow-indigo-500/20 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-indigo-600" disabled>
+          <span class="material-symbols-outlined text-[20px]">arrow_upward</span>
         </button>
       </div>
-      <div class="flex justify-between items-center px-2 mt-2">
-        <span class="text-[10px] font-label text-neutral-500">Shift + Enter for new line • Use $ for inline math</span>
-        <span class="text-[10px] font-label text-neutral-500 flex items-center gap-1">
-          <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span> AI is ready
+
+      <!-- Footer -->
+      <div class="flex justify-between items-center px-3 mt-2.5">
+        <span class="text-[10px] text-neutral-700 tracking-wide">
+          <span class="hidden sm:inline">Shift + Enter for new line · </span>$ for inline math · ``` for code
+        </span>
+        <span class="text-[10px] flex items-center gap-1.5" id="ai-status">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500/70 shadow-sm shadow-emerald-500/20"></span>
+          <span class="text-emerald-500/60">AI ready</span>
         </span>
       </div>
     </div>
@@ -57,12 +171,10 @@ const { title = 'AI Mentor' } = Astro.props;
   function renderMath(text) {
     if (!text) return text;
     try {
-      // Display math ($$...$$) — rendered before inline to avoid conflicts
       text = text.replace(/\$\$(.+?)\$\$/gs, (_, expr) => {
         try { return katex.renderToString(expr.trim(), { displayMode: true, throwOnError: false }); }
         catch(e) { return `$$${expr}$$`; }
       });
-      // Inline math ($...$)
       text = text.replace(/\$(.+?)\$/g, (_, expr) => {
         try { return katex.renderToString(expr.trim(), { displayMode: false, throwOnError: false }); }
         catch(e) { return `$${expr}$`; }
@@ -78,35 +190,81 @@ const { title = 'AI Mentor' } = Astro.props;
   }
 
   function renderMarkdown(text) {
-    if (!text) return '';
-    // Simple markdown-like rendering
+    if (!text) return '<div class="text-neutral-400 text-sm italic">Empty response</div>';
     let html = escapeHtml(text);
     // Code blocks
-    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre class="p-4 rounded-xl bg-[#0d1321] border border-white/5 text-sm text-indigo-300/80 overflow-x-auto my-4"><code>$2</code></pre>');
+    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre class="p-4 rounded-xl bg-[#0a0f1a] border border-white/[0.06] text-sm text-indigo-300/80 overflow-x-auto my-4 font-mono leading-relaxed"><code>$2</code></pre>');
     // Inline code
-    html = html.replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-[#0d1321] text-indigo-300 text-xs">$1</code>');
+    html = html.replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded-md bg-[#0a0f1a] text-indigo-300/80 text-xs font-mono border border-white/[0.04]">$1</code>');
     // Bold
     html = html.replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-white">$1</strong>');
     // Italic
-    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    html = html.replace(/\*(.+?)\*/g, '<em class="text-neutral-300">$1</em>');
     // Line breaks
-    html = html.replace(/\n\n/g, '</p><p class="text-neutral-300 leading-relaxed">');
+    html = html.replace(/\n\n/g, '</p><p class="text-neutral-300 leading-[1.75]">');
     html = html.replace(/\n/g, '<br/>');
-    // Render LaTeX
+    // LaTeX
     html = renderMath(html);
-    return `<p class="text-neutral-300 leading-relaxed">${html}</p>`;
+    return `<p class="text-neutral-300 leading-[1.75]">${html}</p>`;
   }
 
+  // ── State ──
   const CHAT_STORAGE_KEY = 'sl-mentor-history';
+  const MODEL_STORAGE_KEY = 'sl-mentor-model';
   const messagesArea = document.getElementById('messages-area');
   const input = document.getElementById('mentor-input');
   const sendBtn = document.getElementById('send-btn');
-  const chipsContainer = document.getElementById('chips');
   const chatContainer = document.getElementById('chat-container');
+  const emptyState = document.getElementById('empty-state');
+  const historyMessages = document.getElementById('history-messages');
+  const contextChips = document.getElementById('context-chips');
+
+  // Model selector
+  const modelSelectBtn = document.getElementById('model-select-btn');
+  const modelDropdown = document.getElementById('model-dropdown');
+  const modelName = document.getElementById('model-name');
+  const modelIcon = document.getElementById('model-icon');
+  const emptyModelSelect = document.getElementById('empty-model-select');
 
   let isStreaming = false;
   let history = [];
+  let selectedModel = localStorage.getItem(MODEL_STORAGE_KEY) || 'gemini';
 
+  // ── Model selector UI ──
+  function updateModelUI(model) {
+    const options = document.querySelectorAll('.model-option');
+    options.forEach(opt => {
+      if (opt.dataset.model === model) {
+        const icon = opt.querySelector('.material-symbols-outlined');
+        const label = opt.querySelector('.font-medium');
+        if (modelName && label) modelName.textContent = label.textContent;
+        if (modelIcon && icon) modelIcon.textContent = icon.textContent;
+      }
+    });
+    if (emptyModelSelect) emptyModelSelect.value = model;
+    selectedModel = model;
+    localStorage.setItem(MODEL_STORAGE_KEY, model);
+  }
+
+  function toggleModelDropdown() {
+    const isHidden = modelDropdown.style.display === 'none';
+    modelDropdown.style.display = isHidden ? 'block' : 'none';
+  }
+
+  // ── Toggle empty state / history ──
+  function toggleUI(hasHistory) {
+    if (hasHistory) {
+      emptyState.style.display = 'none';
+      historyMessages.style.display = 'block';
+      contextChips.style.display = 'flex';
+    } else {
+      emptyState.style.display = 'flex';
+      historyMessages.style.display = 'none';
+      contextChips.style.display = 'none';
+    }
+  }
+
+  // ── History ──
   function loadHistory() {
     try {
       const saved = localStorage.getItem(CHAT_STORAGE_KEY);
@@ -128,27 +286,24 @@ const { title = 'AI Mentor' } = Astro.props;
   }
 
   function renderHistory() {
-    messagesArea.innerHTML = '';
+    historyMessages.innerHTML = '';
     for (const msg of history) {
       const wrapper = document.createElement('div');
       if (msg.role === 'user') {
         wrapper.className = 'flex justify-end message-entrance';
-        const bubble = document.createElement('div');
-        bubble.className = 'bg-[#0d1321] border border-white/5 rounded-2xl rounded-tr-sm p-5 max-w-[85%] md:max-w-[75%] shadow-sm';
-        bubble.innerHTML = `<p class="text-neutral-200 leading-relaxed">${escapeHtml(msg.content)}</p>`;
-        wrapper.appendChild(bubble);
+        wrapper.innerHTML = `<div class="user-bubble max-w-[85%] md:max-w-[75%]">
+          <p class="text-neutral-200 leading-relaxed text-sm">${escapeHtml(msg.content)}</p>
+        </div>`;
       } else {
-        wrapper.className = 'flex gap-4 message-entrance';
-        const avatar = document.createElement('div');
-        avatar.className = 'w-8 h-8 rounded bg-indigo-500/20 text-indigo-500 flex items-center justify-center shrink-0 border border-indigo-500/30 mt-1';
-        avatar.innerHTML = '<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: \'FILL\' 1;">smart_toy</span>';
-        wrapper.appendChild(avatar);
-        const bubble = document.createElement('div');
-        bubble.className = 'flex-1 bg-[#0d1321]/30 border border-white/5 rounded-2xl rounded-tl-sm p-5 md:p-6 max-w-[95%] shadow-sm';
-        bubble.innerHTML = renderMarkdown(msg.content);
-        wrapper.appendChild(bubble);
+        wrapper.className = 'flex gap-3 message-entrance';
+        wrapper.innerHTML = `<div class="ai-avatar w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0 mt-1">
+          <span class="material-symbols-outlined text-[16px] text-indigo-400" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+        </div>
+        <div class="ai-bubble flex-1 max-w-[95%]">
+          ${renderMarkdown(msg.content)}
+        </div>`;
       }
-      messagesArea.appendChild(wrapper);
+      historyMessages.appendChild(wrapper);
     }
     chatContainer?.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
   }
@@ -156,7 +311,7 @@ const { title = 'AI Mentor' } = Astro.props;
   function autoResize() {
     if (input) {
       input.style.height = '';
-      input.style.height = input.scrollHeight + 'px';
+      input.style.height = Math.min(input.scrollHeight, 144) + 'px';
     }
   }
 
@@ -164,14 +319,17 @@ const { title = 'AI Mentor' } = Astro.props;
   async function sendMessage(text) {
     if (!text.trim() || isStreaming) return;
 
-    history.push({ role: 'user', content: text.trim() });
+    const trimmed = text.trim();
+    history.push({ role: 'user', content: trimmed });
+    if (history.length === 1) toggleUI(true);
+
+    // User bubble
     const userWrapper = document.createElement('div');
     userWrapper.className = 'flex justify-end message-entrance';
-    const bubble = document.createElement('div');
-    bubble.className = 'bg-[#0d1321] border border-white/5 rounded-2xl rounded-tr-sm p-5 max-w-[85%] md:max-w-[75%] shadow-sm';
-    bubble.innerHTML = `<p class="text-neutral-200 leading-relaxed">${escapeHtml(text.trim())}</p>`;
-    userWrapper.appendChild(bubble);
-    messagesArea.appendChild(userWrapper);
+    userWrapper.innerHTML = `<div class="user-bubble max-w-[85%] md:max-w-[75%]">
+      <p class="text-neutral-200 leading-relaxed text-sm">${escapeHtml(trimmed)}</p>
+    </div>`;
+    historyMessages.appendChild(userWrapper);
 
     input.value = '';
     autoResize();
@@ -181,31 +339,34 @@ const { title = 'AI Mentor' } = Astro.props;
 
     // AI thinking indicator
     const aiWrapper = document.createElement('div');
-    aiWrapper.className = 'flex gap-4 message-entrance';
+    aiWrapper.className = 'flex gap-3 message-entrance';
     aiWrapper.id = 'streaming-msg';
-    const avatar = document.createElement('div');
-    avatar.className = 'w-8 h-8 rounded bg-indigo-500/20 text-indigo-500 flex items-center justify-center shrink-0 border border-indigo-500/30 mt-1';
-    avatar.innerHTML = '<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: \'FILL\' 1;">smart_toy</span>';
-    aiWrapper.appendChild(avatar);
-    const bubbleDiv = document.createElement('div');
-    bubbleDiv.className = 'flex-1 bg-[#0d1321]/30 border border-white/5 rounded-2xl rounded-tl-sm p-5 md:p-6 max-w-[95%] shadow-sm';
-    bubbleDiv.innerHTML = '<div class="flex items-center gap-2 text-neutral-400"><div class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div><span class="text-sm">Thinking...</span></div>';
-    aiWrapper.appendChild(bubbleDiv);
-    messagesArea.appendChild(aiWrapper);
+    aiWrapper.innerHTML = `<div class="ai-avatar w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0 mt-1">
+      <span class="material-symbols-outlined text-[16px] text-indigo-400" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+    </div>
+    <div class="ai-bubble flex-1 max-w-[95%]">
+      <div class="flex items-center gap-2.5 text-neutral-500 py-1">
+        <div class="thinking-dots flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-indigo-500/60 animate-bounce" style="animation-delay: 0ms;"></span>
+          <span class="w-1.5 h-1.5 rounded-full bg-indigo-500/60 animate-bounce" style="animation-delay: 150ms;"></span>
+          <span class="w-1.5 h-1.5 rounded-full bg-indigo-500/60 animate-bounce" style="animation-delay: 300ms;"></span>
+        </div>
+        <span class="text-xs italic">Thinking...</span>
+      </div>
+    </div>`;
+    historyMessages.appendChild(aiWrapper);
     chatContainer?.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
 
     try {
-      // Build query and history for API
       const lastMsg = history[history.length - 1];
       const prevHistory = history.slice(0, -1).map(h => ({ role: h.role, content: h.content }));
       const res = await fetch('/api/mentor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: lastMsg.content, history: prevHistory }),
+        body: JSON.stringify({ query: lastMsg.content, history: prevHistory, model: selectedModel }),
       });
-      if (!res.ok) throw new Error('API Error');
+      if (!res.ok) throw new Error(`API Error (${res.status})`);
 
-      // Read SSE stream
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let reply = '';
@@ -213,10 +374,9 @@ const { title = 'AI Mentor' } = Astro.props;
 
       // Replace thinking indicator with live streaming bubble
       if (streamingEl) {
-        const bubbleDiv = streamingEl.querySelector('.flex-1');
+        const bubbleDiv = streamingEl.querySelector('.ai-bubble');
         if (bubbleDiv) {
-          bubbleDiv.className = 'flex-1 bg-[#0d1321]/30 border border-white/5 rounded-2xl rounded-tl-sm p-5 md:p-6 max-w-[95%] shadow-sm';
-          bubbleDiv.innerHTML = '<div class="text-neutral-300 leading-relaxed"></div>';
+          bubbleDiv.innerHTML = '<div class="text-neutral-300 leading-relaxed text-sm streaming-content"></div>';
         }
       }
 
@@ -232,27 +392,25 @@ const { title = 'AI Mentor' } = Astro.props;
             const data = JSON.parse(line.slice(6));
             if (data.type === 'chunk' && data.text) {
               reply += data.text;
-              // Update the streaming bubble with rendered markdown
               const msgEl = document.getElementById('streaming-msg');
               if (msgEl) {
-                const txtDiv = msgEl.querySelector('.flex-1 > div');
-                if (txtDiv) {
-                  txtDiv.innerHTML = renderMarkdown(reply);
+                const contentDiv = msgEl.querySelector('.streaming-content');
+                if (contentDiv) {
+                  contentDiv.innerHTML = renderMarkdown(reply) + '<span class="inline-block w-2 h-4 bg-indigo-400/70 ml-0.5 animate-pulse rounded-sm typewriter-cursor"></span>';
                   chatContainer?.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
                 }
               }
             } else if (data.type === 'error') {
               throw new Error(data.text);
             }
-            // 'done' type — stream complete, fall through
           } catch (e) {
-            if (e instanceof SyntaxError) continue; // bad JSON line, skip
+            if (e instanceof SyntaxError) continue;
             throw e;
           }
         }
       }
 
-      // Remove streaming indicator
+      // Remove streaming msg, add permanent one
       const streaming = document.getElementById('streaming-msg');
       if (streaming) streaming.remove();
 
@@ -260,31 +418,31 @@ const { title = 'AI Mentor' } = Astro.props;
       saveHistory();
 
       const aiComplete = document.createElement('div');
-      aiComplete.className = 'flex gap-4 message-entrance';
-      const av = document.createElement('div');
-      av.className = 'w-8 h-8 rounded bg-indigo-500/20 text-indigo-500 flex items-center justify-center shrink-0 border border-indigo-500/30 mt-1';
-      av.innerHTML = '<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: \'FILL\' 1;">smart_toy</span>';
-      aiComplete.appendChild(av);
-      const bbl = document.createElement('div');
-      bbl.className = 'flex-1 bg-[#0d1321]/30 border border-white/5 rounded-2xl rounded-tl-sm p-5 md:p-6 max-w-[95%] shadow-sm';
-      bbl.innerHTML = renderMarkdown(reply);
-      aiComplete.appendChild(bbl);
-      messagesArea.appendChild(aiComplete);
+      aiComplete.className = 'flex gap-3 message-entrance';
+      aiComplete.innerHTML = `<div class="ai-avatar w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0 mt-1">
+        <span class="material-symbols-outlined text-[16px] text-indigo-400" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+      </div>
+      <div class="ai-bubble flex-1 max-w-[95%]">
+        ${renderMarkdown(reply)}
+      </div>`;
+      historyMessages.appendChild(aiComplete);
       chatContainer?.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
     } catch (err) {
       const streaming = document.getElementById('streaming-msg');
       if (streaming) streaming.remove();
+
       const errWrapper = document.createElement('div');
-      errWrapper.className = 'flex gap-4 message-entrance';
-      const av = document.createElement('div');
-      av.className = 'w-8 h-8 rounded bg-red-500/20 text-red-400 flex items-center justify-center shrink-0 border border-red-500/30 mt-1';
-      av.innerHTML = '<span class="material-symbols-outlined text-[18px]">error</span>';
-      errWrapper.appendChild(av);
-      const bbl = document.createElement('div');
-      bbl.className = 'flex-1 bg-red-500/5 border border-red-500/20 rounded-2xl rounded-tl-sm p-5 max-w-[95%]';
-      bbl.innerHTML = `<p class="text-sm text-red-400">Failed to get response: ${err.message}. Please try again.</p>`;
-      errWrapper.appendChild(bbl);
-      messagesArea.appendChild(errWrapper);
+      errWrapper.className = 'flex gap-3 message-entrance';
+      errWrapper.innerHTML = `<div class="w-8 h-8 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0 mt-1">
+        <span class="material-symbols-outlined text-[16px] text-red-400">error</span>
+      </div>
+      <div class="flex-1 bg-red-500/5 border border-red-500/10 rounded-2xl rounded-tl-sm p-4 max-w-[95%]">
+        <p class="text-sm text-red-400/80 leading-relaxed">${escapeHtml(err.message)}</p>
+        <button onclick="retryLastMessage()" class="mt-2 text-xs text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1">
+          <span class="material-symbols-outlined text-[14px]">refresh</span> Try again
+        </button>
+      </div>`;
+      historyMessages.appendChild(errWrapper);
     } finally {
       isStreaming = false;
       sendBtn.disabled = false;
@@ -292,7 +450,44 @@ const { title = 'AI Mentor' } = Astro.props;
     }
   }
 
+  // ── Retry ──
+  window.retryLastMessage = function() {
+    if (history.length >= 2 && history[history.length - 1].role === 'assistant') {
+      history.pop();
+      saveHistory();
+    }
+    const lastUser = history.filter(m => m.role === 'user').pop();
+    if (lastUser) {
+      sendMessage(lastUser.content);
+    }
+  };
+
   // ── Event listeners ──
+
+  // Model selector toggle
+  modelSelectBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleModelDropdown();
+  });
+
+  document.addEventListener('click', () => {
+    if (modelDropdown) modelDropdown.style.display = 'none';
+  });
+
+  modelDropdown?.addEventListener('click', (e) => e.stopPropagation());
+
+  document.querySelectorAll('.model-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      updateModelUI(opt.dataset.model);
+      modelDropdown.style.display = 'none';
+    });
+  });
+
+  emptyModelSelect?.addEventListener('change', (e) => {
+    updateModelUI(e.target.value);
+  });
+
+  // Input
   input?.addEventListener('input', () => {
     autoResize();
     sendBtn.disabled = !input.value.trim() || isStreaming;
@@ -313,25 +508,186 @@ const { title = 'AI Mentor' } = Astro.props;
     }
   });
 
-  chipsContainer?.addEventListener('click', (e) => {
-    const chip = e.target.closest('.suggestion-chip');
-    if (chip) {
+  // Quick actions (empty state)
+  document.querySelectorAll('.quick-action-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const prompt = btn.dataset.prompt;
+      if (prompt) sendMessage(prompt);
+    });
+  });
+
+  // Context chips (chat mode)
+  document.querySelectorAll('.context-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
       const prompt = chip.dataset.prompt;
       if (prompt) sendMessage(prompt);
-    }
+    });
+  });
+
+  // Attachment button
+  document.getElementById('attach-btn')?.addEventListener('click', () => {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*,.pdf';
+    fileInput.onchange = (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const note = `[Uploaded: ${file.name}] Explain this for me.`;
+        input.value = note;
+        autoResize();
+        sendBtn.disabled = false;
+        input.focus();
+      };
+      reader.readAsDataURL(file);
+    };
+    fileInput.click();
   });
 
   // ── Init ──
-  if (loadHistory()) renderHistory();
+  const hasHistory = loadHistory();
+  if (hasHistory) {
+    toggleUI(true);
+    renderHistory();
+  }
   sendBtn.disabled = true;
+  updateModelUI(selectedModel);
 </script>
 
 <style>
+  /* ── Message Animations ── */
   .message-entrance {
-    animation: slide-up-fade 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: slide-up-fade 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
   @keyframes slide-up-fade {
     from { opacity: 0; transform: translateY(12px); }
     to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── User Bubble ── */
+  .user-bubble {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(99, 102, 241, 0.06));
+    border: 1px solid rgba(99, 102, 241, 0.15);
+    border-radius: 1rem 1rem 0.25rem 1rem;
+    padding: 0.875rem 1.125rem;
+    box-shadow: 0 2px 12px rgba(99, 102, 241, 0.08);
+  }
+
+  /* ── AI Bubble ── */
+  .ai-bubble {
+    background: rgba(13, 19, 33, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 1rem 1rem 1rem 0.25rem;
+    padding: 1rem 1.25rem;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.15);
+  }
+  .ai-bubble p {
+    margin-bottom: 0.5rem;
+  }
+  .ai-bubble p:last-child {
+    margin-bottom: 0;
+  }
+  .ai-bubble p code {
+    font-size: 0.8125rem;
+  }
+  .ai-bubble pre {
+    margin: 0.75rem 0;
+    position: relative;
+  }
+  .ai-bubble pre::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: linear-gradient(to bottom, rgba(99, 102, 241, 0.4), rgba(99, 102, 241, 0.1));
+    border-radius: 3px 0 0 3px;
+  }
+
+  /* ── AI Avatar ── */
+  .ai-avatar {
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.08);
+  }
+
+  /* ── Thinking Dots ── */
+  @keyframes bounce {
+    0%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-5px); }
+  }
+  .thinking-dots span {
+    animation: bounce 1.2s ease-in-out infinite;
+  }
+
+  /* ── Typewriter Cursor ── */
+  .typewriter-cursor {
+    display: inline-block;
+    vertical-align: text-bottom;
+    animation: blink-cursor 0.8s step-end infinite;
+  }
+  @keyframes blink-cursor {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  /* ── Gradient Glass Input ── */
+  .gradient-glass-input {
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+  .gradient-glass-input:focus-within {
+    border-color: rgba(99, 102, 241, 0.3);
+    box-shadow: 0 4px 32px rgba(99, 102, 241, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+
+  /* ── Model Dropdown ── */
+  #model-dropdown {
+    animation: dropdown-in 0.15s ease-out;
+  }
+  @keyframes dropdown-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Quick Action Buttons ── */
+  .quick-action-btn {
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .quick-action-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.06);
+  }
+  .quick-action-btn:active {
+    transform: translateY(0);
+  }
+
+  /* ── Scrollbar ── */
+  #chat-container::-webkit-scrollbar {
+    width: 6px;
+  }
+  #chat-container::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  #chat-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 3px;
+  }
+  #chat-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  /* ── Textarea scroll ── */
+  #mentor-input::-webkit-scrollbar {
+    width: 4px;
+  }
+  #mentor-input::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 2px;
+  }
+
+  /* ── Model Select Hover ── */
+  .model-select-btn:hover {
+    background: rgba(255, 255, 255, 0.03);
   }
 </style>

@@ -30,6 +30,17 @@ const existingProfile = user?.classLevel ? {
   subjects: settings.subjects || [],
 } : null;
 
+// Pre-compute data for the client-side script to avoid esbuild parse errors
+const examSubjectsData = Object.fromEntries(EXAM_DEFINITIONS.map(e => [e.key, e.subjects]));
+const streamSubjectsData = Object.fromEntries(Object.entries(STREAMS).map(([k, s]) => [k, s.subjects]));
+const preFillData = {
+  selectedExams: existingProfile?.selectedExams || [],
+  stream: existingProfile?.stream || '',
+  weakSubjects: existingProfile?.weakSubjects || [],
+  subjects: existingProfile?.subjects || [],
+};
+const onboardData = { examSubjects: examSubjectsData, streamSubjects: streamSubjectsData, preFill: preFillData };
+
 const CLASS_LEVELS = [
   { value: 'class_9', label: 'Class 9' },
   { value: 'class_10', label: 'Class 10' },
@@ -215,18 +226,10 @@ const CLASS_LEVELS = [
 </BaseLayout>
 
 <script is:inline>
-  window.__EXAM_SUBJECTS = {
-    {EXAM_DEFINITIONS.map(e => `${JSON.stringify(e.key)}: ${JSON.stringify(e.subjects)}`).join(',\n    ')}
-  };
-  window.__STREAM_SUBJECTS = {
-    {Object.entries(STREAMS).map(([k, s]) => `${JSON.stringify(k)}: ${JSON.stringify(s.subjects)}`).join(',\n    ')}
-  };
-  window.__PRE_FILL = {
-    selectedExams: {JSON.stringify(existingProfile?.selectedExams || [])},
-    stream: {JSON.stringify(existingProfile?.stream || '')},
-    weakSubjects: {JSON.stringify(existingProfile?.weakSubjects || [])},
-    subjects: {JSON.stringify(existingProfile?.subjects || [])},
-  };
+  window.__ONBOARDING = JSON.parse('{JSON.stringify(onboardData)}');
+  window.__EXAM_SUBJECTS = window.__ONBOARDING.examSubjects;
+  window.__STREAM_SUBJECTS = window.__ONBOARDING.streamSubjects;
+  window.__PRE_FILL = window.__ONBOARDING.preFill;
 </script>
 
 <script>

@@ -38,7 +38,7 @@ const entryDates = getMonthlyEntryDates(thisYear, thisMonth);
   <div class="h-full min-h-screen grid grid-cols-1 xl:grid-cols-3 overflow-hidden">
 
     <!-- Left Column (1/3) — Darker surface bg, scrollable -->
-    <section class="xl:col-span-1 border-r border-white/5 bg-[#0A0A0B] p-8 overflow-y-auto custom-scrollbar">
+    <section class="xl:col-span-1 border-r border-white/5 bg-[#0A0A0B] p-8 overflow-y-auto custom-scrollbar reveal-on-scroll">
       {!hasEntries && <GettingStarted />}
 
       <DashboardLeftColumn
@@ -62,7 +62,7 @@ const entryDates = getMonthlyEntryDates(thisYear, thisMonth);
     </section>
 
     <!-- Right Column (2/3) — Base bg color, scrollable, flex layout -->
-    <section class="xl:col-span-2 bg-[#050505] p-8 lg:p-12 overflow-y-auto flex flex-col custom-scrollbar">
+    <section class="xl:col-span-2 bg-[#050505] p-8 lg:p-12 overflow-y-auto flex flex-col custom-scrollbar reveal-on-scroll">
       <DashboardRightColumn
         totalHoursThisWeek={stats.totalHoursThisWeek}
         targetHoursPerWeek={stats.targetHoursPerWeek}

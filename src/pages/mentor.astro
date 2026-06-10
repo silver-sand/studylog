@@ -8,9 +8,9 @@ import 'katex/dist/katex.min.css';
   <!-- Main Content Wrapper -->
   <div class="flex-1 flex flex-col h-screen bg-[#050b18]">
     <!-- TopNavBar -->
-    <header class="h-16 w-full bg-[#050b18]/80 backdrop-blur-md border-b border-white/5 shadow-sm flex justify-between items-center px-6 shrink-0 z-30">
+    <header class="h-16 w-full bg-[#050b18]/80 backdrop-blur-md border-b border-white/[0.04] flex justify-between items-center px-6 shrink-0 z-30">
       <div class="flex items-center gap-4">
-        <h2 class="font-headline text-lg tracking-tight text-neutral-300 font-semibold">AI Mentor Session</h2>
+        <h2 class="font-headline text-lg tracking-tight text-neutral-300 font-semibold">AI Mentor</h2>
         <div class="h-4 w-px bg-white/10 hidden md:block"></div>
         <span class="px-2.5 py-1 rounded bg-indigo-500/10 text-indigo-400 font-label text-xs uppercase tracking-wider hidden md:inline-flex items-center gap-1.5 border border-indigo-500/20">
           <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></span>
@@ -25,30 +25,51 @@ import 'katex/dist/katex.min.css';
         <a href="/settings" class="p-2 text-neutral-500 hover:text-neutral-300 hover:bg-white/5 rounded-lg transition-all active:scale-95 duration-150">
           <span class="material-symbols-outlined">settings</span>
         </a>
-        <div class="h-8 w-8 ml-2 rounded-full bg-[#1a2235] border border-white/10 overflow-hidden shrink-0 flex items-center justify-center text-neutral-500 font-headline font-semibold text-sm">U</div>
+        <div class="h-8 w-8 ml-2 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/10 border border-indigo-500/20 overflow-hidden shrink-0 flex items-center justify-center text-indigo-400 font-headline font-semibold text-sm">U</div>
       </div>
     </header>
 
     <!-- Split Screen Layout -->
     <main class="flex-1 flex overflow-hidden">
       <!-- Left Panel: Past Sessions (30%) -->
-      <aside class="hidden md:flex flex-col w-[30%] min-w-[300px] max-w-[400px] border-r border-white/5 bg-[#0d1321]/30">
-        <div class="p-4 border-b border-white/5 flex justify-between items-center shrink-0">
-          <h3 class="font-label text-sm uppercase tracking-wider text-neutral-400">Past Sessions</h3>
-          <button class="p-1.5 text-neutral-500 hover:text-indigo-400 hover:bg-indigo-500/10 rounded transition-colors">
-            <span class="material-symbols-outlined text-[18px]">add</span>
+      <aside class="hidden md:flex flex-col w-[30%] min-w-[300px] max-w-[400px] border-r border-white/[0.04] bg-gradient-to-b from-[#0a1020] via-[#0d1321]/50 to-transparent reveal-on-scroll-left">
+        <!-- Sidebar Header -->
+        <div class="px-5 py-4 border-b border-white/[0.04] flex justify-between items-center shrink-0">
+          <div>
+            <h3 class="font-label text-xs uppercase tracking-widest text-neutral-500">Session History</h3>
+            <p class="text-[10px] text-neutral-700 mt-0.5">Your recent conversations</p>
+          </div>
+          <button class="p-1.5 text-neutral-500 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors" title="New session">
+            <span class="material-symbols-outlined text-[18px]">edit</span>
           </button>
         </div>
-        <div class="flex-1 overflow-y-auto p-3 space-y-2" id="past-sessions">
-          <!-- History items rendered by JS -->
-          <div class="flex items-center justify-center h-full">
-            <p class="text-xs text-neutral-500">Session history will appear here</p>
+
+        <!-- Sessions List -->
+        <div class="flex-1 overflow-y-auto py-3 px-3 space-y-1" id="past-sessions">
+          <div class="flex flex-col items-center justify-center h-full text-center px-6">
+            <div class="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/10 flex items-center justify-center mb-4">
+              <span class="material-symbols-outlined text-2xl text-indigo-400/60">history</span>
+            </div>
+            <p class="text-sm text-neutral-500 font-medium mb-1">No sessions yet</p>
+            <p class="text-[11px] text-neutral-700 leading-relaxed">Start a conversation and your session history will appear here.</p>
           </div>
+        </div>
+
+        <!-- Sidebar Footer -->
+        <div class="px-5 py-3 border-t border-white/[0.04] flex items-center gap-3">
+          <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500/20 to-purple-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-[14px] text-indigo-400" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-[11px] text-neutral-400 font-medium truncate">StudyLog Mentor</p>
+            <p class="text-[9px] text-neutral-700">AI-powered study assistant</p>
+          </div>
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500/60 shrink-0"></span>
         </div>
       </aside>
 
       <!-- Right Panel: Active Chat Canvas (70%) -->
-      <section class="flex-1 flex flex-col bg-[#050b18] relative">
+      <section class="flex-1 flex flex-col bg-[#050b18] relative reveal-on-scroll-right">
         <MentorChat />
       </section>
     </main>

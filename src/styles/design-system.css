@@ -15,6 +15,20 @@
   --ds-bg-active: #2a2a2e;      /* Active/pressed state */
   --ds-bg-overlay: rgba(5, 5, 5, 0.7);
 
+  /* ── Surface Depth Scale (Stitch 4-layer system) ── */
+  --ds-surface-1: #050505;        /* Deepest — page background */
+  --ds-surface-2: #0A0A0B;        /* Default card / sidebar */
+  --ds-surface-3: #141416;        /* Elevated card, modal, popover */
+  --ds-surface-4: #1D1D20;        /* Highest — hovered card, active element */
+
+  /* ── Gradient Accents ── */
+  --ds-gradient-primary: linear-gradient(135deg, #6366f1, #a78bfa);
+  --ds-gradient-accent: linear-gradient(135deg, #6366f1, #a78bfa);
+  --ds-gradient-warm: linear-gradient(135deg, #f59e0b, #f97316);
+  --ds-gradient-success: linear-gradient(135deg, #10b981, #34d399);
+  --ds-gradient-text: linear-gradient(to right, var(--ds-accent-400), #a78bfa);
+  --ds-gradient-glow: radial-gradient(ellipse at 50% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 60%);
+
   /* Text */
   --ds-text-primary: #E5E5E5;
   --ds-text-secondary: #c7c7c7;
@@ -34,7 +48,7 @@
   --ds-accent-100: #a4c9ff;
   --ds-accent-200: #93bfff;
   --ds-accent-300: #7ab0ff;
-  --ds-accent-400: #60a5fa;
+  --ds-accent-400: #818cf8;
   --ds-accent-500: #3b82f6;
   --ds-accent-600: #2563eb;
   --ds-accent-700: #1d4ed8;
@@ -165,10 +179,10 @@
   --ds-z-tooltip: 700;
 
 /* ── Study Rings — Signature Visual ── */
-  --ring-coverage: #60a5fa;
+  --ring-coverage: #818cf8;
   --ring-consistency: #ffc640;
   --ring-mastery: #bcc7de;
-  --ring-coverage-glow: rgba(96, 165, 250, 0.4);
+  --ring-coverage-glow: rgba(129, 140, 248, 0.4);
   --ring-consistency-glow: rgba(255, 198, 64, 0.4);
   --ring-mastery-glow: rgba(188, 199, 222, 0.3);
   --ring-size: 200px;
@@ -1534,6 +1548,48 @@ textarea.ds-input {
   animation: breathe 3s ease-in-out infinite;
 }
 
+/* ── Gradient text utility ── */
+.ds-gradient-text {
+  background: var(--ds-gradient-text);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.ds-gradient-text-accent {
+  background: var(--ds-gradient-accent);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Surface depth cards — Stitch-style ── */
+.ds-card-surface-3 {
+  background: var(--ds-surface-3);
+  border: 1px solid var(--ds-border-default);
+  border-radius: var(--ds-radius-xl);
+}
+.ds-card-surface-4 {
+  background: var(--ds-surface-4);
+  border: 1px solid var(--ds-border-strong);
+  border-radius: var(--ds-radius-xl);
+}
+.ds-card-gradient {
+  background: linear-gradient(135deg, var(--ds-surface-2), rgba(99, 102, 241, 0.04));
+  border: 1px solid var(--ds-accent-border);
+  border-radius: var(--ds-radius-xl);
+}
+
+/* ── Premium glow accent bar ── */
+.ds-glow-bar {
+  width: 3px;
+  height: 100%;
+  min-height: 2rem;
+  border-radius: 0 2px 2px 0;
+  background: var(--ds-gradient-primary);
+  box-shadow: 0 0 8px rgba(96, 165, 250, 0.4);
+  flex-shrink: 0;
+}
+
 /* ── Subject accent bar (left border color) ── */
 .subject-accent-bar {
   position: relative;
@@ -1554,4 +1610,234 @@ textarea.ds-input {
   display: inline-block;
   animation: count-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   font-variant-numeric: tabular-nums;
+}
+
+
+/* ==========================================================================
+   PHASE 8: PREMIUM ANIMATION LAYER
+   ========================================================================== */
+
+/* ── Scroll-triggered entrance ──
+   Usage: <div class="reveal-on-scroll">...</div>
+   Elements animate in when they enter the viewport.
+   Combined with stagger: add .animate-stagger > * inside a .reveal-on-scroll parent.
+*/
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal-on-scroll.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reveal-on-scroll-left {
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal-on-scroll-left.revealed {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.reveal-on-scroll-right {
+  opacity: 0;
+  transform: translateX(20px);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal-on-scroll-right.revealed {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.reveal-on-scroll-scale {
+  opacity: 0;
+  transform: scale(0.92);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal-on-scroll-scale.revealed {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ── Skeleton loading patterns ── */
+
+/* Base skeleton shimmer */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--ds-bg-surface) 25%,
+    var(--ds-bg-elevated) 37%,
+    var(--ds-bg-surface) 63%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--ds-radius-md);
+}
+
+/* Skeleton shapes */
+.skeleton-text {
+  height: 0.75rem;
+  margin-bottom: 0.5rem;
+  width: 100%;
+}
+.skeleton-text:last-child {
+  width: 60%;
+}
+.skeleton-text-sm {
+  height: 0.5rem;
+  margin-bottom: 0.375rem;
+}
+.skeleton-title {
+  height: 1rem;
+  width: 70%;
+  margin-bottom: 0.75rem;
+}
+.skeleton-avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.skeleton-thumbnail {
+  width: 4rem;
+  height: 3rem;
+  border-radius: var(--ds-radius-md);
+  flex-shrink: 0;
+}
+.skeleton-button {
+  height: 2.25rem;
+  width: 6rem;
+  border-radius: var(--ds-radius-md);
+}
+.skeleton-badge {
+  height: 1.25rem;
+  width: 3.5rem;
+  border-radius: var(--ds-radius-full);
+}
+.skeleton-card {
+  height: 8rem;
+  width: 100%;
+  border-radius: var(--ds-radius-xl);
+}
+
+/* Skeleton card layout — mimics a dashboard stat card */
+.skeleton-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: var(--ds-space-3);
+  background: var(--ds-bg-surface);
+  border: 1px solid var(--ds-border-default);
+  border-radius: var(--ds-radius-xl);
+}
+.skeleton-stat .skeleton-value {
+  height: 2rem;
+  width: 40%;
+}
+.skeleton-stat .skeleton-label {
+  height: 0.5rem;
+  width: 55%;
+}
+
+/* Skeleton row — mimics a table row or list item */
+.skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+}
+.skeleton-row + .skeleton-row {
+  border-top: 1px solid var(--ds-border-subtle);
+}
+
+/* ── Shine effect for buttons ── */
+.shine-button {
+  position: relative;
+  overflow: hidden;
+}
+.shine-button::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 70%
+  );
+  transform: translateX(-100%) rotate(25deg);
+  transition: transform 0.6s ease;
+}
+.shine-button:hover::after {
+  transform: translateX(100%) rotate(25deg);
+}
+
+/* ── Button ripple effect ── */
+.ripple-btn {
+  position: relative;
+  overflow: hidden;
+}
+.ripple-btn .ripple-effect {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(0);
+  animation: ripple-anim 0.6s ease-out;
+  pointer-events: none;
+}
+@keyframes ripple-anim {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* ── Page mount entrance ── */
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.page-enter {
+  animation: page-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ── Reduced motion respect ── */
+@media (prefers-reduced-motion: reduce) {
+  .reveal-on-scroll,
+  .reveal-on-scroll-left,
+  .reveal-on-scroll-right,
+  .reveal-on-scroll-scale {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .reveal-on-scroll.revealed,
+  .reveal-on-scroll-left.revealed,
+  .reveal-on-scroll-right.revealed,
+  .reveal-on-scroll-scale.revealed {
+    opacity: 1;
+    transform: none;
+  }
+  .skeleton,
+  .shimmer {
+    animation: none;
+    background: var(--ds-bg-elevated);
+  }
+  .animate-stagger > * {
+    opacity: 1 !important;
+    animation: none !important;
+  }
+  .shine-button::after {
+    display: none;
+  }
 }

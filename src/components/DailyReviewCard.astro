@@ -13,13 +13,13 @@ function mdToHtml(md: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
 
-  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-white">$1</strong>');
   html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
   html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
-  html = html.replace(/`(.+?)`/g, '<code>$1</code>');
+  html = html.replace(/`(.+?)`/g, '<code class="px-1.5 py-0.5 rounded-md bg-[#0a0f1a] text-indigo-300/80 text-xs font-mono border border-white/5">$1</code>');
   html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
   html = html.replace(/((?:<li>.*?<\/li>\n?)+)/g, '<ul>$1</ul>');
-  html = html.replace(/^---$/gm, '<hr>');
+  html = html.replace(/^---$/gm, '<hr class="my-3 border-white/5">');
   html = html.replace(/\n\n/g, '</p><p>');
   html = html.replace(/\n/g, '<br>');
 
@@ -39,9 +39,17 @@ const renderedContent = mdToHtml(review.content);
 
 <div class="daily-review-card">
   <div class="daily-review-header">
-    <h2 class="daily-review-title">Today's Review</h2>
+    <div class="flex items-center gap-2.5">
+      <div class="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+        <span class="material-symbols-outlined text-base text-indigo-400">auto_awesome</span>
+      </div>
+      <div>
+        <h2 class="text-xs font-bold text-white">AI Daily Review</h2>
+        <p class="text-[10px] text-neutral-500">Generated just now</p>
+      </div>
+    </div>
     {review.totalHours > 0 && (
-      <span class="hours-badge">{Math.round(review.totalHours * 10) / 10}h studied</span>
+      <span class="text-xs font-bold text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-lg">{Math.round(review.totalHours * 10) / 10}h studied</span>
     )}
   </div>
 
@@ -49,7 +57,7 @@ const renderedContent = mdToHtml(review.content);
 
   {review.insights.length > 0 && (
     <div class="insights-section">
-      <h3 class="section-label">Insights</h3>
+      <h3 class="section-label">💡 Insights</h3>
       <ul class="insights-list">
         {review.insights.map(insight => (
           <li>{insight}</li>
@@ -60,7 +68,7 @@ const renderedContent = mdToHtml(review.content);
 
   {review.subjects.length > 0 && (
     <div class="subjects-section">
-      <h3 class="section-label">Subjects</h3>
+      <h3 class="section-label">📚 Subjects Covered</h3>
       <div class="subjects-row">
         {review.subjects.map(subject => (
           <span class="subject-badge">{subject}</span>
@@ -71,7 +79,7 @@ const renderedContent = mdToHtml(review.content);
 
   {review.strengths.length > 0 && (
     <div class="strengths-section">
-      <h3 class="section-label">Strengths</h3>
+      <h3 class="section-label text-emerald-400">✅ Strengths</h3>
       <ul class="strengths-list">
         {review.strengths.map(s => (
           <li class="positive">{s}</li>
@@ -82,7 +90,7 @@ const renderedContent = mdToHtml(review.content);
 
   {review.weaknesses.length > 0 && (
     <div class="weaknesses-section">
-      <h3 class="section-label">To Improve</h3>
+      <h3 class="section-label text-amber-400">🎯 Areas to Improve</h3>
       <ul class="weaknesses-list">
         {review.weaknesses.map(w => (
           <li class="negative">{w}</li>
@@ -93,7 +101,7 @@ const renderedContent = mdToHtml(review.content);
 
   {review.recommendations.length > 0 && (
     <div class="recs-section">
-      <h3 class="section-label">Recommendations</h3>
+      <h3 class="section-label text-indigo-400">🎯 Recommendations</h3>
       <ul class="recs-list">
         {review.recommendations.map(r => (
           <li>{r}</li>
@@ -105,52 +113,40 @@ const renderedContent = mdToHtml(review.content);
 
 <style>
   .daily-review-card {
-    background: rgba(15, 23, 42, 0.8);
-    border: 1px solid rgba(51, 65, 85, 0.4);
-    border-radius: 0.75rem;
+    background: rgba(13, 19, 33, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 1rem;
     padding: 1.5rem;
+    backdrop-filter: blur(4px);
   }
   .daily-review-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 1rem;
-  }
-  .daily-review-title {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #64748b;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-  .hours-badge {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #93c5fd;
-    background: rgba(59, 130, 246, 0.1);
-    padding: 0.2rem 0.6rem;
-    border-radius: 0.375rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   }
   .daily-review-content :global(h2) {
-    color: #e2e8f0;
-    font-size: 1.05rem;
+    color: #f1f5f9;
+    font-size: 1rem;
     font-weight: 600;
-    margin-bottom: 0.5rem;
-    margin-top: 1rem;
+    margin-bottom: 0.35rem;
+    margin-top: 0.75rem;
   }
   .daily-review-content :global(h2:first-child) {
     margin-top: 0;
   }
   .daily-review-content :global(h1) {
-    color: #f1f5f9;
-    font-size: 1.25rem;
+    color: #f8fafc;
+    font-size: 1.15rem;
     font-weight: 700;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
   }
   .daily-review-content :global(p) {
     color: #94a3b8;
     line-height: 1.7;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
     font-size: 0.875rem;
   }
   .daily-review-content :global(ul) {
@@ -169,7 +165,7 @@ const renderedContent = mdToHtml(review.content);
     content: '';
     width: 4px;
     height: 4px;
-    background: #3b82f6;
+    background: rgba(99, 102, 241, 0.6);
     border-radius: 50%;
     position: absolute;
     left: 0.4rem;
@@ -190,7 +186,7 @@ const renderedContent = mdToHtml(review.content);
   .recs-section {
     margin-top: 1rem;
     padding-top: 0.75rem;
-    border-top: 1px solid rgba(51, 65, 85, 0.25);
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
   }
   .insights-list,
   .strengths-list,
@@ -206,7 +202,7 @@ const renderedContent = mdToHtml(review.content);
   .recs-list li {
     font-size: 0.825rem;
     color: #94a3b8;
-    padding: 0.2rem 0;
+    padding: 0.25rem 0;
     padding-left: 1rem;
     position: relative;
   }
@@ -221,13 +217,13 @@ const renderedContent = mdToHtml(review.content);
     border-radius: 50%;
     position: absolute;
     left: 0.25rem;
-    top: 0.55rem;
+    top: 0.6rem;
   }
   .strengths-list li.positive::before {
     background: #22c55e;
   }
   .weaknesses-list li.negative::before {
-    background: #ef4444;
+    background: #f59e0b;
   }
   .subjects-row {
     display: flex;
@@ -237,12 +233,12 @@ const renderedContent = mdToHtml(review.content);
   .subject-badge {
     display: inline-flex;
     align-items: center;
-    padding: 0.2rem 0.55rem;
+    padding: 0.2rem 0.6rem;
     border-radius: 0.375rem;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 500;
     background: rgba(99, 102, 241, 0.1);
     color: #a5b4fc;
-    border: 1px solid rgba(99, 102, 241, 0.2);
+    border: 1px solid rgba(99, 102, 241, 0.15);
   }
 </style>

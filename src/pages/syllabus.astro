@@ -23,12 +23,10 @@ interface ExamData {
 const settings = db.getSettings();
 const selectedExamKeys: string[] = settings.selectedExams?.length ? settings.selectedExams : ['JEE'];
 
-// Map selected exam keys to definitions, group by syllabusKey
 const userExamDefs = selectedExamKeys
   .map(key => EXAM_DEFINITIONS.find(e => e.key === key))
   .filter((e): e is (typeof EXAM_DEFINITIONS)[number] => !!e);
 
-// Group exams sharing a syllabusKey, merging their subjects
 const syllabusGroups = new Map<string, { primaryLabel: string; examKeys: string[]; subjects: Set<string> }>();
 for (const exam of userExamDefs) {
   if (!syllabusGroups.has(exam.syllabusKey)) {
@@ -44,11 +42,10 @@ for (const exam of userExamDefs) {
   }
 }
 
-// Build ExamData per syllabus group — filtered to only the user's active subjects
 const exams: ExamData[] = [...syllabusGroups.entries()].map(([syllabusKey, group]) => {
   const allSubjects = [...group.subjects];
   const activeSubjects = settings.subjects?.length ? settings.subjects : allSubjects;
-  db.seedSyllabusData(syllabusKey, allSubjects); // seed all to keep progress data
+  db.seedSyllabusData(syllabusKey, allSubjects);
   const progress = db.getSyllabusProgress(syllabusKey, activeSubjects);
   const chapters = db.getSyllabus(syllabusKey).filter(ch => activeSubjects.includes(ch.subject));
   const totalChapters = progress.reduce((s, p) => s + p.total, 0);
@@ -70,7 +67,6 @@ const defaultExam = exams[0];
 const defaultKey = defaultExam?.key;
 const filteredExams = exams;
 
-// Subject icon mapping
 const subjectIcon: Record<string, string> = {
   physics: 'bolt',
   chemistry: 'science',
@@ -84,87 +80,89 @@ const subjectIcon: Record<string, string> = {
 <BaseLayout title="Syllabus">
   <main class="min-h-screen pb-24 md:pb-8 bg-[#050b18]">
     <!-- Top bar -->
-    <header class="w-full h-16 flex justify-between items-center px-6 bg-[#0d1321] sticky top-0 z-40">
+    <header class="w-full h-16 flex justify-between items-center px-6 border-b border-white/[0.04] bg-[#050b18]/80 backdrop-blur-md sticky top-0 z-40">
       <div class="flex items-center gap-4">
-        <span class="md:hidden material-symbols-outlined text-[#60a5fa]">menu</span>
-        <h2 class="font-headline text-xl font-black text-[#60a5fa] tracking-tight">Syllabus</h2>
+        <span class="md:hidden material-symbols-outlined text-neutral-400">menu</span>
+        <h2 class="font-headline text-xl font-black text-white tracking-tight">Syllabus Tracker</h2>
       </div>
       <div class="flex items-center gap-4">
-        <div class="hidden sm:flex items-center bg-[#050b18] px-3 py-1.5 rounded-full border border-slate-800">
-          <span class="material-symbols-outlined text-slate-500 text-sm">search</span>
-          <input class="bg-transparent border-none focus:ring-0 text-sm text-slate-300 w-48 placeholder-slate-500" placeholder="Search chapters..." type="text" />
+        <div class="hidden sm:flex items-center bg-[#0d1321]/60 px-3 py-1.5 rounded-full border border-white/5">
+          <span class="material-symbols-outlined text-neutral-500 text-sm">search</span>
+          <input class="bg-transparent border-none focus:ring-0 text-sm text-neutral-300 w-48 placeholder-neutral-600" placeholder="Search chapters..." type="text" />
         </div>
         <div class="flex items-center gap-2">
-          <button class="hover:bg-slate-800 rounded-full p-2 transition-all active:opacity-80">
-            <span class="material-symbols-outlined text-slate-400">notifications</span>
-          </button>
-          <button class="hover:bg-slate-800 rounded-full p-2 transition-all active:opacity-80">
-            <span class="material-symbols-outlined text-slate-400">account_circle</span>
-          </button>
+          <a href="/settings" class="hover:bg-white/5 rounded-full p-2 transition-all active:opacity-80">
+            <span class="material-symbols-outlined text-neutral-500">notifications</span>
+          </a>
+          <a href="/settings" class="hover:bg-white/5 rounded-full p-2 transition-all active:opacity-80">
+            <span class="material-symbols-outlined text-neutral-500">settings</span>
+          </a>
         </div>
       </div>
     </header>
 
     <div class="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
       {filteredExams.length === 0 ? (
-        <div class="bg-[#0d1321] border border-slate-800 rounded-2xl p-12 text-center">
-          <span class="material-symbols-outlined text-5xl text-slate-600 mb-4">assignment</span>
-          <p class="text-lg font-semibold text-white">No exams configured</p>
-          <p class="text-sm text-slate-400 mt-2">Select your exams in Settings to start tracking syllabus progress.</p>
-          <a href="/settings" class="inline-block mt-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-6 rounded-lg transition-all active:scale-95">
+        <div class="obsidian-glass rounded-2xl p-12 text-center card-lift reveal-on-scroll">
+          <div class="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mx-auto mb-5">
+            <span class="material-symbols-outlined text-3xl text-indigo-400">assignment</span>
+          </div>
+          <p class="text-lg font-semibold text-white mb-2">No exams configured</p>
+          <p class="text-sm text-neutral-500 mt-2 max-w-sm mx-auto">Select your exams in Settings to start tracking syllabus progress and chapter completion.</p>
+          <a href="/settings" class="inline-block mt-6 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-6 rounded-xl transition-all active:scale-95 shadow-lg shadow-indigo-500/20 glow-button">
             Go to Settings
           </a>
         </div>
       ) : (
-        filteredExams.map((exam) => {
+        filteredExams.map((exam, examIdx) => {
           const circumference = 440;
           const offset = circumference - (exam.overallPercent / 100) * circumference;
           return (
-          <div class="space-y-8" key={exam.key} data-exam-key={exam.key}>
+          <div class="space-y-8 animate-stagger" style={`--stagger-index:${examIdx}`} key={exam.key} data-exam-key={exam.key}>
             <!-- Overall Summary Card -->
-            <section class="relative overflow-hidden bg-[#0d1321] rounded-2xl p-6 md:p-8 border border-slate-800 shadow-2xl">
+            <section class="relative overflow-hidden ds-card-gradient rounded-2xl p-6 md:p-8 card-lift reveal-on-scroll">
               <div class="relative z-10 grid md:grid-cols-2 gap-8 items-center">
                 <div>
-                  <span class="text-indigo-400 font-bold text-xs uppercase tracking-[0.2em] mb-2 block">Preparation Status</span>
-                  <h2 class="text-3xl md:text-4xl font-black text-white mb-4">You've covered {exam.overallPercent}% of your syllabus.</h2>
-                  <p class="text-slate-400 mb-6 max-w-md">Keep up the momentum! You've completed {exam.completedChapters} of {exam.totalChapters} chapters.</p>
-                  <div class="flex gap-4">
-                    <a href="/daily" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-6 rounded-lg transition-all active:scale-95 flex items-center gap-2">
+                  <span class="text-indigo-400 font-bold text-[10px] uppercase tracking-[0.2em] mb-3 block">Preparation Status</span>
+                  <h2 class="text-3xl md:text-4xl font-black text-white mb-3">You've covered {exam.overallPercent}% of your syllabus.</h2>
+                  <p class="text-neutral-400 mb-6 max-w-md">Keep up the momentum! You've completed {exam.completedChapters} of {exam.totalChapters} chapters.</p>
+                  <div class="flex gap-3">
+                    <a href="/daily" class="bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-400 text-white font-bold py-2.5 px-6 rounded-xl transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-indigo-500/20 glow-button">
                       <span class="material-symbols-outlined text-sm">rocket_launch</span>
                       Resume Studying
                     </a>
-                    <a href="/weekly" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-2.5 px-6 rounded-lg transition-all">
-                      View Analytics
+                    <a href="/dashboard" class="bg-[#0d1321] hover:bg-[#1a2440] text-neutral-300 font-bold py-2.5 px-6 rounded-xl transition-all border border-white/5">
+                      Dashboard
                     </a>
                   </div>
                 </div>
                 <div class="flex justify-center md:justify-end">
                   <div class="relative w-40 h-40 flex items-center justify-center">
                     <svg class="w-full h-full transform -rotate-90">
-                      <circle class="text-slate-800" cx="80" cy="80" fill="transparent" r="70" stroke="currentColor" stroke-width="12"></circle>
-                      <circle class="text-indigo-500 progress-ring-circle" cx="80" cy="80" fill="transparent" r="70" stroke="currentColor" stroke-dasharray={circumference} stroke-dashoffset={offset} stroke-linecap="round" stroke-width="12"></circle>
+                      <circle class="text-white/5" cx="80" cy="80" fill="transparent" r="70" stroke="currentColor" stroke-width="12"></circle>
+                      <circle class="text-indigo-500 progress-ring-circle" cx="80" cy="80" fill="transparent" r="70" stroke="currentColor" stroke-dasharray={circumference} stroke-dashoffset={offset} stroke-linecap="round" stroke-width="12" style="filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.3));"></circle>
                     </svg>
                     <div class="absolute flex flex-col items-center">
-                      <span class="text-4xl font-black text-white">{exam.overallPercent}%</span>
-                      <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Complete</span>
+                      <span class="text-4xl font-black text-white" id="overall-pct">{exam.overallPercent}%</span>
+                      <span class="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Complete</span>
                     </div>
                   </div>
                 </div>
               </div>
-              <div class="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-indigo-600/10 blur-[100px] rounded-full"></div>
+              <div class="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-indigo-500/10 blur-[100px] rounded-full pointer-events-none"></div>
             </section>
 
-            <!-- Class Level Filter (for CBSE 11th/12th separation) -->
+            <!-- Class Level Filter -->
             <div class="flex items-center gap-3" data-class-filter>
-              <span class="text-xs font-bold uppercase tracking-widest text-slate-500">Class:</span>
-              <button class="px-3 py-1.5 rounded-lg text-xs font-medium border border-indigo-500 bg-indigo-500/10 text-indigo-400 transition-all" data-level="all">All</button>
-              <button class="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-700 text-[#94a3b8] hover:border-slate-500 transition-all" data-level="11">Class 11</button>
-              <button class="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-700 text-[#94a3b8] hover:border-slate-500 transition-all" data-level="12">Class 12</button>
+              <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-500">Filter:</span>
+              <button class="px-3 py-1.5 rounded-lg text-[11px] font-medium border border-indigo-500 bg-indigo-500/10 text-indigo-400 transition-all" data-level="all">All</button>
+              <button class="px-3 py-1.5 rounded-lg text-[11px] font-medium border border-white/10 text-neutral-400 hover:border-white/20 transition-all" data-level="11">Class 11</button>
+              <button class="px-3 py-1.5 rounded-lg text-[11px] font-medium border border-white/10 text-neutral-400 hover:border-white/20 transition-all" data-level="12">Class 12</button>
             </div>
 
             <!-- Subjects Grid -->
-            <div class="space-y-6">
-              {exam.progress.map((p) => {
+            <div class="space-y-5" id="progress-tracker">
+              {exam.progress.map((p, subjIdx) => {
                 const subjectChapters = exam.chapters.filter(ch => ch.subject === p.subject);
                 const sName = p.subject.toLowerCase();
                 const icon = subjectIcon[sName] || 'school';
@@ -173,38 +171,43 @@ const subjectIcon: Record<string, string> = {
                   sName.includes('math') ? '#f59e0b' :
                   sName.includes('biology') ? '#ec4899' : '#6366f1';
                 return (
-                  <div class="bg-[#0d1321] border border-slate-800 rounded-2xl overflow-hidden shadow-lg transition-all hover:border-indigo-500/30 subject-section">
-                    <button class="w-full flex flex-col md:flex-row md:items-center justify-between p-6 gap-4 text-left subject-toggle">
-                      <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center" style={`background: ${subjColor}15;`}>
-                          <span class="material-symbols-outlined" style={`color: ${subjColor}; font-variation-settings: 'FILL' 1;`}>{icon}</span>
-                        </div>
-                        <div>
-                          <h3 class="text-xl font-bold text-white">{p.subject}</h3>
-                          <p class="text-sm text-slate-500">{p.completed} of {p.total} Chapters Completed</p>
-                        </div>
-                      </div>
-                      <div class="flex-1 max-w-md w-full">
-                        <div class="flex justify-between text-xs font-bold mb-2">
-                          <span class="text-indigo-400">PROGRESS</span>
-                          <span class="text-slate-400">{p.weightedPercent}%</span>
-                        </div>
-                        <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                          <div class="h-full rounded-full progress-fill-anim" style={`width: ${p.weightedPercent}%; background: ${subjColor};`}></div>
-                        </div>
-                      </div>
-                      <span class="material-symbols-outlined text-indigo-500 transition-transform duration-300 subject-chevron">expand_more</span>
-                    </button>
-                    <div class="subject-content px-6 pb-8">
-                      <div class="border-t border-slate-800/50 pt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {subjectChapters.length === 0 ? (
-                          <div class="col-span-full py-8 flex flex-col items-center justify-center text-slate-500">
-                            <span class="material-symbols-outlined text-3xl mb-2">info</span>
-                            <p class="text-sm">No chapters loaded yet.</p>
+                  <div class="card-lift reveal-on-scroll" style={`--stagger-index:${subjIdx}`} key={p.subject}>
+                    <div class="bg-[#0d1321]/40 border border-white/5 rounded-2xl overflow-hidden transition-all hover:border-indigo-500/20 subject-section">
+                      <button class="w-full flex flex-col md:flex-row md:items-center justify-between p-5 md:p-6 gap-4 text-left subject-toggle group">
+                        <div class="flex items-center gap-4">
+                          <div class="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: `${subjColor}15` }}>
+                            <span class="material-symbols-outlined" style={{ color: subjColor, fontVariationSettings: "'FILL' 1" }}>{icon}</span>
                           </div>
-                        ) : (
-                          subjectChapters.map(ch => <ChapterList chapter={ch} />)
-                        )}
+                          <div>
+                            <h3 class="text-lg font-bold text-white group-hover:text-indigo-400 transition-colors">{p.subject}</h3>
+                            <p class="text-sm text-neutral-500">{p.completed} of {p.total} chapters completed</p>
+                          </div>
+                        </div>
+                        <div class="flex-1 max-w-xs w-full md:ml-4">
+                          <div class="flex justify-between text-[10px] font-bold mb-2">
+                            <span class="text-indigo-400 uppercase tracking-wider">Progress</span>
+                            <span class="text-neutral-500 font-mono">{p.weightedPercent}%</span>
+                          </div>
+                          <div class="w-full bg-white/5 h-2 rounded-full overflow-hidden">
+                            <div class="h-full rounded-full progress-fill-anim" style={{ width: `${p.weightedPercent}%`, background: subjColor }}></div>
+                          </div>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0">
+                          <span class="text-[10px] text-neutral-500 font-mono" id="subject-completed">{p.completed}/{p.total}</span>
+                          <span class="material-symbols-outlined text-indigo-400 transition-transform duration-300 subject-chevron">expand_more</span>
+                        </div>
+                      </button>
+                      <div class="subject-content px-6 pb-7">
+                        <div class="border-t border-white/[0.04] pt-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                          {subjectChapters.length === 0 ? (
+                            <div class="col-span-full py-8 flex flex-col items-center justify-center text-neutral-500">
+                              <span class="material-symbols-outlined text-3xl mb-2">info</span>
+                              <p class="text-sm">No chapters loaded yet.</p>
+                            </div>
+                          ) : (
+                            subjectChapters.map(ch => <ChapterList chapter={ch} />)
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -220,7 +223,7 @@ const subjectIcon: Record<string, string> = {
 </BaseLayout>
 
 <script>
-  // ── STATUS WEIGHTS (mirrors src/types/review.ts) ──
+  // ── STATUS WEIGHTS ──
   const STATUS_WEIGHTS = {
     not_started: 0,
     studied: 0.2,
@@ -245,14 +248,15 @@ const subjectIcon: Record<string, string> = {
 
     const weightedPercent = total > 0 ? Math.round((sumWeight / total) * 100) : 0;
 
-    // Update progress bar
     const progressBar = section.querySelector('.progress-fill-anim');
-    const percentText = section.querySelector('.flex.justify-between .text-slate-400');
-    const completedText = section.querySelector('.text-sm.text-slate-500');
+    const percentText = section.querySelector('.flex.justify-between .text-neutral-500.font-mono');
+    const completedText = section.querySelector('.text-sm.text-neutral-500');
+    const countBadge = section.querySelector('[id="subject-completed"]');
 
     if (progressBar) progressBar.style.width = `${weightedPercent}%`;
     if (percentText) percentText.textContent = `${weightedPercent}%`;
-    if (completedText) completedText.textContent = `${masteredCount} of ${total} Chapters Completed`;
+    if (completedText) completedText.textContent = `${masteredCount} of ${total} chapters completed`;
+    if (countBadge) countBadge.textContent = `${masteredCount}/${total}`;
   }
 
   // ── Recalculate the overall exam hero section ──
@@ -278,18 +282,17 @@ const subjectIcon: Record<string, string> = {
 
     const overallPercent = totalChapters > 0 ? Math.round((totalWeightedSum / totalChapters) * 100) : 0;
 
-    // Update hero: heading
     const heroTitle = examContainer.querySelector('h2');
-    const heroSubtext = examContainer.querySelector('.text-slate-400.mb-6');
+    const heroSubtext = examContainer.querySelector('.text-neutral-400.mb-6');
     const ringCircle = examContainer.querySelector('.progress-ring-circle');
-    const ringPercentText = examContainer.querySelector('.absolute .text-4xl');
+    const ringPercentText = document.getElementById('overall-pct');
 
     if (heroTitle) heroTitle.textContent = `You've covered ${overallPercent}% of your syllabus.`;
     if (heroSubtext) heroSubtext.textContent = `Keep up the momentum! You've completed ${totalMastered} of ${totalChapters} chapters.`;
     if (ringPercentText) ringPercentText.textContent = `${overallPercent}%`;
 
     if (ringCircle) {
-      const circumference = 440; // 2 * PI * 70
+      const circumference = 440;
       const offset = circumference - (overallPercent / 100) * circumference;
       ringCircle.style.strokeDashoffset = offset;
     }
@@ -314,15 +317,14 @@ const subjectIcon: Record<string, string> = {
     });
   });
 
-  // ── Chapter status toggle (cycles through statuses) ──
+  // ── Chapter status toggle ──
   const STATUS_CYCLE = ['not_started', 'studied', 'revision_1', 'revision_2', 'revision_3', 'mastered'];
-  const STATUS_ICONS = ['radio_button_unchecked', 'radio_button_unchecked', 'radio_button_unchecked', 'radio_button_unchecked', 'radio_button_unchecked', 'check_circle'];
   const STATUS_COLORS = {
     not_started: { icon: '#475569', label: '#475569' },
     studied: { icon: '#f59e0b', label: '#f59e0b' },
-    revision_1: { icon: '#3b82f6', label: '#3b82f6' },
-    revision_2: { icon: '#8b5cf6', label: '#8b5cf6' },
-    revision_3: { icon: '#ec4899', label: '#ec4899' },
+    revision_1: { icon: '#818cf8', label: '#818cf8' },
+    revision_2: { icon: '#a78bfa', label: '#a78bfa' },
+    revision_3: { icon: '#e879f9', label: '#e879f9' },
     mastered: { icon: '#22c55e', label: '#22c55e' },
   };
   const STATUS_LABELS = {
@@ -334,9 +336,9 @@ const subjectIcon: Record<string, string> = {
     mastered: 'Completed',
   };
   const STATUS_BG = {
-    not_started: 'bg-slate-800 text-slate-500',
+    not_started: 'bg-slate-800/50 text-slate-500',
     studied: 'bg-yellow-500/10 text-yellow-500',
-    revision_1: 'bg-blue-500/10 text-blue-400',
+    revision_1: 'bg-indigo-500/10 text-indigo-400',
     revision_2: 'bg-purple-500/10 text-purple-400',
     revision_3: 'bg-pink-500/10 text-pink-400',
     mastered: 'bg-emerald-500/10 text-emerald-400',
@@ -359,7 +361,6 @@ const subjectIcon: Record<string, string> = {
         });
         if (!res.ok) throw new Error('Update failed');
 
-        // Update visual state
         item.dataset.status = nextStatus;
         const icon = item.querySelector('.chapter-icon');
         const badge = item.querySelector('.chapter-badge');
@@ -372,14 +373,13 @@ const subjectIcon: Record<string, string> = {
           badge.textContent = STATUS_LABELS[nextStatus as keyof typeof STATUS_LABELS];
           badge.className = `chapter-badge text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wider ${STATUS_BG[nextStatus as keyof typeof STATUS_BG]}`;
         }
-        // Recalculate parent subject section + overall exam progress
+
         const section = item.closest('.subject-section');
         if (section) recalculateSubjectProgress(section);
 
         const examContainer = item.closest('[data-exam-key]');
         if (examContainer) recalculateOverallProgress(examContainer);
 
-        // Notify other components (e.g., DailyActionCard)
         document.dispatchEvent(new CustomEvent('syllabus-updated'));
       } catch (err) {
         // Revert on error
@@ -396,10 +396,7 @@ const subjectIcon: Record<string, string> = {
       const name = item.querySelector('.chapter-name')?.textContent?.toLowerCase() || '';
       item.style.display = name.includes(query) ? '' : 'none';
     });
-    // Show/hide empty subject sections
     document.querySelectorAll('.subject-section').forEach(section => {
-      const visible = section.querySelectorAll('.chapter-item[style*="display: none"]').length === 0;
-      // Only hide if ALL items in section are hidden
       const totalItems = section.querySelectorAll('.chapter-item').length;
       const hiddenItems = section.querySelectorAll('.chapter-item[style*="display: none"]').length;
       if (totalItems > 0 && hiddenItems === totalItems) {
@@ -417,17 +414,15 @@ const subjectIcon: Record<string, string> = {
       if (!container) return;
       const level = btn.dataset.level;
 
-      // Update button states within this exam container
       const filterBar = container.querySelector('[data-class-filter]');
       if (!filterBar) return;
       filterBar.querySelectorAll('button').forEach(b => {
         b.classList.remove('border-indigo-500', 'bg-indigo-500/10', 'text-indigo-400');
-        b.classList.add('border-slate-700', 'text-[#94a3b8]');
+        b.classList.add('border-white/10', 'text-neutral-400');
       });
-      btn.classList.remove('border-slate-700', 'text-[#94a3b8]');
+      btn.classList.remove('border-white/10', 'text-neutral-400');
       btn.classList.add('border-indigo-500', 'bg-indigo-500/10', 'text-indigo-400');
 
-      // Show/hide chapters based on class level
       container.querySelectorAll('.chapter-item').forEach(item => {
         const cls = item.dataset.classLevel || '';
         if (level === 'all' || !cls || cls === level) {
@@ -437,7 +432,6 @@ const subjectIcon: Record<string, string> = {
         }
       });
 
-      // Show/hide empty subject sections
       container.querySelectorAll('.subject-section').forEach(section => {
         const items = section.querySelectorAll('.chapter-item');
         const visible = Array.from(items).some(item => item.style.display !== 'none');
@@ -456,10 +450,11 @@ const subjectIcon: Record<string, string> = {
   }
   .chapter-item {
     cursor: pointer;
-    transition: opacity 0.2s, border-color 0.2s;
+    transition: opacity 0.2s, border-color 0.2s, background 0.2s;
   }
   .chapter-item:hover {
-    border-color: rgba(99, 102, 241, 0.5) !important;
+    border-color: rgba(99, 102, 241, 0.4) !important;
+    background: rgba(99, 102, 241, 0.03);
   }
   .subject-content {
     transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
@@ -470,7 +465,15 @@ const subjectIcon: Record<string, string> = {
   .rotate-180 {
     transform: rotate(180deg);
   }
+  .glow-button {
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+    transition: all 0.3s ease;
+  }
+  .glow-button:hover {
+    box-shadow: 0 0 30px rgba(99, 102, 241, 0.5);
+    transform: translateY(-2px);
+  }
   ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: #050b18; }
-  ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 10px; }
 </style>

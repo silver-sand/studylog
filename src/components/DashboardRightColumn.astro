@@ -100,9 +100,9 @@ const insight = getInsight();
   </div>
 
   <!-- 2-Column Grid: Today's Quests + Weekly Hours -->
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6" style="--stagger-index:1">
     <!-- Today's Quests -->
-    <div class="obsidian-glass rounded-2xl p-6">
+    <div class="ds-card-gradient rounded-2xl p-6 card-lift">
       <div class="flex items-center justify-between mb-6">
         <h3 class="text-sm font-bold text-white flex items-center gap-2">
           <span class="material-symbols-outlined text-indigo-400 text-lg">checklist</span>
@@ -114,7 +114,7 @@ const insight = getInsight();
     </div>
 
     <!-- Weekly Hours Bar Chart -->
-    <div class="obsidian-glass rounded-2xl p-6">
+    <div class="obsidian-glass rounded-2xl p-6 card-lift">
       <div class="flex items-center justify-between mb-6">
         <h3 class="text-sm font-bold text-white flex items-center gap-2">
           <span class="material-symbols-outlined text-indigo-400 text-lg">timer</span>
@@ -146,7 +146,7 @@ const insight = getInsight();
   </div>
 
   <!-- Weekly Insight -->
-  <div class="obsidian-glass rounded-2xl p-6 flex items-start gap-5 border-l-4 border-indigo-500">
+  <div class="obsidian-glass rounded-2xl p-6 flex items-start gap-5 border-l-4 border-indigo-500 card-lift" style="--stagger-index:2">
     <div class="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center shrink-0">
       <span class="material-symbols-outlined text-indigo-400 text-2xl filled-icon">lightbulb</span>
     </div>
@@ -159,30 +159,30 @@ const insight = getInsight();
   </div>
 
   <!-- Subject Stats Bento Grid -->
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-    {subjectGrades.length > 0 ? subjectGrades.slice(0, 3).map((sg) => (
-      <div class="p-4 obsidian-glass rounded-2xl">
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4" style="--stagger-index:3">
+    {subjectGrades.length > 0 ? subjectGrades.slice(0, 3).map((sg, i) => (
+      <div class="p-4 ds-card-gradient rounded-2xl card-lift" style={`--stagger-index:${i}`}>
         <p class="text-[10px] text-neutral-500 uppercase tracking-widest mb-1">{sg.subject}</p>
         <p class="text-xl font-bold text-white">{sg.letter}</p>
       </div>
     )) : (
       <>
-        <div class="p-4 obsidian-glass rounded-2xl">
+        <div class="p-4 obsidian-glass rounded-2xl" style="--stagger-index:0">
           <p class="text-[10px] text-neutral-500 uppercase tracking-widest mb-1">Physics</p>
           <p class="text-xl font-bold text-neutral-600">--</p>
         </div>
-        <div class="p-4 obsidian-glass rounded-2xl">
+        <div class="p-4 obsidian-glass rounded-2xl" style="--stagger-index:1">
           <p class="text-[10px] text-neutral-500 uppercase tracking-widest mb-1">Maths</p>
           <p class="text-xl font-bold text-neutral-600">--</p>
         </div>
-        <div class="p-4 obsidian-glass rounded-2xl">
+        <div class="p-4 obsidian-glass rounded-2xl" style="--stagger-index:2">
           <p class="text-[10px] text-neutral-500 uppercase tracking-widest mb-1">Chemistry</p>
           <p class="text-xl font-bold text-neutral-600">--</p>
         </div>
       </>
     )}
     <!-- Avg Score always shown -->
-    <div class="p-4 obsidian-glass rounded-2xl">
+    <div class="p-4 ds-card-gradient rounded-2xl card-lift" style="--stagger-index:4">
       <p class="text-[10px] text-neutral-500 uppercase tracking-widest mb-1">Avg Score</p>
       {subjectGrades.length > 0 ? (
         <div class="flex items-center gap-1 text-emerald-400">
@@ -202,8 +202,8 @@ const insight = getInsight();
   </div>
 
   <!-- Focus CTA -->
-  <div class="mt-auto pt-4">
-    <a href="/timer" class="w-full bg-indigo-500 hover:bg-indigo-400 text-white font-bold text-sm py-3 rounded-xl flex items-center justify-center gap-3 glow-button tracking-widest uppercase shadow-lg transition-all active:scale-[0.98] no-underline">
+  <div class="mt-auto pt-4" style="--stagger-index:5">
+    <a href="/timer" class="w-full bg-indigo-500 hover:bg-indigo-400 text-white font-bold text-sm py-3 rounded-xl flex items-center justify-center gap-3 glow-button pulse-glow tracking-widest uppercase shadow-lg transition-all active:scale-[0.98] no-underline">
       <span class="material-symbols-outlined">rocket_launch</span>
       START FOCUS SESSION
     </a>

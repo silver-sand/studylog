@@ -34,14 +34,54 @@ const showAuthPopup = false;
   <body class="bg-[#050505] text-[#E5E5E5] antialiased min-h-screen font-sans">
     <div class="flex min-h-screen">
       <Sidebar currentPath={Astro.url.pathname} user={user} />
-      <main class="flex-1 ml-0 md:ml-20 lg:ml-64 min-w-0">
+      <main class="flex-1 ml-0 md:ml-20 lg:ml-64 min-w-0 pb-[80px] md:pb-0 page-enter">
         <slot />
       </main>
     </div>
 
     <AuthPopup />
 
-    <style>
+    <script>
+      // ── Scroll-triggered reveal: IntersectionObserver ──
+      // Watches .reveal-on-scroll (and -left, -right, -scale) elements
+      // and adds .revealed when they enter the viewport.
+      // Also animates staggered children within a revealed container.
+      const observer = new IntersectionObserver(
+        entries => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('revealed');
+              observer.unobserve(entry.target);
+            }
+          }
+        },
+        { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+      );
+
+      document.querySelectorAll(
+        '.reveal-on-scroll, .reveal-on-scroll-left, .reveal-on-scroll-right, .reveal-on-scroll-scale'
+      ).forEach(el => observer.observe(el));
+
+      // ── Ripple effect for .ripple-btn ──
+      document.addEventListener('click', e => {
+        const btn = e.target.closest('.ripple-btn');
+        if (!btn) return;
+        const rect = btn.getBoundingClientRect();
+        const ripple = document.createElement('span');
+        ripple.className = 'ripple-effect';
+        const size = Math.max(rect.width, rect.height);
+        ripple.style.width = ripple.style.height = size + 'px';
+        ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+        ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+        btn.appendChild(ripple);
+        ripple.addEventListener('animationend', () => ripple.remove());
+      });
+
+      // ── Page enter animation ──
+      document.querySelector('.page-enter')?.classList.add('page-enter');
+    </script>
+
+    <style is:global>
       /* Base styles are in design-system.css — this file only customizes Astro layout */
     </style>
   </body>

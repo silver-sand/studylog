@@ -3,46 +3,117 @@ export interface Props {
   label: string;
   value: string | number;
   subtext?: string;
+  icon?: string;
+  trend?: { direction: 'up' | 'down' | 'neutral'; value: string };
+  gradient?: boolean;
 }
 
-const { label, value, subtext } = Astro.props;
+const { label, value, subtext, icon, trend, gradient = false } = Astro.props;
+const id = `stat-${Math.random().toString(36).slice(2, 7)}`;
 ---
 
-<div class="stat-card group">
-  <p class="stat-label">{label}</p>
-  <p class="stat-value">{value}</p>
+<div class:list={['stat-card card-lift', { 'stat-card-gradient': gradient }]}>
+  <div class="stat-header">
+    <p class="stat-label">{label}</p>
+    {icon && (
+      <span class="material-symbols-outlined stat-icon">{icon}</span>
+    )}
+  </div>
+  <div class="stat-value-row">
+    <p class="stat-value count-up" id={id}>{value}</p>
+    {trend && (
+      <span class:list={['stat-trend', `stat-trend--${trend.direction}`]}>
+        {trend.direction === 'up' && (
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="18 15 12 9 6 15"/>
+          </svg>
+        )}
+        {trend.direction === 'down' && (
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        )}
+        {trend.value}
+      </span>
+    )}
+  </div>
   {subtext && <p class="stat-subtext">{subtext}</p>}
 </div>
 
 <style>
   .stat-card {
-    background: #0f172a;
-    border: 1px solid rgba(51, 65, 85, 0.4);
-    border-radius: 0.75rem;
-    padding: 1.25rem;
-    transition: border-color 0.15s;
+    background: var(--ds-bg-surface);
+    border: 1px solid var(--ds-border-default);
+    border-radius: var(--ds-radius-lg);
+    padding: var(--ds-space-3);
+    transition: border-color var(--ds-transition-base), box-shadow var(--ds-transition-base);
+    position: relative;
+    overflow: hidden;
   }
   .stat-card:hover {
-    border-color: rgba(51, 65, 85, 0.8);
+    border-color: var(--ds-border-strong);
+    box-shadow: var(--ds-shadow-md);
+  }
+  .stat-card-gradient {
+    background: linear-gradient(135deg, var(--ds-bg-surface), rgba(99, 102, 241, 0.04));
+    border-color: var(--ds-accent-border);
+  }
+  .stat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--ds-space-1);
   }
   .stat-label {
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: #64748b;
+    font-size: var(--ds-text-xs);
+    font-weight: var(--ds-weight-medium);
+    color: var(--ds-text-tertiary);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 0.5rem;
+    letter-spacing: var(--ds-tracking-uppercase);
+  }
+  .stat-icon {
+    font-size: 1rem;
+    color: var(--ds-text-muted);
+  }
+  .stat-value-row {
+    display: flex;
+    align-items: center;
+    gap: var(--ds-space-1);
   }
   .stat-value {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #f1f5f9;
-    font-family: 'JetBrains Mono', monospace;
+    font-size: var(--ds-text-2xl);
+    font-weight: var(--ds-weight-bold);
+    color: var(--ds-text-primary);
+    font-family: var(--ds-font-mono);
     line-height: 1.2;
+    letter-spacing: var(--ds-tracking-tight);
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    font-size: var(--ds-text-xs);
+    font-weight: var(--ds-weight-semibold);
+    padding: 2px 6px;
+    border-radius: var(--ds-radius-full);
+    line-height: 1;
+  }
+  .stat-trend--up {
+    color: var(--ds-success-text);
+    background: var(--ds-success-bg);
+  }
+  .stat-trend--down {
+    color: var(--ds-danger-text);
+    background: var(--ds-danger-bg);
+  }
+  .stat-trend--neutral {
+    color: var(--ds-text-tertiary);
+    background: transparent;
   }
   .stat-subtext {
-    font-size: 0.75rem;
-    color: #475569;
-    margin-top: 0.25rem;
+    font-size: var(--ds-text-xs);
+    color: var(--ds-text-muted);
+    margin-top: var(--ds-space-1);
   }
 </style>
