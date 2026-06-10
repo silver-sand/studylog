@@ -111,7 +111,7 @@ const settingsBridgeData = {
               <input class="w-full bg-[#050b18] border border-slate-700 rounded-lg px-4 py-2 text-[#f1f5f9] focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" type="email" value={user?.email || ''} />
             </div>
             <div class="pt-2">
-              <button id="save-profile-btn" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors shadow-lg shadow-indigo-500/20">Save Profile</button>
+              <button id="save-profile-btn" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors shadow-lg shadow-indigo-500/20 ripple-btn">Save Profile</button>
             </div>
           </div>
         </section>
@@ -231,7 +231,7 @@ const settingsBridgeData = {
               )}
             </div>
 
-            <button id="save-preferences-btn" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors shadow-lg shadow-indigo-500/20">
+            <button id="save-preferences-btn" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors shadow-lg shadow-indigo-500/20 ripple-btn">
               Save Preferences
             </button>
           </div>
@@ -351,7 +351,7 @@ const settingsBridgeData = {
             </a>
           )}
           {!isGuest && (
-            <button type="button" id="account-logout-btn" class="w-full flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-medium text-sm py-3 px-6 rounded-lg transition-colors border border-red-500/20">
+            <button type="button" id="account-logout-btn" class="w-full flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-medium text-sm py-3 px-6 rounded-lg transition-colors border border-red-500/20 ripple-btn">
               <span class="material-symbols-outlined text-lg">logout</span>
               Log Out
             </button>
@@ -374,7 +374,7 @@ const settingsBridgeData = {
                   <p class="text-sm font-medium text-white">Download Backup</p>
                   <p class="text-xs text-[#94a3b8]">Save all your entries, reviews, syllabus progress, and settings as a JSON file.</p>
                 </div>
-                <button id="data-download-btn" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg transition-colors shrink-0">
+                <button id="data-download-btn" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg transition-colors shrink-0 ripple-btn">
                   Download
                 </button>
               </div>
@@ -390,7 +390,7 @@ const settingsBridgeData = {
                   <p class="text-sm font-medium text-white">Restore from Backup</p>
                   <p class="text-xs text-[#94a3b8]">Upload a previously downloaded backup file to restore your data. This replaces all existing data.</p>
                 </div>
-                <button id="data-upload-btn" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium rounded-lg transition-colors shrink-0">
+                <button id="data-upload-btn" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium rounded-lg transition-colors shrink-0 ripple-btn">
                   Upload
                 </button>
               </div>
@@ -407,8 +407,8 @@ const settingsBridgeData = {
                 <div id="data-confirm-preview" class="text-sm text-[#94a3b8] mb-4 space-y-1"></div>
                 <p class="text-sm text-red-400 mb-5 font-medium">This will replace ALL your current data. This cannot be undone.</p>
                 <div class="flex gap-3 justify-end">
-                  <button id="data-confirm-cancel" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium rounded-lg transition-colors">Cancel</button>
-                  <button id="data-confirm-proceed" class="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-sm font-medium rounded-lg transition-colors">Restore Data</button>
+                  <button id="data-confirm-cancel" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium rounded-lg transition-colors ripple-btn">Cancel</button>
+                  <button id="data-confirm-proceed" class="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-sm font-medium rounded-lg transition-colors ripple-btn">Restore Data</button>
                 </div>
               </div>
             </div>
@@ -611,12 +611,12 @@ const settingsBridgeData = {
   // ── Save Profile ──
   document.getElementById('save-profile-btn')?.addEventListener('click', async () => {
     const btn = document.getElementById('save-profile-btn');
-    if (!btn) return;
+    if (!btn || btn.disabled) return;
     const nameInput = document.querySelector('#section-profile input[type="text"]');
     const emailInput = document.querySelector('#section-profile input[type="email"]');
     const original = btn.textContent;
-    btn.textContent = 'Saving...';
     btn.disabled = true;
+    btn.innerHTML = '<span class="ds-btn-spinner-icon" style="width:1rem;height:1rem;border-color:white;border-top-color:transparent;display:inline-block;margin-right:0.5rem;"></span>Saving...';
     try {
       const res = await fetch('/api/settings', {
         method: 'PUT',
@@ -641,8 +641,10 @@ const settingsBridgeData = {
   // ── Save Preferences ──
   document.getElementById('save-preferences-btn')?.addEventListener('click', async () => {
     const btn = document.getElementById('save-preferences-btn');
-    if (!btn) return;
+    if (!btn || btn.disabled) return;
     const original = btn.textContent;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="ds-btn-spinner-icon" style="width:1rem;height:1rem;border-color:white;border-top-color:transparent;display:inline-block;margin-right:0.5rem;"></span>Saving...';
 
     // Collect selected exams
     const selectedExams = Array.from(document.querySelectorAll('#exam-grid button[data-exam].border-indigo-500'))
@@ -663,8 +665,6 @@ const settingsBridgeData = {
     const studyDaysPerWeek = parseInt(document.getElementById('study-days')?.value) || 5;
     const examDate = document.getElementById('exam-date')?.value || null;
 
-    btn.textContent = 'Saving...';
-    btn.disabled = true;
     try {
       const res = await fetch('/api/settings', {
         method: 'PUT',
@@ -729,14 +729,14 @@ const settingsBridgeData = {
   });
 
   // ── Data: Upload / Restore ──
-  let pendingImportData: any = null;
+  let pendingImportData = null;
 
   document.getElementById('data-upload-btn')?.addEventListener('click', () => {
     document.getElementById('data-file-input')?.click();
   });
 
   document.getElementById('data-file-input')?.addEventListener('change', async (e) => {
-    const input = e.target;
+    const input = e.currentTarget;
     const file = input.files?.[0];
     const status = document.getElementById('data-status');
     if (!file || !status) return;

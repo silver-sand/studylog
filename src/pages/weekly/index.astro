@@ -87,7 +87,7 @@ const focusChange = prevFocus > 0 ? Math.round(((currFocus - prevFocus) / prevFo
           <p class="text-neutral-500 text-sm">Analyze your progress, spot trends, and plan for the week ahead.</p>
         </div>
         <div class="flex items-center gap-4 bg-[#141416] px-4 py-2 rounded-xl border border-white/5">
-          <button id="week-prev-btn" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 text-neutral-400 transition-colors">
+          <button id="week-prev-btn" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 text-neutral-400 transition-colors ripple-btn">
             <span class="material-symbols-outlined text-sm">chevron_left</span>
           </button>
           <div class="flex items-center gap-2">
@@ -346,7 +346,7 @@ const focusChange = prevFocus > 0 ? Math.round(((currFocus - prevFocus) / prevFo
           )}
         </div>
         {!currentReview && (
-          <button id="generate-review-btn" class="mt-6 bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm px-6 py-2.5 rounded-lg transition-colors">
+          <button id="generate-review-btn" class="mt-6 bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm px-6 py-2.5 rounded-lg transition-colors ripple-btn">
             Generate AI Review
           </button>
         )}
@@ -370,7 +370,7 @@ const focusChange = prevFocus > 0 ? Math.round(((currFocus - prevFocus) / prevFo
           id="weekly-notes"
         >{currentReview?.notes || ''}</textarea>
         <div class="flex justify-end mt-4">
-          <button id="save-reflection-btn" class="bg-indigo-500 hover:bg-indigo-400 text-white font-medium text-sm px-6 py-2.5 rounded-lg transition-colors">
+          <button id="save-reflection-btn" class="bg-indigo-500 hover:bg-indigo-400 text-white font-medium text-sm px-6 py-2.5 rounded-lg transition-colors ripple-btn">
             Save Reflection
           </button>
         </div>
@@ -418,7 +418,7 @@ const focusChange = prevFocus > 0 ? Math.round(((currFocus - prevFocus) / prevFo
     if (!btn) return;
     const original = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = 'Generating...';
+    btn.innerHTML = '<span class="ds-btn-spinner-icon" style="width:1rem;height:1rem;display:inline-block;margin-right:0.5rem;border-color:rgba(255,255,255,0.3);border-top-color:white;"></span>Generating...';
     try {
       const res = await fetch('/api/reviews/generate', {
         method: 'POST',
@@ -447,7 +447,7 @@ const focusChange = prevFocus > 0 ? Math.round(((currFocus - prevFocus) / prevFo
     const notes = document.getElementById('weekly-notes')?.value || '';
     const original = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = 'Saving...';
+    btn.innerHTML = '<span class="ds-btn-spinner-icon" style="width:1rem;height:1rem;display:inline-block;margin-right:0.5rem;border-color:rgba(255,255,255,0.3);border-top-color:white;"></span>Saving...';
     try {
       const res = await fetch('/api/reviews/notes', {
         method: 'PUT',

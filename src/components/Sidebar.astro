@@ -83,24 +83,26 @@ function isActive(href: string): boolean {
   </div>
 </aside>
 
-<!-- Mobile Bottom Nav -->
-<nav class="fixed bottom-0 w-full z-50 md:hidden bg-[#050b18]/95 backdrop-blur-xl border-t border-white/[0.06] shadow-[0_-8px_24px_rgba(0,0,0,0.4)] h-[68px] flex justify-around items-center px-2" style="padding-bottom: env(safe-area-inset-bottom, 0px);">
-  {links.slice(0, 5).map(link => (
-    <a
-      href={link.href}
-      class:list={{
-        'flex flex-col items-center justify-center transition-all active:scale-90 duration-200 min-w-[56px] py-1.5 rounded-xl': true,
-        'text-indigo-400 font-bold': isActive(link.href),
-        'text-neutral-500 hover:text-neutral-300': !isActive(link.href),
-      }}
-    >
-      <span
-        class="material-symbols-outlined text-[22px]"
-        class:list={{ 'filled-icon': isActive(link.href) }}
-      >{link.icon}</span>
-      <span class="font-body text-[9px] uppercase tracking-wide mt-0.5 font-medium">{link.label}</span>
-    </a>
-  ))}
+<!-- Mobile Bottom Nav (scrollable: all 7 items visible) -->
+<nav class="fixed bottom-0 w-full z-50 md:hidden bg-[#050b18]/95 backdrop-blur-xl border-t border-white/[0.06] shadow-[0_-8px_24px_rgba(0,0,0,0.4)] h-[68px]" style="padding-bottom: env(safe-area-inset-bottom, 0px);">
+  <div class="flex overflow-x-auto items-center justify-around h-full px-1 gap-0 scrollbar-none" style="-webkit-overflow-scrolling:touch;scrollbar-width:none;">
+    {links.map(link => (
+      <a
+        href={link.href}
+        class:list={{
+          'flex flex-col items-center justify-center transition-all active:scale-90 duration-200 min-w-[48px] flex-shrink-0 py-1.5 px-1.5 rounded-xl': true,
+          'text-indigo-400 font-bold': isActive(link.href),
+          'text-neutral-500 hover:text-neutral-300': !isActive(link.href),
+        }}
+      >
+        <span
+          class="material-symbols-outlined text-[20px]"
+          class:list={{ 'filled-icon': isActive(link.href) }}
+        >{link.icon}</span>
+        <span class="font-body text-[8px] uppercase tracking-wide mt-0.5 font-medium whitespace-nowrap">{link.label}</span>
+      </a>
+    ))}
+  </div>
 </nav>
 
 <script>

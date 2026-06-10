@@ -114,7 +114,7 @@ function getSubjectColor(subjectName: string): string {
           </div>
           <p class="text-lg font-semibold text-white mb-2">No exams configured</p>
           <p class="text-sm text-neutral-500 mt-2 max-w-sm mx-auto">Select your exams in Settings to start tracking syllabus progress and chapter completion.</p>
-          <a href="/settings" class="inline-block mt-6 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-6 rounded-xl transition-all active:scale-95 shadow-lg shadow-indigo-500/20 glow-button">
+          <a href="/settings" class="inline-block mt-6 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-6 rounded-xl transition-all active:scale-95 shadow-lg shadow-indigo-500/20 glow-button ripple-btn">
             Go to Settings
           </a>
         </div>
@@ -132,7 +132,7 @@ function getSubjectColor(subjectName: string): string {
                   <h2 class="text-3xl md:text-4xl font-black text-white mb-3">You've covered {exam.overallPercent}% of your syllabus.</h2>
                   <p class="text-neutral-400 mb-6 max-w-md">Keep up the momentum! You've completed {exam.completedChapters} of {exam.totalChapters} chapters.</p>
                   <div class="flex gap-3">
-                    <a href="/daily" class="bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-400 text-white font-bold py-2.5 px-6 rounded-xl transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-indigo-500/20 glow-button">
+                    <a href="/daily" class="bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-400 text-white font-bold py-2.5 px-6 rounded-xl transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-indigo-500/20 glow-button ripple-btn">
                       <span class="material-symbols-outlined text-sm">rocket_launch</span>
                       Resume Studying
                     </a>
@@ -393,7 +393,8 @@ function getSubjectColor(subjectName: string): string {
 
   // ── Search input filter ──
   document.querySelector('input[placeholder="Search chapters..."]')?.addEventListener('input', (e) => {
-    const query = (e.target as HTMLInputElement).value.toLowerCase();
+    const input = e.target;
+    const query = input.value.toLowerCase();
     document.querySelectorAll('.chapter-item').forEach(item => {
       const name = item.querySelector('.chapter-name')?.textContent?.toLowerCase() || '';
       item.style.display = name.includes(query) ? '' : 'none';

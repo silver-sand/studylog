@@ -107,6 +107,8 @@
   /* ── Typography ── */
   --ds-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --ds-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --ds-font-devanagari: 'Noto Sans Devanagari', 'Inter', system-ui, sans-serif;
+  --ds-font-display: 'Public Sans', 'Inter', system-ui, sans-serif;
 
   /* Font size scale */
   --ds-text-2xs: 0.625rem;   /* 10px — badges, metadata */
@@ -525,6 +527,34 @@ body {
   padding: var(--ds-space-1);
   width: 2.25rem;
   height: 2.25rem;
+}
+
+/* ── Button Loading State ── */
+.ds-btn-loading {
+  position: relative;
+  pointer-events: none;
+}
+.ds-btn-loading .ds-btn-text {
+  opacity: 0.4;
+}
+.ds-btn-loading .ds-btn-spinner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ds-btn-spinner-icon {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: ds-spin 0.6s linear infinite;
+}
+
+@keyframes ds-spin {
+  to { transform: rotate(360deg); }
 }
 
 
@@ -1809,6 +1839,124 @@ textarea.ds-input {
 }
 .page-enter {
   animation: page-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+
+/* ==========================================================================
+   PREMIUM UI KIT — Toast, Gradient Border, Card Enhancements
+   ========================================================================== */
+
+/* ── Toast Notification System ── */
+.ds-toast-container {
+  position: fixed;
+  top: var(--ds-space-3);
+  right: var(--ds-space-3);
+  z-index: var(--ds-z-tooltip);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-1);
+  pointer-events: none;
+}
+.ds-toast {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-1);
+  padding: var(--ds-space-1) var(--ds-space-2);
+  background: var(--ds-surface-4);
+  border: 1px solid var(--ds-border-strong);
+  border-radius: var(--ds-radius-lg);
+  box-shadow: var(--ds-shadow-lg);
+  font-size: var(--ds-text-sm);
+  color: var(--ds-text-primary);
+  pointer-events: auto;
+  animation: toast-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  max-width: 24rem;
+  backdrop-filter: blur(12px);
+}
+.ds-toast--success { border-left: 3px solid var(--ds-success); }
+.ds-toast--error { border-left: 3px solid var(--ds-danger); }
+.ds-toast--warning { border-left: 3px solid var(--ds-warning); }
+.ds-toast--info { border-left: 3px solid var(--ds-accent-400); }
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(24px) scale(0.95); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+@keyframes toast-out {
+  from { opacity: 1; transform: translateX(0) scale(1); }
+  to { opacity: 0; transform: translateX(24px) scale(0.95); }
+}
+.ds-toast.removing {
+  animation: toast-out 0.2s ease forwards;
+}
+
+/* ── Gradient Border Utility ── */
+.ds-border-gradient {
+  position: relative;
+  background-clip: padding-box;
+  border: 1px solid transparent;
+}
+.ds-border-gradient::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--ds-gradient-primary);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.ds-border-gradient-glow {
+  box-shadow: 0 0 16px rgba(99, 102, 241, 0.15);
+}
+
+/* ── Card focus-within highlight ── */
+.ds-card-focusable {
+  transition: border-color var(--ds-transition-base), box-shadow var(--ds-transition-base);
+}
+.ds-card-focusable:focus-within {
+  border-color: var(--ds-accent-border);
+  box-shadow: 0 0 0 1px var(--ds-accent-border), 0 0 16px rgba(99, 102, 241, 0.08);
+}
+
+/* ── Card press animation ── */
+.card-press {
+  transition: transform var(--ds-transition-fast);
+}
+.card-press:active {
+  transform: scale(0.98);
+}
+
+/* ── Focus ring improvements ── */
+.ds-ring-accent {
+  transition: box-shadow var(--ds-transition-base);
+}
+.ds-ring-accent:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--ds-accent-500), 0 0 0 4px rgba(99, 102, 241, 0.15);
+  border-radius: var(--ds-radius-sm);
+}
+
+/* ── Improved divider with gradient ── */
+.ds-divider-gradient {
+  height: 1px;
+  border: none;
+  background: linear-gradient(to right, transparent, var(--ds-border-strong), transparent);
+  margin: var(--ds-space-2) 0;
+}
+
+/* ── Number counter animation ── */
+.ds-number {
+  font-variant-numeric: tabular-nums;
+  transition: all var(--ds-transition-slow);
+}
+
+/* ── Smooth color transition for all interactive elements ── */
+.ds-smooth {
+  transition: all var(--ds-transition-base);
 }
 
 /* ── Reduced motion respect ── */

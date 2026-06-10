@@ -25,9 +25,11 @@ const showAuthPopup = false;
     <meta name="description" content="AI-Powered Daily Study Progress Tracker" />
     <title>{title} — StudyLog</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Inter (primary) + Public Sans (display) + JetBrains Mono (code) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/src/styles/design-system.css" />
   </head>
@@ -39,13 +41,15 @@ const showAuthPopup = false;
       </main>
     </div>
 
+    <!-- Toast notification container (populated dynamically) -->
+    <div id="toast-container" class="ds-toast-container" aria-live="polite"></div>
+
     <AuthPopup />
 
     <script>
       // ── Scroll-triggered reveal: IntersectionObserver ──
       // Watches .reveal-on-scroll (and -left, -right, -scale) elements
       // and adds .revealed when they enter the viewport.
-      // Also animates staggered children within a revealed container.
       const observer = new IntersectionObserver(
         entries => {
           for (const entry of entries) {
@@ -77,8 +81,43 @@ const showAuthPopup = false;
         ripple.addEventListener('animationend', () => ripple.remove());
       });
 
-      // ── Page enter animation ──
-      document.querySelector('.page-enter')?.classList.add('page-enter');
+      // ── Page mount animation trigger ──
+      // Re-triggers on every page navigation (works with Astro view transitions)
+      const main = document.querySelector('main');
+      if (main) {
+        main.classList.remove('page-enter');
+        requestAnimationFrame(() => {
+          main.classList.add('page-enter');
+        });
+      }
+
+      // ── Global toast helper ──
+      window.showToast = function(message, type = 'info', duration = 4000) {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        const toast = document.createElement('div');
+        toast.className = 'ds-toast ds-toast--' + type;
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(() => {
+          toast.classList.add('removing');
+          toast.addEventListener('animationend', () => toast.remove());
+        }, duration);
+      };
+
+      // ── Double-tap protection for submit buttons ──
+      document.addEventListener('submit', e => {
+        const btn = e.target.querySelector('button[type="submit"]');
+        if (btn && btn.disabled) {
+          e.preventDefault();
+          return;
+        }
+        const submitBtns = e.target.querySelectorAll('button[type="submit"]');
+        for (const b of submitBtns) {
+          b.disabled = true;
+          setTimeout(() => { b.disabled = false; }, 2000);
+        }
+      });
     </script>
 
     <style is:global>

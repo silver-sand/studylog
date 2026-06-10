@@ -54,18 +54,18 @@ const CLASS_LEVELS = [
 
 <BaseLayout title={isUpdate ? 'Update Study Profile' : 'Set Up Your Workspace'}>
   <main class="ds-flex-center" style="min-height:80vh;padding:2rem 1rem;">
-    <div class="ds-onboarding-card" style="max-width:520px;width:100%;">
+    <div class="ds-onboarding-card ds-border-gradient ds-border-gradient-glow" style="max-width:520px;width:100%;">
 
       <!-- Step indicator -->
       <div class="ds-flex-center ds-gap-md" id="step-indicator" style="margin-bottom:var(--ds-space-3);">
         <div class="ds-step active" data-step="0">1</div>
-        <div class="ds-divider" style="width:1rem;"></div>
+        <div class="ds-divider-gradient" style="width:1rem;height:2px;flex-shrink:0;" data-divider="0"></div>
         <div class="ds-step" data-step="1">2</div>
-        <div class="ds-divider" style="width:1rem;"></div>
+        <div class="ds-divider-gradient" style="width:1rem;height:2px;flex-shrink:0;" data-divider="1"></div>
         <div class="ds-step" data-step="2">3</div>
-        <div class="ds-divider" style="width:1rem;"></div>
+        <div class="ds-divider-gradient" style="width:1rem;height:2px;flex-shrink:0;" data-divider="2"></div>
         <div class="ds-step" data-step="3">4</div>
-        <div class="ds-divider" style="width:1rem;"></div>
+        <div class="ds-divider-gradient" style="width:1rem;height:2px;flex-shrink:0;" data-divider="3"></div>
         <div class="ds-step" data-step="4">5</div>
       </div>
 
@@ -95,7 +95,7 @@ const CLASS_LEVELS = [
           <label class="ds-label-form" style="margin-bottom:0;">Your stream</label>
           <div style="display:flex;flex-direction:column;gap:var(--ds-space-1);">
             {Object.entries(STREAMS).map(([key, stream]) => (
-              <button type="button" class="stream-card" data-stream={key}
+              <button type="button" class="stream-card ripple-btn onboard-card" data-stream={key}
                 style="display:flex;align-items:center;gap:var(--ds-space-2);padding:var(--ds-space-2) var(--ds-space-2);border-radius:var(--ds-radius-lg);border:1px solid var(--ds-border-subtle);background:var(--ds-bg-surface);cursor:pointer;text-align:left;transition:all 0.15s;">
                 <span style="font-size:1.2rem;">{stream.icon}</span>
                 <div>
@@ -117,7 +117,7 @@ const CLASS_LEVELS = [
         <div class="exam-grid" id="exam-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:var(--ds-space-2);">
           {EXAM_DEFINITIONS.map(exam => (
             <button type="button"
-              class="exam-card hidden"
+              class="exam-card hidden ripple-btn onboard-card"
               data-exam={exam.key}
               data-groups={JSON.stringify(exam.groups)}
               style="padding:var(--ds-space-1) var(--ds-space-2);border-radius:var(--ds-radius-lg);border:1px solid var(--ds-border-subtle);background:var(--ds-bg-surface);cursor:pointer;text-align:left;transition:all 0.15s;"
@@ -150,7 +150,7 @@ const CLASS_LEVELS = [
             { value: 'self_study', label: 'Self-study only', icon: '💻' },
           ].map(({ value, label, icon }) => (
             <button type="button"
-              class="coaching-option"
+              class="coaching-option ripple-btn onboard-card"
               data-coaching={value}
               style="display:flex;align-items:center;gap:var(--ds-space-2);padding:var(--ds-space-1) var(--ds-space-2);border-radius:var(--ds-radius-lg);border:1px solid var(--ds-border-subtle);background:var(--ds-bg-surface);cursor:pointer;text-align:left;">
               <span style="font-size:1.1rem;">{icon}</span>
@@ -215,11 +215,11 @@ const CLASS_LEVELS = [
         </div>
       </div>
 
-      <div id="form-error" class="ds-error-text hidden" style="margin-top:var(--ds-space-2);padding:var(--ds-space-1) var(--ds-space-2);background:var(--ds-danger-bg);border:1px solid var(--ds-danger-border);border-radius:var(--ds-radius-md);"></div>
+      <div id="form-error" class="ds-error-text onboard-error hidden" style="margin-top:var(--ds-space-2);padding:var(--ds-space-1) var(--ds-space-2);background:var(--ds-danger-bg);border:1px solid var(--ds-danger-border);border-radius:var(--ds-radius-md);"></div>
 
       <div style="display:flex;gap:var(--ds-space-3);margin-top:var(--ds-space-3);">
-        <button id="prev-btn" class="ds-btn ds-btn-ghost hidden" style="flex-shrink:0;">← Back</button>
-        <button id="next-btn" class="ds-btn ds-btn-primary" style="flex:1;">Continue →</button>
+        <button id="prev-btn" class="ds-btn ds-btn-ghost ripple-btn hidden" style="flex-shrink:0;">← Back</button>
+        <button id="next-btn" class="ds-btn ds-btn-primary ripple-btn shine-button" style="flex:1;">Continue →</button>
       </div>
     </div>
   </main>
@@ -269,12 +269,27 @@ const CLASS_LEVELS = [
   function updateStep(step) {
     currentStep = step;
     hideError();
-    stepContents.forEach(el => el.classList.toggle('hidden', parseInt(el.dataset.step) !== step));
+    stepContents.forEach(el => {
+      const isTarget = parseInt(el.dataset.step) === step;
+      if (isTarget) {
+        el.classList.remove('hidden', 'step-enter');
+        void el.offsetHeight; // force reflow so animation re-triggers
+        el.classList.add('step-enter');
+      } else {
+        el.classList.add('hidden');
+        el.classList.remove('step-enter');
+      }
+    });
 
     indicators.forEach(el => {
       const s = parseInt(el.dataset.step);
       el.classList.toggle('active', s === step);
       el.classList.toggle('completed', s < step);
+    });
+    // Animate dividers between completed steps
+    document.querySelectorAll('[data-divider]').forEach(div => {
+      const d = parseInt(div.dataset.divider);
+      div.classList.toggle('completed', d < step);
     });
     prevBtn.classList.toggle('hidden', step <= 0);
 
@@ -497,7 +512,7 @@ const CLASS_LEVELS = [
     } else {
       // Submit
       nextBtn.disabled = true;
-      nextBtn.textContent = 'Setting up your workspace...';
+      nextBtn.innerHTML = '<span class="ds-btn-spinner-icon" style="width:1rem;height:1rem;border-color:rgba(255,255,255,0.3);border-top-color:white;"></span> Setting up your workspace...';
 
       try {
         const name = document.getElementById('onboarding-name').value.trim();
@@ -532,7 +547,7 @@ const CLASS_LEVELS = [
       } catch (err) {
         showError(err instanceof Error ? err.message : 'Something went wrong');
         nextBtn.disabled = false;
-        nextBtn.textContent = '🎯 Generate My Workspace';
+        nextBtn.innerHTML = '🎯 Generate My Workspace';
       }
     }
   });
@@ -583,6 +598,21 @@ const CLASS_LEVELS = [
     if (e.key === 'Enter' && currentStep > 0) nextBtn.click();
   });
 
+  // ── Ripple effect for .ripple-btn ──
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.ripple-btn');
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const ripple = document.createElement('span');
+    ripple.className = 'ripple-effect';
+    const size = Math.max(rect.width, rect.height);
+    ripple.style.width = ripple.style.height = size + 'px';
+    ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+    ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+    btn.appendChild(ripple);
+    ripple.addEventListener('animationend', () => ripple.remove());
+  });
+
   // ── Init ──
   updateStep(0);
 
@@ -605,6 +635,80 @@ const CLASS_LEVELS = [
   .review-row { display: flex; justify-content: space-between; align-items: center; padding: 0.2rem 0; }
   .review-label { font-size: var(--ds-text-sm); color: var(--ds-text-muted); }
   .review-value { font-size: var(--ds-text-sm); color: var(--ds-text-primary); font-weight: var(--ds-weight-medium); text-align: right; }
+
+  /* ── Smooth step transitions ── */
+  /* ── Premium error display ── */
+  .onboard-error {
+    border-left: 3px solid var(--ds-danger);
+    color: var(--ds-danger-text);
+    font-size: var(--ds-text-sm);
+  }
+
+  /* ── Smooth transitions on form fields ── */
+  .ds-onboarding-card .ds-input {
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  }
+  .ds-onboarding-card .ds-input:focus {
+    transform: translateY(-1px);
+  }
+
+  /* ── Step divider animation ── */
+  .ds-divider-gradient.completed {
+    background: linear-gradient(to right, var(--ds-accent-500), var(--ds-accent-400));
+    transition: background 0.3s ease;
+  }
+
+  .step-enter {
+    animation: onboarding-step-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes onboarding-step-in {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Card hover lift ── */
+  .onboard-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+  .onboard-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  }
+  .onboard-card:active {
+    transform: translateY(0) scale(0.99);
+  }
+
+  /* ── Step indicator glow on active ── */
+  .ds-step.active {
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.4);
+    transition: box-shadow 0.3s ease;
+  }
+  .ds-step.completed {
+    position: relative;
+    transition: all 0.3s ease;
+  }
+
+  /* ── Goal suggestion chips ── */
+  .target-suggestion {
+    transition: all 0.15s;
+  }
+  .target-suggestion:hover {
+    border-color: var(--ds-accent-400);
+    color: var(--ds-text-primary);
+    background: rgba(99, 102, 241, 0.08);
+  }
+  .target-suggestion:active {
+    transform: scale(0.96);
+  }
+
+  /* ── Coaching option hover ── */
+  .coaching-option {
+    transition: all 0.15s;
+  }
+  .coaching-option:hover {
+    border-color: var(--ds-border-hover);
+    background: rgba(99, 102, 241, 0.05);
+  }
 
   /* Encouragement toast */
   .encouragement-toast {
