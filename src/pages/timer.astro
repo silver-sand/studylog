@@ -441,6 +441,14 @@ timerSubjectColorMap['Biology'] = '#ec4899';
       saveStatus.style.color = '#34d399';
 
       if (logAndGo) {
+        // Store data for daily page to pre-fill the form
+        try {
+          sessionStorage.setItem('studyTimerData', JSON.stringify({
+            hours: hoursStudied,
+            subject: subject,
+            topic: topic,
+          }));
+        } catch(e) {}
         setTimeout(() => { window.location.href = '/daily'; }, 500);
       } else {
         setTimeout(() => {

@@ -603,13 +603,9 @@ const settingsBridgeData = {
   });
 
   // ── Logout ──
-  document.getElementById('account-logout-btn')?.addEventListener('click', async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      window.location.href = '/';
-    } catch (e) {
-      window.location.href = '/';
-    }
+  document.getElementById('account-logout-btn')?.addEventListener('click', () => {
+    // Navigate directly — the GET handler clears the cookie and redirects to /
+    window.location.href = '/api/auth/logout';
   });
 
   // ── Save Profile ──

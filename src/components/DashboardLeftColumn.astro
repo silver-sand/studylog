@@ -83,7 +83,7 @@ function daysUntil(dateStr: string): number {
   <div style="--stagger-index:2">
     <div class="flex items-center justify-between mb-4">
       <h4 class="text-xs font-label uppercase tracking-widest text-neutral-400">Current Streak</h4>
-      <span class="text-xs font-bold text-[#F59E0B] flex items-center gap-1 pulse-glow">
+      <span class:list={['text-xs', 'font-bold', 'text-[#F59E0B]', 'flex', 'items-center', 'gap-1', streak > 0 ? 'pulse-glow' : '']}>
         {streak} DAYS <span class="material-symbols-outlined text-sm filled-icon">local_fire_department</span>
       </span>
     </div>

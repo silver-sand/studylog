@@ -18,13 +18,6 @@ import 'katex/dist/katex.min.css';
         </span>
       </div>
       <div class="flex items-center gap-2">
-        <a href="/settings" class="p-2 text-neutral-500 hover:text-neutral-300 hover:bg-white/5 rounded-lg transition-all active:scale-95 duration-150 relative">
-          <span class="material-symbols-outlined">notifications</span>
-          <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-indigo-500 border-2 border-[#050b18]"></span>
-        </a>
-        <a href="/settings" class="p-2 text-neutral-500 hover:text-neutral-300 hover:bg-white/5 rounded-lg transition-all active:scale-95 duration-150">
-          <span class="material-symbols-outlined">settings</span>
-        </a>
         <div class="h-8 w-8 ml-2 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/10 border border-indigo-500/20 overflow-hidden shrink-0 flex items-center justify-center text-indigo-400 font-headline font-semibold text-sm">U</div>
       </div>
     </header>
@@ -39,8 +32,8 @@ import 'katex/dist/katex.min.css';
             <h3 class="font-label text-xs uppercase tracking-widest text-neutral-500">Session History</h3>
             <p class="text-[10px] text-neutral-700 mt-0.5">Your recent conversations</p>
           </div>
-          <button class="p-1.5 text-neutral-500 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors" title="New session">
-            <span class="material-symbols-outlined text-[18px]">edit</span>
+          <button id="new-chat-btn" class="p-1.5 text-neutral-500 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors" title="New session">
+            <span class="material-symbols-outlined text-[18px]">add_circle</span>
           </button>
         </div>
 
@@ -75,6 +68,22 @@ import 'katex/dist/katex.min.css';
     </main>
   </div>
 </BaseLayout>
+
+<script>
+  document.getElementById('new-chat-btn')?.addEventListener('click', () => {
+    if (confirm('Start a new session? Current conversation will be archived.')) {
+      try {
+        const history = localStorage.getItem('sl-mentor-history');
+        if (history && history !== '[]') {
+          const key = 'sl-mentor-session-' + new Date().toISOString().slice(0, 16);
+          localStorage.setItem(key, history);
+        }
+      } catch(e) {}
+      localStorage.removeItem('sl-mentor-history');
+      window.location.reload();
+    }
+  });
+</script>
 
 <style>
   ::-webkit-scrollbar { width: 8px; height: 8px; }

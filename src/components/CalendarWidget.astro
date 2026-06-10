@@ -30,7 +30,6 @@ const pad = (n: number) => n.toString().padStart(2, '0');
 const weeks: { day: number; date: string; hasEntry: boolean }[][] = [];
 let currentWeek: { day: number; date: string; hasEntry: boolean }[] = [];
 
-// Leading empty cells
 for (let i = 0; i < startDay; i++) {
   currentWeek.push({ day: 0, date: '', hasEntry: false });
 }
@@ -59,17 +58,21 @@ const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(toda
 const isCurrentMonth = today.getFullYear() === year && today.getMonth() + 1 === month;
 ---
 
-<div class="ds-card calendar-card">
+<div class="ds-card calendar-card" id="calendar-widget" data-year={year} data-month={month}>
   <div class="calendar-header">
-    <h3 class="ds-card-title">{monthNames[month - 1]} {year}</h3>
+    <h3 class="ds-card-title" id="cal-title">{monthNames[month - 1]} {year}</h3>
     <div class="calendar-nav">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-      <span class="calendar-total">{entryDates.size} study days</span>
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      <button id="cal-prev" class="cal-nav-btn" aria-label="Previous month">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <span class="calendar-total" id="cal-count">{entryDates.size} study days</span>
+      <button id="cal-next" class="cal-nav-btn" aria-label="Next month">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
     </div>
   </div>
 
-  <div class="calendar-grid">
+  <div class="calendar-grid" id="cal-grid">
     {dayHeaders.map(h => (
       <span class="cal-day-header">{h}</span>
     ))}
@@ -93,6 +96,98 @@ const isCurrentMonth = today.getFullYear() === year && today.getMonth() + 1 === 
   </div>
 </div>
 
+<script>
+  (function() {
+    const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const HEADERS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+    const widget = document.getElementById('calendar-widget');
+    const titleEl = document.getElementById('cal-title');
+    const countEl = document.getElementById('cal-count');
+    const gridEl = document.getElementById('cal-grid');
+    const prevBtn = document.getElementById('cal-prev');
+    const nextBtn = document.getElementById('cal-next');
+    if (!widget) return;
+
+    let year = parseInt(widget.dataset.year) || new Date().getFullYear();
+    let month = parseInt(widget.dataset.month) || new Date().getMonth() + 1;
+
+    function pad(n) { return n.toString().padStart(2, '0'); }
+
+    function daysInMonth(y, m) { return new Date(y, m, 0).getDate(); }
+
+    function firstDayOfMonth(y, m) { return new Date(y, m - 1, 1).getDay(); }
+
+    function renderCalendar(entryDates) {
+      const totalDays = daysInMonth(year, month);
+      const startDay = firstDayOfMonth(year, month);
+      const today = new Date();
+      const todayStr = today.getFullYear() + '-' + pad(today.getMonth() + 1) + '-' + pad(today.getDate());
+      const isCurrentMonth = today.getFullYear() === year && today.getMonth() + 1 === month;
+
+      // Build grid
+      const cells = [];
+      // Day headers
+      HEADERS.forEach(h => {
+        cells.push('<span class="cal-day-header">' + h + '</span>');
+      });
+      // Empty leading cells
+      for (let i = 0; i < startDay; i++) {
+        cells.push('<span class="cal-day cal-day--empty"></span>');
+      }
+      // Day cells
+      for (let d = 1; d <= totalDays; d++) {
+        const dateStr = year + '-' + pad(month) + '-' + pad(d);
+        const hasEntry = entryDates && entryDates.has(dateStr);
+        const classes = ['cal-day'];
+        if (isCurrentMonth && dateStr === todayStr) classes.push('cal-day--today');
+        if (hasEntry) classes.push('cal-day--active');
+        else if (dateStr < todayStr) classes.push('cal-day--inactive');
+        cells.push(
+          '<span class="' + classes.join(' ') + '">' +
+          '<span class="cal-day-num">' + d + '</span>' +
+          (hasEntry ? '<span class="cal-day-dot"></span>' : '') +
+          '</span>'
+        );
+      }
+      // Empty trailing cells
+      const remaining = 7 - (cells.length % 7);
+      if (remaining < 7) {
+        for (let i = 0; i < remaining; i++) {
+          cells.push('<span class="cal-day cal-day--empty"></span>');
+        }
+      }
+
+      gridEl.innerHTML = cells.join('');
+      titleEl.textContent = MONTHS[month - 1] + ' ' + year;
+      countEl.textContent = (entryDates ? entryDates.size : 0) + ' study days';
+    }
+
+    function fetchMonth(y, m) {
+      const params = new URLSearchParams({ year: String(y), month: String(m) });
+      fetch('/api/calendar?' + params.toString())
+        .then(r => r.json())
+        .then(data => {
+          const dates = new Set(data.dates || []);
+          renderCalendar(dates);
+        })
+        .catch(() => {
+          renderCalendar(new Set());
+        });
+    }
+
+    function goMonth(delta) {
+      month += delta;
+      if (month > 12) { month = 1; year++; }
+      else if (month < 1) { month = 12; year--; }
+      fetchMonth(year, month);
+    }
+
+    prevBtn?.addEventListener('click', () => goMonth(-1));
+    nextBtn?.addEventListener('click', () => goMonth(1));
+  })();
+</script>
+
 <style>
   .calendar-card {
     padding: var(--ds-space-3);
@@ -108,6 +203,25 @@ const isCurrentMonth = today.getFullYear() === year && today.getMonth() + 1 === 
     align-items: center;
     gap: 0.5rem;
     color: var(--ds-text-muted);
+  }
+  .cal-nav-btn {
+    background: none;
+    border: none;
+    color: var(--ds-text-tertiary);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  .cal-nav-btn:hover {
+    color: var(--ds-text-primary);
+    background: rgba(255, 255, 255, 0.05);
+  }
+  .cal-nav-btn:active {
+    transform: scale(0.9);
   }
   .calendar-total {
     font-size: var(--ds-text-xs);
