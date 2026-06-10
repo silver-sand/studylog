@@ -7,16 +7,20 @@ import CalendarWidget from '../components/CalendarWidget.astro';
 import { getDashboardStats, getMonthlyEntryDates } from '../services/stats-service';
 import { getDb } from '../db';
 import { scopeDbToUser } from '../services/user-scope';
-import { getSyllabusKeyForExam } from '../utils/exam-map';
+import { getSyllabusKeyForExam, getSubjectsForExamKeys } from '../utils/exam-map';
+import { getExamsForStream } from '../utils/stream-map';
 
 scopeDbToUser(Astro.request);
 const db = getDb();
 const stats = getDashboardStats();
 const settings = db.getSettings();
-const selectedExams = settings.selectedExams?.length ? settings.selectedExams : ['JEE'];
-const examKey = getSyllabusKeyForExam(selectedExams[0]);
 const userId = db.getCurrentUser();
 const user = userId ? db.getUserById(userId) : null;
+const userStream = user?.stream || '';
+const defaultExamCandidates = userStream ? getExamsForStream(userStream) : ['JEE'];
+const selectedExams = settings.selectedExams?.length ? settings.selectedExams : (defaultExamCandidates.length > 0 ? [defaultExamCandidates[0]] : ['JEE']);
+const examKey = getSyllabusKeyForExam(selectedExams[0]);
+const activeSubjects = settings.subjects?.length ? settings.subjects : getSubjectsForExamKeys(selectedExams);
 const hasEntries = stats.totalHoursThisWeek > 0 || stats.entriesThisMonth > 0;
 
 // Progress for syllabus bar
@@ -76,6 +80,7 @@ const entryDates = getMonthlyEntryDates(thisYear, thisMonth);
         subjectBreakdown={stats.subjectBreakdown}
         weekComparison={stats.weekComparison}
         user={user}
+        subjects={activeSubjects}
       />
     </section>
 

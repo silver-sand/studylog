@@ -56,7 +56,7 @@
     let activeType = null;
     let rainAudio = null;
 
-    function getAudioContext(): AudioContext {
+    function getAudioContext() {
       if (!audioCtx) {
         audioCtx = new AudioContext();
       }
@@ -100,7 +100,7 @@
       return source;
     }
 
-    function startNoise(type: 'pink' | 'brown') {
+    function startNoise(type) {
       stopAll();
 
       const ctx = getAudioContext();

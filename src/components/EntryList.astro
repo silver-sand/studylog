@@ -10,12 +10,29 @@ const { entries } = Astro.props;
 
 function subjectColor(subject: string): string {
   const name = subject.toLowerCase();
-  if (name.includes('physics')) return 'bg-blue-400/10 text-blue-400 border-blue-400/20';
-  if (name.includes('chemistry')) return 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20';
-  if (name.includes('math')) return 'bg-amber-400/10 text-amber-400 border-amber-400/20';
-  if (name.includes('biology')) return 'bg-rose-400/10 text-rose-400 border-rose-400/20';
-  if (name.includes('english')) return 'bg-purple-400/10 text-purple-400 border-purple-400/20';
-  return 'bg-slate-400/10 text-slate-400 border-slate-400/20';
+  const STANDARD: Record<string, string> = {
+    physics: 'bg-blue-400/10 text-blue-400 border-blue-400/20',
+    chemistry: 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20',
+    maths: 'bg-amber-400/10 text-amber-400 border-amber-400/20',
+    mathematics: 'bg-amber-400/10 text-amber-400 border-amber-400/20',
+    biology: 'bg-rose-400/10 text-rose-400 border-rose-400/20',
+    english: 'bg-purple-400/10 text-purple-400 border-purple-400/20',
+  };
+  for (const [key, cls] of Object.entries(STANDARD)) { if (name.includes(key)) return cls; }
+  const PALETTE = [
+    'bg-blue-400/10 text-blue-400 border-blue-400/20',
+    'bg-emerald-400/10 text-emerald-400 border-emerald-400/20',
+    'bg-amber-400/10 text-amber-400 border-amber-400/20',
+    'bg-rose-400/10 text-rose-400 border-rose-400/20',
+    'bg-purple-400/10 text-purple-400 border-purple-400/20',
+    'bg-cyan-400/10 text-cyan-400 border-cyan-400/20',
+    'bg-pink-400/10 text-pink-400 border-pink-400/20',
+    'bg-lime-400/10 text-lime-400 border-lime-400/20',
+    'bg-orange-400/10 text-orange-400 border-orange-400/20',
+    'bg-teal-400/10 text-teal-400 border-teal-400/20',
+  ];
+  let hash = 0; for (let i = 0; i < subject.length; i++) { hash = ((hash << 5) - hash) + subject.charCodeAt(i); hash = hash & hash; }
+  return PALETTE[Math.abs(hash) % PALETTE.length];
 }
 ---
 

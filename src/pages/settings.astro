@@ -13,7 +13,7 @@ const settings = db.getSettings();
 const user = getSessionUser(getTokenFromCookie(Astro.request));
 const isGuest = user?.userType === 'guest';
 
-const userStream = user?.stream || 'science';
+const userStream = user?.stream || '';
 const defaultExams = settings.selectedExams?.length
   ? settings.selectedExams
   : EXAM_DEFINITIONS.filter(e => e.groups.includes(userStream)).map(e => e.key).slice(0, 1);
@@ -29,6 +29,15 @@ if (settings.examDate) {
   const examDt = new Date(settings.examDate);
   daysUntilExam = Math.max(0, Math.ceil((examDt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
 }
+
+// Data bridge for client-side stream/exam/subject cascade
+const settingsBridgeData = {
+  exams: EXAM_DEFINITIONS.map(e => ({ key: e.key, label: e.label, groups: e.groups, subjects: e.subjects, syllabusKey: e.syllabusKey })),
+  streams: Object.fromEntries(Object.entries(STREAMS).map(([k, s]) => [k, { label: s.label, icon: s.icon, subjects: s.subjects, examKeys: s.examKeys }])),
+  savedStream: userStream,
+  savedExams: defaultExams,
+  savedSubjects: activeSubjects,
+};
 ---
 
 <BaseLayout title="Settings">
@@ -156,7 +165,7 @@ if (settings.examDate) {
             <!-- Active Subjects (toggleable) -->
             <div>
               <label class="block text-sm font-medium text-[#94a3b8] mb-2">Active Subjects</label>
-              <p class="text-xs text-[#94a3b8] mb-2">Toggle subjects to include in your syllabus tracking. (PCM/PCB/PCMB/Full)</p>
+              <p class="text-xs text-[#94a3b8] mb-2">Toggle the subjects you want tracked in your syllabus.</p>
               <div class="flex flex-wrap gap-2" id="active-subjects-grid">
                 {allSubjects.map(subject => {
                   const isActive = activeSubjects.includes(subject);
@@ -411,7 +420,126 @@ if (settings.examDate) {
   </main>
 </BaseLayout>
 
+<!-- Data bridge: exam definitions & stream subjects for client-side cascade -->
+<div id="settings-data-store" data-value={JSON.stringify(settingsBridgeData)} hidden aria-hidden="true"></div>
+
 <script>
+  // ── Settings data bridge ──
+  var SETTINGS_DATA = {};
+  try {
+    var dataEl = document.getElementById('settings-data-store');
+    if (dataEl) SETTINGS_DATA = JSON.parse(dataEl.dataset.value);
+  } catch(e) { console.error('Settings data bridge error:', e); }
+
+  function getStreamExams(stream) {
+    if (!stream || !SETTINGS_DATA.streams || !SETTINGS_DATA.streams[stream]) return [];
+    return SETTINGS_DATA.streams[stream].examKeys || [];
+  }
+
+  function getStreamSubjects(stream) {
+    if (!stream || !SETTINGS_DATA.streams || !SETTINGS_DATA.streams[stream]) return [];
+    return SETTINGS_DATA.streams[stream].subjects || [];
+  }
+
+  function getSubjectsForExamKeys(keys) {
+    var set = {};
+    if (!SETTINGS_DATA.exams) return [];
+    keys.forEach(function(key) {
+      SETTINGS_DATA.exams.forEach(function(exam) {
+        if (exam.key === key) {
+          exam.subjects.forEach(function(s) { set[s] = true; });
+        }
+      });
+    });
+    return Object.keys(set);
+  }
+
+  function rebuildExamGrid(stream, selectedKeys) {
+    var grid = document.getElementById('exam-grid');
+    if (!grid) return;
+    var examKeys = getStreamExams(stream);
+    var visibleExams = SETTINGS_DATA.exams.filter(function(e) { return examKeys.indexOf(e.key) !== -1; });
+    selectedKeys = selectedKeys || [];
+    grid.innerHTML = '';
+    visibleExams.forEach(function(exam) {
+      var isSelected = selectedKeys.indexOf(exam.key) !== -1;
+      var btn = document.createElement('button');
+      btn.className = 'px-3 py-1.5 rounded-full border text-sm font-medium transition-all flex items-center gap-1' +
+        (isSelected ? ' border-indigo-500 bg-indigo-500/10 text-indigo-400' : ' border-slate-700 text-[#94a3b8] hover:border-slate-500 hover:text-white');
+      btn.dataset.exam = exam.key;
+      btn.textContent = exam.label;
+      if (isSelected) {
+        var close = document.createElement('span');
+        close.className = 'material-symbols-outlined text-[16px]';
+        close.textContent = 'close';
+        btn.appendChild(close);
+      }
+      btn.addEventListener('click', function() {
+        btn.classList.toggle('border-indigo-500');
+        btn.classList.toggle('bg-indigo-500/10');
+        btn.classList.toggle('text-indigo-400');
+        btn.classList.toggle('border-slate-700');
+        btn.classList.toggle('text-[#94a3b8]');
+        // Also toggle hover classes
+        btn.classList.toggle('hover:border-slate-500');
+        btn.classList.toggle('hover:text-white');
+        // Rebuild subjects
+        rebuildSubjectGrid();
+      });
+      grid.appendChild(btn);
+    });
+  }
+
+  function rebuildSubjectGrid() {
+    var grid = document.getElementById('active-subjects-grid');
+    if (!grid) return;
+
+    // Get stream for the subject label text
+    var streamEl = document.querySelector('#stream-grid button.border-indigo-500');
+    var stream = streamEl ? streamEl.dataset.stream : (SETTINGS_DATA.savedStream || 'science');
+
+    // Collect selected exams
+    var selectedExamKeys = Array.from(document.querySelectorAll('#exam-grid button[data-exam].border-indigo-500'))
+      .map(function(b) { return b.dataset.exam; }).filter(Boolean);
+
+    var subjects;
+    if (selectedExamKeys.length > 0) {
+      subjects = getSubjectsForExamKeys(selectedExamKeys);
+    } else {
+      subjects = getStreamSubjects(stream);
+    }
+
+    // Get currently selected subjects
+    var currentSelected = Array.from(document.querySelectorAll('#active-subjects-grid button.border-indigo-500'))
+      .map(function(b) { return b.dataset.subject; }).filter(Boolean);
+    var selectedSet = {};
+    currentSelected.forEach(function(s) { selectedSet[s] = true; });
+
+    grid.innerHTML = '';
+    if (subjects.length === 0) {
+      grid.innerHTML = '<p class="text-xs text-[#94a3b8]">Select at least one exam to see subjects.</p>';
+      return;
+    }
+    subjects.forEach(function(subject) {
+      var isActive = selectedSet[subject] || false;
+      var btn = document.createElement('button');
+      btn.className = 'px-3 py-1.5 rounded-full border text-sm font-medium transition-all' +
+        (isActive ? ' border-indigo-500 bg-indigo-500/10 text-indigo-400' : ' border-slate-700 text-[#94a3b8] hover:border-slate-500 hover:text-white');
+      btn.dataset.subject = subject;
+      btn.textContent = subject;
+      btn.addEventListener('click', function() {
+        btn.classList.toggle('border-indigo-500');
+        btn.classList.toggle('bg-indigo-500/10');
+        btn.classList.toggle('text-indigo-400');
+        btn.classList.toggle('border-slate-700');
+        btn.classList.toggle('text-[#94a3b8]');
+        btn.classList.toggle('hover:border-slate-500');
+        btn.classList.toggle('hover:text-white');
+      });
+      grid.appendChild(btn);
+    });
+  }
+
   // ── Settings tab navigation ──
   const navBtns = document.querySelectorAll('.settings-nav-btn');
   const sections = {};
@@ -440,32 +568,30 @@ if (settings.examDate) {
     });
   });
 
-  // ── Stream selection ──
+  // ── Stream selection — cascades to exams and subjects ──
   document.querySelectorAll('#stream-grid button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('#stream-grid button').forEach(b => {
+    btn.addEventListener('click', function() {
+      // Update visual state
+      document.querySelectorAll('#stream-grid button').forEach(function(b) {
         b.classList.remove('border-indigo-500', 'bg-indigo-500/10', 'text-indigo-400');
         b.classList.add('border-slate-700', 'text-[#94a3b8]');
       });
       btn.classList.remove('border-slate-700', 'text-[#94a3b8]');
       btn.classList.add('border-indigo-500', 'bg-indigo-500/10', 'text-indigo-400');
+
+      var stream = btn.dataset.stream;
+      // Rebuild exam grid for this stream, auto-select first exam
+      var streamExamKeys = getStreamExams(stream);
+      var firstExam = streamExamKeys.length > 0 ? [streamExamKeys[0]] : [];
+      rebuildExamGrid(stream, firstExam);
+      // Rebuild subjects
+      rebuildSubjectGrid();
     });
   });
 
-  // ── Exam toggle ──
-  document.querySelectorAll('#exam-grid button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      btn.classList.toggle('border-indigo-500');
-      btn.classList.toggle('bg-indigo-500/10');
-      btn.classList.toggle('text-indigo-400');
-      btn.classList.toggle('border-slate-700');
-      btn.classList.toggle('text-[#94a3b8]');
-    });
-  });
-
-  // ── Subject toggle (PCM/PCB/PCMB selection) ──
+  // ── Subject toggle ──
   document.querySelectorAll('#active-subjects-grid button').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', function() {
       btn.classList.toggle('border-indigo-500');
       btn.classList.toggle('bg-indigo-500/10');
       btn.classList.toggle('text-indigo-400');

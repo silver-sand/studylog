@@ -7,8 +7,23 @@ import { scopeDbToUser } from '../services/user-scope';
 scopeDbToUser(Astro.request);
 const db = getDb();
 const settings = db.getSettings();
-const subjects = settings.subjects || ['Physics', 'Chemistry', 'Mathematics', 'Biology'];
+const subjects = settings.subjects || [];
 const streak = db.getStreak();
+
+// Compute dynamic subject colors
+const TIMER_COLOR_PALETTE = ['#6366f1', '#22c55e', '#f59e0b', '#ec4899', '#a78bfa', '#06b6d4', '#f472b6', '#84cc16', '#fb923c', '#14b8a6'];
+const timerSubjectColorMap: Record<string, string> = {};
+for (const s of subjects) {
+  let hash = 0;
+  for (let i = 0; i < s.length; i++) { hash = ((hash << 5) - hash) + s.charCodeAt(i); hash = hash & hash; }
+  timerSubjectColorMap[s] = TIMER_COLOR_PALETTE[Math.abs(hash) % TIMER_COLOR_PALETTE.length];
+}
+// Standard subject overrides
+timerSubjectColorMap['Physics'] = '#6366f1';
+timerSubjectColorMap['Chemistry'] = '#22c55e';
+timerSubjectColorMap['Mathematics'] = '#f59e0b';
+timerSubjectColorMap['Maths'] = '#f59e0b';
+timerSubjectColorMap['Biology'] = '#ec4899';
 ---
 
 <BaseLayout title="Timer">
@@ -134,12 +149,23 @@ const streak = db.getStreak();
   </main>
 </BaseLayout>
 
+<!-- Data bridge: subject colors for client-side -->
+<div id="timer-colors-bridge" data-colors={JSON.stringify(timerSubjectColorMap)} hidden aria-hidden="true"></div>
+
 <script>
   // ═══════════════════════ TIMER & STOPWATCH ENGINE ═══════════════════════
 
   const STORAGE_KEY = 'timer_recent_sessions';
   const MODE_KEY = 'timer_timer_mode';
   const CIRCUMFERENCE = 2 * Math.PI * 46; // ≈ 289.026
+
+  // Load dynamic subject colors from server
+  var TIMER_COLORS = {};
+  try {
+    var colorEl = document.getElementById('timer-colors-bridge');
+    if (colorEl) TIMER_COLORS = JSON.parse(colorEl.dataset.colors);
+  } catch(e) {}
+  function getTimerColor(subject) { return TIMER_COLORS[subject] || '#6366f1'; }
 
   // DOM refs
   const displayEl = document.getElementById('timer-display-main');
@@ -530,13 +556,12 @@ const streak = db.getStreak();
     const { subject, topic, duration, type } = e.detail || {};
     if (!subject) return;
     const sessions = loadSessions();
-    const colors = { Physics: '#6366f1', Chemistry: '#22c55e', Mathematics: '#f59e0b', Maths: '#f59e0b', Biology: '#ec4899' };
     sessions.unshift({
       subject, topic,
       duration: formatDuration(duration),
       date: new Date().toISOString(),
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      color: colors[subject] || '#6366f1',
+      color: getTimerColor(subject),
       tag: type === 'Stopwatch' ? 'Stopwatch' : 'Focus',
     });
     saveSessions(sessions);
@@ -560,8 +585,7 @@ const streak = db.getStreak();
       manualFormVisible = false;
       return;
     }
-    const colors = { Physics: '#6366f1', Chemistry: '#22c55e', Mathematics: '#f59e0b', Maths: '#f59e0b', Biology: '#ec4899' };
-    const subjects = Object.keys(colors);
+    const subjects = Object.keys(TIMER_COLORS).length ? Object.keys(TIMER_COLORS).sort() : ['Physics', 'Chemistry', 'Mathematics'];
     const form = document.createElement('div');
     form.id = 'manual-log-form';
     form.className = 'bg-[#050b18] border border-white/5 rounded-xl p-4 mt-3 animate-slide-up';
@@ -571,7 +595,7 @@ const streak = db.getStreak();
         <div>
           <label class="text-[10px] text-slate-500 uppercase tracking-wider block mb-1">Subject</label>
           <div class="flex flex-wrap gap-1.5" id="manual-subject-chips">
-            ${subjects.map((s, i) => '<button type="button" class="manual-subj-chip px-3 py-1 rounded-full border text-xs font-medium transition-all border-slate-700 bg-[#050b18] text-slate-300 ' + (i === 0 ? 'selected' : '') + '" data-subject="' + s + '"><span class="w-1.5 h-1.5 rounded-full inline-block mr-1" style="background:' + colors[s] + '"></span>' + s + '</button>').join('')}
+            ${subjects.map((s, i) => '<button type="button" class="manual-subj-chip px-3 py-1 rounded-full border text-xs font-medium transition-all border-slate-700 bg-[#050b18] text-slate-300 ' + (i === 0 ? 'selected' : '') + '" data-subject="' + s + '"><span class="w-1.5 h-1.5 rounded-full inline-block mr-1" style="background:' + getTimerColor(s) + '"></span>' + s + '</button>').join('')}
           </div>
         </div>
         <div>

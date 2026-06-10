@@ -10,11 +10,11 @@ const { subject, progress } = Astro.props;
 
 function subjectColor(s: string): string {
   const name = s.toLowerCase();
-  if (name.includes('physics')) return 'blue';
-  if (name.includes('chemistry')) return 'green';
-  if (name.includes('math')) return 'amber';
-  if (name.includes('biology')) return 'pink';
-  return 'gray';
+  const STANDARD: Record<string, string> = { physics: 'blue', chemistry: 'green', maths: 'amber', mathematics: 'amber', biology: 'pink' };
+  for (const [key, color] of Object.entries(STANDARD)) { if (name.includes(key)) return color; }
+  const PALETTE = ['blue', 'green', 'amber', 'pink', 'purple', 'cyan', 'rose', 'lime', 'orange', 'teal'];
+  let hash = 0; for (let i = 0; i < s.length; i++) { hash = ((hash << 5) - hash) + s.charCodeAt(i); hash = hash & hash; }
+  return PALETTE[Math.abs(hash) % PALETTE.length];
 }
 
 const color = subjectColor(subject);
@@ -24,10 +24,16 @@ const colorMap: Record<string, { accent: string; bar: string }> = {
   green: { accent: '#22c55e', bar: '#22c55e' },
   amber: { accent: '#f59e0b', bar: '#f59e0b' },
   pink: { accent: '#ec4899', bar: '#ec4899' },
+  purple: { accent: '#8b5cf6', bar: '#8b5cf6' },
+  cyan: { accent: '#06b6d4', bar: '#06b6d4' },
+  rose: { accent: '#f43f5e', bar: '#f43f5e' },
+  lime: { accent: '#84cc16', bar: '#84cc16' },
+  orange: { accent: '#f97316', bar: '#f97316' },
+  teal: { accent: '#14b8a6', bar: '#14b8a6' },
   gray: { accent: '#64748b', bar: '#64748b' },
 };
 
-const c = colorMap[color];
+const c = colorMap[color] || colorMap.gray;
 ---
 
 <div

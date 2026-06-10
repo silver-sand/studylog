@@ -3,15 +3,22 @@ export interface Props {
   subjects?: string[];
 }
 
-const { subjects = ['Physics', 'Chemistry', 'Mathematics', 'Biology'] } = Astro.props;
+const { subjects = [] } = Astro.props;
 
-const subjectColors: Record<string, string> = {
+const COLOR_PALETTE = ['#6366f1', '#22c55e', '#f59e0b', '#ec4899', '#a78bfa', '#06b6d4', '#f472b6', '#84cc16', '#fb923c', '#14b8a6'];
+const subjectColorMap: Record<string, string> = {
   Physics: '#6366f1',
   Chemistry: '#22c55e',
   Mathematics: '#f59e0b',
   Maths: '#f59e0b',
   Biology: '#ec4899',
 };
+function getSubjectColor(subject: string): string {
+  if (subjectColorMap[subject]) return subjectColorMap[subject];
+  let hash = 0;
+  for (let i = 0; i < subject.length; i++) { hash = ((hash << 5) - hash) + subject.charCodeAt(i); hash = hash & hash; }
+  return COLOR_PALETTE[Math.abs(hash) % COLOR_PALETTE.length];
+}
 ---
 
 <div class="bg-[#0d1321] border border-white/5 rounded-2xl p-6 w-full animate-slide-up">
@@ -22,7 +29,7 @@ const subjectColors: Record<string, string> = {
     <label class="text-xs font-label text-slate-400 uppercase tracking-wider mb-3 block">Subject</label>
     <div class="flex flex-wrap gap-2" id="timer-subject-chips">
       {subjects.map((s) => {
-        const color = subjectColors[s] || '#6366f1';
+        const color = getSubjectColor(s);
         return (
           <button
             type="button"

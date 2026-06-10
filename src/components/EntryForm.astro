@@ -10,17 +10,41 @@ export interface Props {
     examType: string;
   } | null;
   defaultExamType?: string;
+  subjects?: string[];
+  exams?: string[];
 }
 
-const { todayEntry, defaultExamType } = Astro.props;
+const { todayEntry, defaultExamType, subjects: propSubjects, exams: propExams } = Astro.props;
 const isEditing = !!todayEntry;
 const initialExamType = todayEntry?.examType || defaultExamType || '';
 
-const EXAM_TYPES = [
-  'JEE', 'JEE Main', 'JEE Advanced', 'NEET', 'CET',
-  'Boards (PCM)', 'Boards (PCB)', 'Boards (Commerce)',
-  'CUET', 'GATE', 'CAT', 'UPSC', 'Other'
-];
+// Dynamic subjects and exams — fallbacks instead of hardcoded science defaults
+const SUBJECTS = propSubjects?.length ? propSubjects : ['Add subjects in Settings first'];
+const EXAM_TYPES = propExams?.length ? propExams : ['JEE', 'NEET', 'CET', 'CUET', 'GATE', 'Boards', 'Other'];
+
+const SUBJECT_COLORS: Record<string, string> = {
+  Physics: 'bg-blue-400',
+  Chemistry: 'bg-emerald-400',
+  Maths: 'bg-amber-400',
+  Mathematics: 'bg-amber-400',
+  Biology: 'bg-rose-400',
+};
+// Dynamic color for any subject not in the hardcoded map
+const COLOR_PALETTE = ['bg-blue-400', 'bg-emerald-400', 'bg-amber-400', 'bg-rose-400', 'bg-violet-400', 'bg-cyan-400', 'bg-pink-400', 'bg-lime-400', 'bg-orange-400', 'bg-teal-400'];
+function getSubjectColor(subject: string): string {
+  return SUBJECT_COLORS[subject] || COLOR_PALETTE[Math.abs(hashCode(subject)) % COLOR_PALETTE.length];
+}
+
+// Simple string hash for deterministic color assignment
+function hashCode(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return hash;
+}
 
 const STUDY_TYPES = [
   { value: 'theory', label: 'Theory 📖' },
@@ -30,20 +54,12 @@ const STUDY_TYPES = [
   { value: 'other', label: 'Other' },
 ];
 
-const SUBJECTS = ['Physics', 'Chemistry', 'Maths', 'Biology'];
-const SUBJECT_COLORS: Record<string, string> = {
-  Physics: 'bg-blue-400',
-  Chemistry: 'bg-emerald-400',
-  Maths: 'bg-amber-400',
-  Biology: 'bg-rose-400',
-};
-
 const inputClass = 'w-full bg-[#050b18] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/30 transition-all placeholder:text-neutral-600';
 const labelClass = 'block text-xs font-label text-neutral-500 mb-2 tracking-wide';
 ---
 
 <div id="entry-form-container">
-  <form id="entry-form" class="space-y-7">
+  <form id="entry-form" class="space-y-7" data-colors={JSON.stringify(Object.fromEntries(SUBJECTS.map(s => [s, getSubjectColor(s)])))}>
     <input type="hidden" name="id" value={todayEntry?.id || ''} />
 
     <!-- Subject Chips -->
@@ -58,7 +74,7 @@ const labelClass = 'block text-xs font-label text-neutral-500 mb-2 tracking-wide
             data-selected="false"
             data-subject={subject}
           >
-            <span class={`w-2 h-2 rounded-full ${SUBJECT_COLORS[subject] || 'bg-slate-400'}`}></span>
+            <span class={`w-2 h-2 rounded-full ${getSubjectColor(subject)}`}></span>
             {subject}
           </button>
         ))}
@@ -185,6 +201,18 @@ const labelClass = 'block text-xs font-label text-neutral-500 mb-2 tracking-wide
     charCount.textContent = `${textarea.value.length} / 10000`;
   });
 
+  // Parse subject colors from server-generated data
+  var SUBJECT_COLORS_MAP = {};
+  try {
+    if (form && form.dataset.colors) {
+      SUBJECT_COLORS_MAP = JSON.parse(form.dataset.colors);
+    }
+  } catch(e) {}
+
+  function getChipColor(subject) {
+    return SUBJECT_COLORS_MAP[subject] || 'bg-slate-400';
+  }
+
   // Subject Chips — toggle selection
   const subjectChips = document.querySelectorAll('.subject-chip');
   subjectChips.forEach(chip => {
@@ -195,16 +223,13 @@ const labelClass = 'block text-xs font-label text-neutral-500 mb-2 tracking-wide
         chip.classList.remove('bg-[#050b18]', 'text-white', 'border-white/10');
         chip.classList.add('bg-indigo-500', 'text-white', 'border-indigo-500');
         const dot = chip.querySelector('span');
-        dot.classList.remove('bg-blue-400', 'bg-emerald-400', 'bg-amber-400', 'bg-rose-400');
-        dot.classList.add('bg-white');
+        dot.className = 'w-2 h-2 rounded-full bg-white';
       } else {
         chip.classList.add('bg-[#050b18]', 'text-white', 'border-white/10');
         chip.classList.remove('bg-indigo-500', 'text-white', 'border-indigo-500');
         const dot = chip.querySelector('span');
-        dot.classList.remove('bg-white');
         const subject = chip.dataset.subject;
-        const subjectColors = { Physics: 'bg-blue-400', Chemistry: 'bg-emerald-400', Maths: 'bg-amber-400', Biology: 'bg-rose-400' };
-        dot.className = `w-2 h-2 rounded-full ${subjectColors[subject] || 'bg-slate-400'}`;
+        dot.className = 'w-2 h-2 rounded-full ' + getChipColor(subject);
       }
       updateSubjectInput();
     });
@@ -313,12 +338,19 @@ const labelClass = 'block text-xs font-label text-neutral-500 mb-2 tracking-wide
       subjects[ch.subject].push(ch);
     }
 
-    const subjectColors = { Physics: '#3b82f6', Chemistry: '#22c55e', Mathematics: '#f59e0b', Maths: '#f59e0b', Biology: '#ec4899' };
+    // Build hex color map from the Tailwind bg classes
+    var sylColors = {};
+    for (var subj in SUBJECT_COLORS_MAP) {
+      var bgClass = SUBJECT_COLORS_MAP[subj];
+      // Map Tailwind bg-* classes to hex colors
+      var colorMap = { 'bg-blue-400': '#60a5fa', 'bg-emerald-400': '#34d399', 'bg-amber-400': '#fbbf24', 'bg-rose-400': '#fb7185', 'bg-violet-400': '#a78bfa', 'bg-cyan-400': '#22d3ee', 'bg-pink-400': '#f472b6', 'bg-lime-400': '#a3e635', 'bg-orange-400': '#fb923c', 'bg-teal-400': '#2dd4bf' };
+      sylColors[subj] = colorMap[bgClass] || '#64748b';
+    }
 
     syllabusChapters.innerHTML = '';
 
     for (const [subject, chs] of Object.entries(subjects)) {
-      const color = subjectColors[subject] || '#64748b';
+      const color = sylColors[subject] || '#64748b';
       const prog = progress ? progress.find(p => p.subject === subject) : null;
       const pct = prog ? prog.weightedPercent : 0;
 

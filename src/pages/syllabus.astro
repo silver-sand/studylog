@@ -75,6 +75,15 @@ const subjectIcon: Record<string, string> = {
   biology: 'biotech',
   english: 'book',
 };
+
+function getSubjectColor(subjectName: string): string {
+  const PALETTE = ['#6366f1', '#22c55e', '#f59e0b', '#ec4899', '#a78bfa', '#06b6d4', '#f472b6', '#84cc16', '#fb923c', '#14b8a6'];
+  const STANDARD_COLORS: Record<string, string> = { physics: '#6366f1', chemistry: '#22c55e', maths: '#f59e0b', mathematics: '#f59e0b', biology: '#ec4899' };
+  const sName = subjectName.toLowerCase();
+  for (const [key, color] of Object.entries(STANDARD_COLORS)) { if (sName.includes(key)) return color; }
+  let hash = 0; for (let i = 0; i < subjectName.length; i++) { hash = ((hash << 5) - hash) + subjectName.charCodeAt(i); hash = hash & hash; }
+  return PALETTE[Math.abs(hash) % PALETTE.length];
+}
 ---
 
 <BaseLayout title="Syllabus">
@@ -166,10 +175,7 @@ const subjectIcon: Record<string, string> = {
                 const subjectChapters = exam.chapters.filter(ch => ch.subject === p.subject);
                 const sName = p.subject.toLowerCase();
                 const icon = subjectIcon[sName] || 'school';
-                const subjColor = sName.includes('physics') ? '#3b82f6' :
-                  sName.includes('chemistry') ? '#22c55e' :
-                  sName.includes('math') ? '#f59e0b' :
-                  sName.includes('biology') ? '#ec4899' : '#6366f1';
+                const subjColor = getSubjectColor(p.subject);
                 return (
                   <div class="card-lift reveal-on-scroll" style={`--stagger-index:${subjIdx}`} key={p.subject}>
                     <div class="bg-[#0d1321]/40 border border-white/5 rounded-2xl overflow-hidden transition-all hover:border-indigo-500/20 subject-section">
