@@ -404,19 +404,16 @@ const CLASS_LEVELS = [
         card.classList.remove('hidden');
         if (preFillExams.includes(card.dataset.exam)) {
           card.classList.add('selected');
-          card.style.borderColor = 'var(--ds-accent-500)';
         }
       } else {
         card.classList.add('hidden');
         card.classList.remove('selected');
-        card.style.borderColor = 'var(--ds-border-subtle)';
       }
     });
     // Auto-select first exam when pre-fill is empty
     const visibleCards = document.querySelectorAll('#exam-grid .exam-card:not(.hidden)');
     if (visibleCards.length === 1 && preFillExams.length === 0) {
       visibleCards[0].classList.add('selected');
-      visibleCards[0].style.borderColor = 'var(--ds-accent-500)';
     }
     updateExamCount();
   }
@@ -543,8 +540,8 @@ const CLASS_LEVELS = [
   // ── Stream selection ──
   document.querySelectorAll('.stream-card').forEach(card => {
     card.addEventListener('click', () => {
-      document.querySelectorAll('.stream-card').forEach(c => c.style.borderColor = 'var(--ds-border-subtle)');
-      card.style.borderColor = 'var(--ds-accent-500)';
+      document.querySelectorAll('.stream-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
       document.getElementById('onboarding-stream').value = card.dataset.stream;
       hideError();
     });
@@ -555,7 +552,6 @@ const CLASS_LEVELS = [
     const card = e.target.closest('.exam-card');
     if (!card || card.classList.contains('hidden')) return;
     card.classList.toggle('selected');
-    card.style.borderColor = card.classList.contains('selected') ? 'var(--ds-accent-500)' : 'var(--ds-border-subtle)';
     updateExamCount();
     hideError();
   });
@@ -563,12 +559,8 @@ const CLASS_LEVELS = [
   // ── Coaching selection ──
   document.querySelectorAll('.coaching-option').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.coaching-option').forEach(b => {
-        b.style.borderColor = 'var(--ds-border-subtle)';
-        b.style.background = 'var(--ds-bg-surface)';
-      });
-      btn.style.borderColor = 'var(--ds-accent-500)';
-      btn.style.background = 'var(--ds-accent-bg)';
+      document.querySelectorAll('.coaching-option').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
       document.getElementById('onboarding-coaching').value = btn.dataset.coaching;
       hideError();
     });
@@ -593,6 +585,19 @@ const CLASS_LEVELS = [
 
   // ── Init ──
   updateStep(0);
+
+  // Pre-select saved values on returning
+  const preFillStream = window.__PRE_FILL?.stream;
+  if (preFillStream) {
+    const streamCard = document.querySelector(`.stream-card[data-stream="${preFillStream}"]`);
+    if (streamCard) streamCard.classList.add('selected');
+  }
+
+  const savedCoaching = document.getElementById('onboarding-coaching').value;
+  if (savedCoaching) {
+    const coachingBtn = document.querySelector(`.coaching-option[data-coaching="${savedCoaching}"]`);
+    if (coachingBtn) coachingBtn.classList.add('selected');
+  }
 </script>
 
 <style>
@@ -617,9 +622,11 @@ const CLASS_LEVELS = [
     color: var(--ds-text-primary);
   }
   .weak-subject-chip.selected {
-    background: rgba(251, 191, 36, 0.15);
-    border-color: #f59e0b;
-    color: #fbbf24;
+    background: rgba(251, 191, 36, 0.25);
+    border-color: #fbbf24;
+    border-width: 1.5px;
+    color: #fde68a;
+    box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.3);
   }
 
   /* Encouragement toast */
@@ -646,6 +653,29 @@ const CLASS_LEVELS = [
     transform: translate(-50%, -50%) scale(1);
   }
 
+  .exam-card.selected {
+    border-color: #818cf8 !important;
+    background: rgba(99, 102, 241, 0.12);
+    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.25);
+  }
+
+  .stream-card.selected {
+    border-color: #818cf8 !important;
+    background: rgba(99, 102, 241, 0.12);
+    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.25);
+  }
+
+  .coaching-option.selected {
+    border-color: #818cf8 !important;
+    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.25);
+  }
+
+  .subject-toggle-chip.selected::after,
+  .weak-subject-chip.selected::after {
+    content: ' ✓';
+    font-weight: 700;
+  }
+
   @media (max-width: 480px) {
     .exam-grid { grid-template-columns: 1fr !important; }
     .ds-onboarding-card { padding: var(--ds-space-3) var(--ds-space-2) !important; max-width: 100% !important; }
@@ -669,8 +699,10 @@ const CLASS_LEVELS = [
     color: var(--ds-text-primary);
   }
   .subject-toggle-chip.selected {
-    background: rgba(99, 102, 241, 0.15);
-    border-color: #6366f1;
-    color: #818cf8;
+    background: rgba(99, 102, 241, 0.25);
+    border-color: #818cf8;
+    border-width: 1.5px;
+    color: #c7d2fe;
+    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.3);
   }
 </style>
