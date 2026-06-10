@@ -28,7 +28,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return next();
   }
 
-  // No session — allow public paths, redirect everything else to landing page
+  // No session — clear any stale user context from previous request
+  getDb().clearCurrentUser();
+
   if (!isPublicPath(url.pathname)) {
     return redirect('/');
   }

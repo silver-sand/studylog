@@ -118,15 +118,15 @@ const stepCount = steps.length;
       : null;
 
     if (target) {
+      // Scroll target into view first, THEN capture its rect
+      target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       const rect = target.getBoundingClientRect();
+
       ring.classList.remove('hidden');
       ring.style.top = rect.top + 'px';
       ring.style.left = rect.left + 'px';
       ring.style.width = rect.width + 'px';
       ring.style.height = rect.height + 'px';
-
-      // Scroll target into view if needed
-      target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 
       positionCard(step.position || 'bottom', rect);
     } else {

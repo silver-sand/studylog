@@ -47,14 +47,14 @@
     const toggle = document.getElementById('ambience-toggle');
     const panel = document.getElementById('ambience-panel');
     const indicator = document.getElementById('ambience-indicator');
-    const volumeSlider = document.getElementById('ambience-volume') as HTMLInputElement;
+    const volumeSlider = document.getElementById('ambience-volume');
     const stopBtn = document.getElementById('ambience-stop');
 
-    let audioCtx: AudioContext | null = null;
-    let activeSource: AudioNode | null = null;
-    let gainNode: GainNode | null = null;
-    let activeType: string | null = null;
-    let rainAudio: HTMLAudioElement | null = null;
+    let audioCtx = null;
+    let activeSource = null;
+    let gainNode = null;
+    let activeType = null;
+    let rainAudio = null;
 
     function getAudioContext(): AudioContext {
       if (!audioCtx) {
@@ -63,7 +63,7 @@
       return audioCtx;
     }
 
-    function generateNoise(type: 'pink' | 'brown'): AudioNode {
+    function generateNoise(type) {
       const ctx = getAudioContext();
       const bufferSize = ctx.sampleRate * 2;
       const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
@@ -112,7 +112,7 @@
       gainNode.gain.value = (parseInt(volumeSlider.value) || 40) / 100;
       gainNode.connect(ctx.destination);
 
-      const source = generateNoise(type) as AudioBufferSourceNode;
+      const source = generateNoise(type);
       source.connect(gainNode);
       source.start();
 
@@ -138,7 +138,7 @@
 
     function stopAll() {
       if (activeSource) {
-        try { (activeSource as AudioBufferSourceNode).stop(); } catch {}
+        try { activeSource.stop(); } catch (e) { /* ignore */ }
         activeSource.disconnect();
         activeSource = null;
       }

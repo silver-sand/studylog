@@ -24,6 +24,6 @@ export const POST: APIRoute = async ({ request }) => {
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Login failed';
-    return new Response(JSON.stringify({ error: msg }), { status: 401 });
+    return new Response(JSON.stringify({ error: msg }), { status: 401, headers: { 'Content-Type': 'application/json' } });
   }
 };

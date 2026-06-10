@@ -2,6 +2,9 @@ import type { APIRoute } from 'astro';
 import { getDb } from '../../../db';
 import { scopeDbToUser } from '../../../services/user-scope';
 import { EXAM_DEFINITIONS, getSubjectsForExamKeys } from '../../../utils/exam-map';
+import { validateOrigin } from '../_csrf';
+
+const VALID_STATUSES = ['not_started', 'studied', 'revision_1', 'revision_2', 'revision_3', 'mastered'] as const;
 
 export const GET: APIRoute = async ({ url, request }) => {
   scopeDbToUser(request);
@@ -44,6 +47,9 @@ export const GET: APIRoute = async ({ url, request }) => {
 };
 
 export const PUT: APIRoute = async ({ request }) => {
+  if (!validateOrigin(request)) {
+    return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
+  }
   scopeDbToUser(request);
   try {
     const body = await request.json();
@@ -53,7 +59,7 @@ export const PUT: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: 'id and status required' }), { status: 400 });
     }
 
-    if (!['not_started', 'studied', 'revision_1', 'revision_2', 'revision_3', 'mastered'].includes(status)) {
+    if (!VALID_STATUSES.includes(status)) {
       return new Response(JSON.stringify({ error: 'Invalid status' }), { status: 400 });
     }
 
@@ -67,6 +73,9 @@ export const PUT: APIRoute = async ({ request }) => {
 };
 
 export const PATCH: APIRoute = async ({ request }) => {
+  if (!validateOrigin(request)) {
+    return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
+  }
   scopeDbToUser(request);
   try {
     const body = await request.json();
@@ -76,10 +85,14 @@ export const PATCH: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: 'updates array required' }), { status: 400 });
     }
 
-    const db = getDb();
+    // Validate all status values before applying
+    for (const u of updates) {
+      if (!u.id || !u.status || !VALID_STATUSES.includes(u.status)) {
+        return new Response(JSON.stringify({ error: `Invalid status "${u.status}" for chapter ${u.id}` }), { status: 400 });
+      }
+    }
 
-    // Look up which exam types these chapters belong to
-    const ids = updates.map(u => `'${u.id.replace(/'/g, "''")}'`);
+    const db = getDb();
     const examRows = db.getSyllabusByIds(updates.map(u => u.id));
     const examTypes = new Set(examRows.map(ch => ch.examType));
 

@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { generateDailyReview, getDailyReviewByDate } from '../../../services/daily-review-service';
 import { scopeDbToUser } from '../../../services/user-scope';
+import { validateOrigin } from '../_csrf';
 
 export const GET: APIRoute = async ({ url, request }) => {
   scopeDbToUser(request);
@@ -22,6 +23,9 @@ export const GET: APIRoute = async ({ url, request }) => {
 };
 
 export const POST: APIRoute = async ({ request }) => {
+  if (!validateOrigin(request)) {
+    return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
+  }
   scopeDbToUser(request);
   try {
     const body = await request.json().catch(() => ({}));

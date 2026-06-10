@@ -1,8 +1,12 @@
 import type { APIRoute } from 'astro';
 import { generateReview } from '../../../services/review-service';
 import { scopeDbToUser } from '../../../services/user-scope';
+import { validateOrigin } from '../_csrf';
 
 export const POST: APIRoute = async ({ request }) => {
+  if (!validateOrigin(request)) {
+    return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
+  }
   scopeDbToUser(request);
   try {
     const body = await request.json().catch(() => ({}));

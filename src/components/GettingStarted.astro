@@ -64,7 +64,12 @@ const storagePrefix = 'sl-checklist-';
   const dismissBtn = document.getElementById('gs-dismiss');
 
   function getCompleted() {
-    return keys.filter(k => k === 'dashboard' || localStorage.getItem(prefix + k) === '1');
+    return keys.filter(k => localStorage.getItem(prefix + k) === '1');
+  }
+
+  // Auto-mark dashboard as completed when user is on the dashboard page
+  if (window.location.pathname === '/dashboard') {
+    localStorage.setItem(prefix + 'dashboard', '1');
   }
 
   function update() {

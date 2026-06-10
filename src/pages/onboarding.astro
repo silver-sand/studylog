@@ -225,11 +225,21 @@ const CLASS_LEVELS = [
   </main>
 </BaseLayout>
 
+<!-- Data bridge: hidden element so Astro evaluates the template expression -->
+<div id="onboarding-data-store" data-value={JSON.stringify(onboardData)} hidden aria-hidden="true"></div>
 <script is:inline>
-  window.__ONBOARDING = JSON.parse('{JSON.stringify(onboardData)}');
-  window.__EXAM_SUBJECTS = window.__ONBOARDING.examSubjects;
-  window.__STREAM_SUBJECTS = window.__ONBOARDING.streamSubjects;
-  window.__PRE_FILL = window.__ONBOARDING.preFill;
+  (function() {
+    try {
+      var el = document.getElementById('onboarding-data-store');
+      if (!el) return;
+      window.__ONBOARDING = JSON.parse(el.dataset.value);
+      window.__EXAM_SUBJECTS = window.__ONBOARDING && window.__ONBOARDING.examSubjects;
+      window.__STREAM_SUBJECTS = window.__ONBOARDING && window.__ONBOARDING.streamSubjects;
+      window.__PRE_FILL = window.__ONBOARDING && window.__ONBOARDING.preFill;
+    } catch(e) {
+      console.error('Onboarding data bridge error:', e);
+    }
+  })();
 </script>
 
 <script>

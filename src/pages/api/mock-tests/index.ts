@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../../db';
 import { scopeDbToUser } from '../../../services/user-scope';
+import { validateOrigin } from '../_csrf';
 
 export const GET: APIRoute = async ({ url, request }) => {
   scopeDbToUser(request);
@@ -20,6 +21,9 @@ export const GET: APIRoute = async ({ url, request }) => {
 };
 
 export const POST: APIRoute = async ({ request }) => {
+  if (!validateOrigin(request)) {
+    return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
+  }
   scopeDbToUser(request);
   try {
     const body = await request.json();
@@ -29,8 +33,8 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: 'subject, testName, score, maxMarks, date are required' }), { status: 400 });
     }
 
-    if (typeof score !== 'number' || typeof maxMarks !== 'number' || maxMarks <= 0) {
-      return new Response(JSON.stringify({ error: 'score must be a number and maxMarks must be a positive number' }), { status: 400 });
+    if (typeof score !== 'number' || typeof maxMarks !== 'number' || isNaN(score) || isNaN(maxMarks) || maxMarks <= 0) {
+      return new Response(JSON.stringify({ error: 'score must be a valid number and maxMarks must be a valid positive number' }), { status: 400 });
     }
 
     const db = getDb();

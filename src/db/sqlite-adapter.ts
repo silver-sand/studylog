@@ -684,12 +684,12 @@ export class SQLiteAdapter implements DatabaseInterface {
     db.run('BEGIN TRANSACTION');
     try {
       const stmt = db.prepare(
-        `UPDATE syllabus SET status = ?, completed_at = ?, last_revised_at = ?, revision_count = revision_count + 1 WHERE id = ? AND user_id = ?`
+        `UPDATE syllabus SET status = ?, completed_at = ?, last_revised_at = ?, revision_count = revision_count + CASE WHEN ? = 'not_started' THEN 0 ELSE 1 END WHERE id = ? AND user_id = ?`
       );
       for (const { id, status } of updates) {
         const completedAt = status === 'mastered' ? now : null;
         const lastRevisedAt = (status === 'revision_1' || status === 'revision_2' || status === 'revision_3') ? now : null;
-        stmt.bind([status, completedAt, lastRevisedAt, id, this.userId]);
+        stmt.bind([status, completedAt, lastRevisedAt, status, id, this.userId]);
         if (stmt.step()) count++;
         stmt.reset();
       }
@@ -1008,7 +1008,12 @@ export class SQLiteAdapter implements DatabaseInterface {
       ]
     );
     this.save();
-    return this.toMockTest({ id, user_id: this.userId, exam_type: data.examType || '', subject: data.subject, test_name: data.testName, score: data.score, max_marks: data.maxMarks, percentage, date: data.date, notes: data.notes || '', created_at: new Date().toISOString() });
+    // Re-read the row from DB to get the consistent created_at format
+    const stmt = db.prepare(`SELECT * FROM mock_tests WHERE id = ?`);
+    stmt.bind([id]);
+    const row = stmt.step() ? stmt.getAsObject() : null;
+    stmt.free();
+    return this.toMockTest(row || { id, user_id: this.userId, exam_type: data.examType || '', subject: data.subject, test_name: data.testName, score: data.score, max_marks: data.maxMarks, percentage, date: data.date, notes: data.notes || '' });
   }
 
   getMockTests(filters?: { subject?: string; limit?: number }): MockTest[] {

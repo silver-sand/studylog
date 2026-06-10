@@ -11,7 +11,7 @@ export const GET: APIRoute = async ({ request }) => {
     const settings = getDb().getSettings();
     return new Response(JSON.stringify(settings));
   } catch (e) {
-    return new Response(JSON.stringify({ error: 'Failed to load settings' }), { status: 500 });
+    return new Response(JSON.stringify({ error: 'Failed to load settings' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
 };
 
@@ -105,6 +105,6 @@ export const PUT: APIRoute = async ({ request }) => {
 
     return new Response(JSON.stringify(settings));
   } catch (e) {
-    return new Response(JSON.stringify({ error: 'Failed to update settings' }), { status: 500 });
+    return new Response(JSON.stringify({ error: 'Failed to update settings' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
 };

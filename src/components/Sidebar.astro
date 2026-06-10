@@ -104,12 +104,6 @@ function isActive(href: string): boolean {
 </nav>
 
 <script>
-  document.getElementById('logout-btn')?.addEventListener('click', async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    window.location.href = '/';
-  });
-  document.getElementById('exit-guest-btn')?.addEventListener('click', async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    window.location.href = '/';
-  });
+  // Logout is handled from settings page and layout header
+  // (IDs logout-btn and exit-guest-btn are not present in this component)
 </script>

@@ -34,11 +34,19 @@ const { tourId, title, description, position = 'bottom', selector = '' } = Astro
     // Find target element
     const target = selector ? document.querySelector(selector) : null;
 
+    // Restore target element styles on clean up
+    let origPosition = null;
+    let origZIndex = null;
+
     // Show after a short delay
     setTimeout(() => {
       el.classList.remove('hidden');
 
       if (target) {
+        // Save original styles so we can restore them on dismiss
+        origPosition = target.style.position;
+        origZIndex = target.style.zIndex;
+
         const targetRect = target.getBoundingClientRect();
         const tooltipRect = el.getBoundingClientRect();
 
@@ -91,6 +99,19 @@ const { tourId, title, description, position = 'bottom', selector = '' } = Astro
     el.querySelector('.tour-dismiss')?.addEventListener('click', () => {
       localStorage.setItem(`tour:${tourId}`, '1');
       el.classList.add('hidden');
+      // Restore target element styles
+      if (target) {
+        if (origPosition !== null && origPosition !== '') {
+          target.style.position = origPosition;
+        } else {
+          target.style.removeProperty('position');
+        }
+        if (origZIndex !== null && origZIndex !== '') {
+          target.style.zIndex = origZIndex;
+        } else {
+          target.style.removeProperty('z-index');
+        }
+      }
     });
   });
 </script>

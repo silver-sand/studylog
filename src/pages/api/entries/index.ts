@@ -68,10 +68,15 @@ export const GET: APIRoute = async ({ request, url }) => {
   try {
     const from = url.searchParams.get('from') || undefined;
     const to = url.searchParams.get('to') || undefined;
-    const limit = url.searchParams.get('limit') ? Number(url.searchParams.get('limit')) : undefined;
-    const offset = url.searchParams.get('offset') ? Number(url.searchParams.get('offset')) : undefined;
+    const limitRaw = url.searchParams.get('limit');
+    const offsetRaw = url.searchParams.get('offset');
+    const limit = limitRaw ? Number(limitRaw) : undefined;
+    const offset = offsetRaw ? Number(offsetRaw) : undefined;
+    // Guard against NaN from invalid query param values
+    const validLimit = limit !== undefined && !isNaN(limit) ? limit : undefined;
+    const validOffset = offset !== undefined && !isNaN(offset) ? offset : undefined;
 
-    const entries = listEntries({ from, to, limit, offset });
+    const entries = listEntries({ from, to, limit: validLimit, offset: validOffset });
     return new Response(JSON.stringify(entries));
   } catch (e) {
     return new Response(JSON.stringify({ error: 'Failed to list entries' }), { status: 500 });

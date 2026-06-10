@@ -40,7 +40,17 @@ if (settings.examDate) {
     </header>
 
     <div class="flex-1 overflow-hidden px-8 pb-8 flex gap-8">
-      <!-- Secondary Navigation (Content Area) — matching Stitch 5-panel nav -->
+      <!-- Mobile tab navigation (visible below lg) -->
+      <div class="flex lg:hidden gap-1 mb-4 overflow-x-auto flex-shrink-0 scrollbar-hide" id="mobile-settings-nav">
+        <button class="px-4 py-2 rounded-lg text-sm font-medium text-indigo-400 bg-[#0d1321] border border-slate-700/50 whitespace-nowrap settings-nav-btn active" data-tab="profile">Profile</button>
+        <button class="px-4 py-2 rounded-lg text-sm font-medium text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#0d1321]/50 whitespace-nowrap transition-colors settings-nav-btn" data-tab="preferences">Study Preferences</button>
+        <button class="px-4 py-2 rounded-lg text-sm font-medium text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#0d1321]/50 whitespace-nowrap transition-colors settings-nav-btn" data-tab="appearance">Appearance</button>
+        <button class="px-4 py-2 rounded-lg text-sm font-medium text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#0d1321]/50 whitespace-nowrap transition-colors settings-nav-btn" data-tab="notifications">Notifications</button>
+        <button class="px-4 py-2 rounded-lg text-sm font-medium text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#0d1321]/50 whitespace-nowrap transition-colors settings-nav-btn" data-tab="account">Account</button>
+        <button class="px-4 py-2 rounded-lg text-sm font-medium text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#0d1321]/50 whitespace-nowrap transition-colors settings-nav-btn" data-tab="data">Data</button>
+      </div>
+
+      <!-- Secondary Navigation (Content Area) — matching Stitch 5-panel nav, hidden on mobile -->
       <nav class="w-48 flex-shrink-0 flex flex-col gap-1 overflow-y-auto pr-4 hidden lg:flex">
         <button class="text-left px-4 py-2.5 rounded-lg text-sm font-medium text-indigo-400 bg-[#0d1321] border border-slate-700/50 settings-nav-btn active" data-tab="profile">
           Profile
@@ -406,8 +416,8 @@ if (settings.examDate) {
   const navBtns = document.querySelectorAll('.settings-nav-btn');
   const sections = {};
   document.querySelectorAll('.settings-section').forEach(s => {
-    const id = (s as HTMLElement).id.replace('section-', '');
-    (sections as any)[id] = s;
+    const id = s.id.replace('section-', '');
+    sections[id] = s;
   });
 
   navBtns.forEach(btn => {
@@ -480,8 +490,8 @@ if (settings.examDate) {
   document.getElementById('save-profile-btn')?.addEventListener('click', async () => {
     const btn = document.getElementById('save-profile-btn');
     if (!btn) return;
-    const nameInput = document.querySelector('#section-profile input[type="text"]') as HTMLInputElement;
-    const emailInput = document.querySelector('#section-profile input[type="email"]') as HTMLInputElement;
+    const nameInput = document.querySelector('#section-profile input[type="text"]');
+    const emailInput = document.querySelector('#section-profile input[type="email"]');
     const original = btn.textContent;
     btn.textContent = 'Saving...';
     btn.disabled = true;
@@ -514,22 +524,22 @@ if (settings.examDate) {
 
     // Collect selected exams
     const selectedExams = Array.from(document.querySelectorAll('#exam-grid button[data-exam].border-indigo-500'))
-      .map(b => (b as HTMLElement).dataset.exam)
+      .map(b => b.dataset.exam)
       .filter(Boolean);
 
     // Collect stream
     const streamEl = document.querySelector('#stream-grid button.border-indigo-500');
-    const stream = (streamEl as HTMLElement)?.dataset?.stream || '';
+    const stream = streamEl?.dataset?.stream || '';
 
     // Collect active subjects (toggled on)
     const activeSubjects = Array.from(document.querySelectorAll('#active-subjects-grid button.border-indigo-500'))
-      .map(b => (b as HTMLElement).dataset.subject)
+      .map(b => b.dataset.subject)
       .filter(Boolean);
 
     // Collect numeric values
-    const targetHoursPerWeek = parseInt((document.getElementById('target-hours') as HTMLInputElement)?.value) || 35;
-    const studyDaysPerWeek = parseInt((document.getElementById('study-days') as HTMLInputElement)?.value) || 5;
-    const examDate = (document.getElementById('exam-date') as HTMLInputElement)?.value || null;
+    const targetHoursPerWeek = parseInt(document.getElementById('target-hours')?.value) || 35;
+    const studyDaysPerWeek = parseInt(document.getElementById('study-days')?.value) || 5;
+    const examDate = document.getElementById('exam-date')?.value || null;
 
     btn.textContent = 'Saving...';
     btn.disabled = true;
@@ -604,7 +614,7 @@ if (settings.examDate) {
   });
 
   document.getElementById('data-file-input')?.addEventListener('change', async (e) => {
-    const input = e.target as HTMLInputElement;
+    const input = e.target;
     const file = input.files?.[0];
     const status = document.getElementById('data-status');
     if (!file || !status) return;

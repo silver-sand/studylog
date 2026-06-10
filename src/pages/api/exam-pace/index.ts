@@ -14,9 +14,9 @@ export const GET: APIRoute = async ({ request }) => {
     // Support multi-exam: return pace for each selected exam
     const selectedExams = settings.selectedExams?.length ? settings.selectedExams : ['JEE'];
 
-    // Get first study date
-    const entries = db.listEntries({ limit: 1 });
-    const firstEntry = entries.length > 0 ? entries[entries.length - 1] : null;
+    // Get first study date (earliest entry, not most recent)
+    const allEntries = db.listEntries({ limit: 10000 });
+    const firstEntry = allEntries.length > 0 ? allEntries[allEntries.length - 1] : null;
     const firstDate = firstEntry ? new Date(firstEntry.date) : new Date();
     const today = new Date();
     const daysSinceStart = Math.max(1, Math.floor((today.getTime() - firstDate.getTime()) / 86400000));

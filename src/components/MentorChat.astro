@@ -452,7 +452,11 @@ const quickActions = [
 
   // ── Retry ──
   window.retryLastMessage = function() {
-    if (history.length >= 2 && history[history.length - 1].role === 'assistant') {
+    // If the last entry is user (from a failed stream), pop it to avoid duplication
+    if (history.length > 0 && history[history.length - 1].role === 'user') {
+      history.pop();
+      saveHistory();
+    } else if (history.length >= 2 && history[history.length - 1].role === 'assistant') {
       history.pop();
       saveHistory();
     }
