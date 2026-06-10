@@ -606,29 +606,6 @@ const CLASS_LEVELS = [
   .review-label { font-size: var(--ds-text-sm); color: var(--ds-text-muted); }
   .review-value { font-size: var(--ds-text-sm); color: var(--ds-text-primary); font-weight: var(--ds-weight-medium); text-align: right; }
 
-  .weak-subject-chip {
-    padding: 0.3rem 0.75rem;
-    border: 1px solid var(--ds-border-default);
-    border-radius: 999px;
-    background: var(--ds-bg-surface);
-    color: var(--ds-text-tertiary);
-    cursor: pointer;
-    font-size: var(--ds-text-xs);
-    transition: all 0.15s;
-    user-select: none;
-  }
-  .weak-subject-chip:hover {
-    border-color: var(--ds-border-hover);
-    color: var(--ds-text-primary);
-  }
-  .weak-subject-chip.selected {
-    background: rgba(251, 191, 36, 0.25);
-    border-color: #fbbf24;
-    border-width: 1.5px;
-    color: #fde68a;
-    box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.3);
-  }
-
   /* Encouragement toast */
   .encouragement-toast {
     position: absolute;
@@ -653,34 +630,39 @@ const CLASS_LEVELS = [
     transform: translate(-50%, -50%) scale(1);
   }
 
-  .exam-card.selected {
-    border-color: #818cf8 !important;
-    background: rgba(99, 102, 241, 0.12);
-    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.25);
-  }
-
-  .stream-card.selected {
-    border-color: #818cf8 !important;
-    background: rgba(99, 102, 241, 0.12);
-    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.25);
-  }
-
-  .coaching-option.selected {
-    border-color: #818cf8 !important;
-    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.25);
-  }
-
-  .subject-toggle-chip.selected::after,
-  .weak-subject-chip.selected::after {
-    content: ' ✓';
-    font-weight: 700;
-  }
-
   @media (max-width: 480px) {
     .exam-grid { grid-template-columns: 1fr !important; }
     .ds-onboarding-card { padding: var(--ds-space-3) var(--ds-space-2) !important; max-width: 100% !important; }
     .ds-onboarding-card .ds-step { width: 1.5rem; height: 1.5rem; font-size: var(--ds-text-2xs); }
     #step-indicator { flex-wrap: wrap; justify-content: center; }
+  }
+</style>
+
+<!-- Global styles for dynamically-created chip elements -->
+<!-- IMPORTANT: Chips are created via document.createElement() so they don't get -->
+<!-- Astro's scoped [data-astro-cid-xxx] attribute. Styles MUST be global. -->
+<style is:global>
+  .weak-subject-chip {
+    padding: 0.3rem 0.75rem;
+    border: 1px solid var(--ds-border-default);
+    border-radius: 999px;
+    background: var(--ds-bg-surface);
+    color: var(--ds-text-tertiary);
+    cursor: pointer;
+    font-size: var(--ds-text-xs);
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .weak-subject-chip:hover {
+    border-color: var(--ds-border-hover);
+    color: var(--ds-text-primary);
+  }
+  .weak-subject-chip.selected {
+    background: rgba(251, 191, 36, 0.25);
+    border-color: #fbbf24;
+    border-width: 1.5px;
+    color: #fde68a;
+    box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.3);
   }
 
   .subject-toggle-chip {
@@ -704,5 +686,28 @@ const CLASS_LEVELS = [
     border-width: 1.5px;
     color: #c7d2fe;
     box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.3);
+  }
+
+  .exam-card.selected {
+    border-color: #818cf8 !important;
+    background: rgba(99, 102, 241, 0.12);
+    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.25);
+  }
+
+  .stream-card.selected {
+    border-color: #818cf8 !important;
+    background: rgba(99, 102, 241, 0.12);
+    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.25);
+  }
+
+  .coaching-option.selected {
+    border-color: #818cf8 !important;
+    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.25);
+  }
+
+  .subject-toggle-chip.selected::after,
+  .weak-subject-chip.selected::after {
+    content: ' ✓';
+    font-weight: 700;
   }
 </style>
