@@ -39,9 +39,9 @@ if (settings.examDate) {
       <p class="text-[#94a3b8] text-sm mt-1">Manage your account, study preferences, and app appearance.</p>
     </header>
 
-    <div class="flex-1 overflow-hidden px-8 pb-8 flex gap-8">
+    <div class="flex-1 overflow-hidden px-8 pb-8 flex flex-col lg:flex-row gap-4 lg:gap-8">
       <!-- Mobile tab navigation (visible below lg) -->
-      <div class="flex lg:hidden gap-1 mb-4 overflow-x-auto flex-shrink-0 scrollbar-hide" id="mobile-settings-nav">
+      <div class="flex lg:hidden gap-1 -mx-2 px-2 overflow-x-auto flex-shrink-0 scrollbar-hide" id="mobile-settings-nav">
         <button class="px-4 py-2 rounded-lg text-sm font-medium text-indigo-400 bg-[#0d1321] border border-slate-700/50 whitespace-nowrap settings-nav-btn active" data-tab="profile">Profile</button>
         <button class="px-4 py-2 rounded-lg text-sm font-medium text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#0d1321]/50 whitespace-nowrap transition-colors settings-nav-btn" data-tab="preferences">Study Preferences</button>
         <button class="px-4 py-2 rounded-lg text-sm font-medium text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#0d1321]/50 whitespace-nowrap transition-colors settings-nav-btn" data-tab="appearance">Appearance</button>
