@@ -14,12 +14,13 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     const result = await login(email.trim().toLowerCase(), password);
+    const secureFlag = import.meta.env.PROD ? '; Secure' : '';
 
     return new Response(JSON.stringify({ user: result.user }), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Set-Cookie': `session_token=${result.token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${7 * 24 * 60 * 60}`,
+        'Set-Cookie': `session_token=${result.token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${7 * 24 * 60 * 60}${secureFlag}`,
       },
     });
   } catch (e) {

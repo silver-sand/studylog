@@ -179,7 +179,14 @@ export class SQLiteAdapter implements DatabaseInterface {
       `ALTER TABLE weekly_reviews ADD COLUMN notes TEXT NOT NULL DEFAULT ''`,
     ];
     for (const sql of migrations) {
-      try { db.run(sql); } catch { /* column already exists — ignore */ }
+      try { db.run(sql); } catch (e) {
+        // Column-already-exists errors are expected for already-applied migrations
+        if (e instanceof Error && e.message.includes('duplicate column name')) {
+          continue;
+        }
+        console.error(`Migration failed: ${sql.substring(0, 60)}...`, e);
+        throw e;
+      }
     }
 
     // Migration: copy syllabus rows for legacy user '1' if not already indexed per-user
@@ -227,9 +234,13 @@ export class SQLiteAdapter implements DatabaseInterface {
 
   private save(): void {
     if (!this.db) return;
-    const data = this.db.export();
-    const buffer = Buffer.from(data);
-    fs.writeFileSync(this.dbPath, buffer);
+    try {
+      const data = this.db.export();
+      const buffer = Buffer.from(data);
+      fs.writeFileSync(this.dbPath, buffer);
+    } catch (err) {
+      console.error('Failed to save database:', err);
+    }
   }
 
   private getDb(): SqlJsDb {
@@ -681,8 +692,8 @@ export class SQLiteAdapter implements DatabaseInterface {
     let count = 0;
     const now = new Date().toISOString();
     // Use a single transaction for all updates
-    db.run('BEGIN TRANSACTION');
     try {
+      db.run('BEGIN TRANSACTION');
       const stmt = db.prepare(
         `UPDATE syllabus SET status = ?, completed_at = ?, last_revised_at = ?, revision_count = revision_count + CASE WHEN ? = 'not_started' THEN 0 ELSE 1 END WHERE id = ? AND user_id = ?`
       );
@@ -695,8 +706,11 @@ export class SQLiteAdapter implements DatabaseInterface {
       }
       stmt.free();
       db.run('COMMIT');
-    } catch {
-      db.run('ROLLBACK');
+    } catch (e) {
+      try { db.run('ROLLBACK'); } catch (rollbackErr) {
+        console.error('ROLLBACK also failed:', rollbackErr);
+      }
+      throw new Error(`Batch syllabus update failed: ${e instanceof Error ? e.message : 'unknown error'}`);
     }
     this.save();
     return count;

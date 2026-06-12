@@ -355,7 +355,7 @@ ${weaknesses.map(w => `- ⚠️ ${w}`).join('\n') || '- Keep up the good work!'}
   async *generateMentorResponse(query: string, context: MentorContext, history?: ChatMessage[]): AsyncGenerator<string, void, unknown> {
     // Simulate streaming with delays
     const responses = [
-      "I can see you've been studying **${context.examType}** syllabus. Let me think about that...\n\n",
+      `I can see you've been studying **${context.examType}** syllabus. Let me think about that...\n\n`,
       "Based on your recent entries, here's what I notice:\n\n",
       `- You've covered ${context.syllabusProgress || 'some ground'} in your syllabus.\n`,
       `- Your weak areas need attention: ${context.weakChapters || 'none flagged'}.\n\n`,

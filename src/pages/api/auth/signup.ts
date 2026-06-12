@@ -31,12 +31,13 @@ export const POST: APIRoute = async ({ request }) => {
       password,
       isGuest ? { guestUserId: currentUserId } : undefined
     );
+    const secureFlag = import.meta.env.PROD ? '; Secure' : '';
 
     return new Response(JSON.stringify({ user: result.user }), {
       status: 201,
       headers: {
         'Content-Type': 'application/json',
-        'Set-Cookie': `session_token=${result.token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${7 * 24 * 60 * 60}`,
+        'Set-Cookie': `session_token=${result.token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${7 * 24 * 60 * 60}${secureFlag}`,
       },
     });
   } catch (e) {

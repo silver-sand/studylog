@@ -4,8 +4,12 @@ import { createAIServiceFromEnv } from '../../../ai';
 import type { MentorContext, ChatMessage } from '../../../types/ai';
 import { scopeDbToUser } from '../../../services/user-scope';
 import { getSyllabusKeyForExam } from '../../../utils/exam-map';
+import { validateOrigin } from '../_csrf';
 
 export const POST: APIRoute = async ({ request }) => {
+  if (!validateOrigin(request)) {
+    return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
+  }
   scopeDbToUser(request);
   try {
     const { query, history } = await request.json();

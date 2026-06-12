@@ -2,10 +2,6 @@ export function validateOrigin(request: Request): boolean {
   // Skip validation for GET/HEAD requests
   if (request.method === 'GET' || request.method === 'HEAD') return true;
 
-  // In development, allow all origins
-  const isDev = import.meta.env.DEV || process.env.NODE_ENV === 'development';
-  if (isDev) return true;
-
   const origin = request.headers.get('origin');
   const referer = request.headers.get('referer');
 
@@ -16,7 +12,7 @@ export function validateOrigin(request: Request): boolean {
   // the external hostname on all platforms (including Render where request.url
   // points to an internal address like http://0.0.0.0:10000/).
   const host = request.headers.get('host');
-  if (!host) return true;
+  if (!host) return false;
 
   const expectedHostname = host.split(':')[0];
 

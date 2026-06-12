@@ -42,6 +42,28 @@ Think → Plan → Build → Review → Test → Ship
 - **Build integration**: Always run `npm run build` before committing
 - **Stitch source of truth**: For design tokens and visual layouts, use Google Stitch MCP as the primary reference — not manual CSS decisions
 
+### Superpowers Methodology Integration
+
+The gstack pipeline (`Think → Plan → Build → Review → Test → Ship`) maps to the Superpowers flow. Enhance each phase:
+
+| Phase | Superpowers Practice |
+|-------|---------------------|
+| **Think** | Ask one question at a time. Propose 2-3 approaches with trade-offs. No code until spec approved. |
+| **Plan** | Break into 2-5 minute tasks. Every task must list exact file paths, complete code, and expected command output. No "TBD", "TODO", or "add validation" without specifics. |
+| **Build** | For multi-file work, prefer fresh subagent per task + two-stage review (spec compliance → code quality). |
+| **Review** | Run the self-review checklist (coverage, placeholders, type consistency, completeness). |
+| **Ship** | No final commit without `npm run build` passing. Verify success criteria from the spec. |
+
+**Systematic debugging** (for bugs/errors):
+1. **Investigate** — Read error carefully, reproduce, `git diff`, trace data flow backward. Never guess.
+2. **Analyze** — Find working examples, list every difference from broken case.
+3. **Hypothesize** — One variable at a time. Smallest test change. Verify before continuing.
+4. **Fix** — One fix addressing root cause. No bundled refactoring. Verify no regressions.
+
+**3-Fix Rule:** After 3 failed fix attempts, stop and question the architecture. Don't keep piling on patches.
+
+The full methodology is documented in `~/.claude/CLAUDE.md`.
+
 ### File Conventions
 
 - Components: `src/components/*.astro`
@@ -49,6 +71,17 @@ Think → Plan → Build → Review → Test → Ship
 - Styles: `src/styles/design-system.css`
 - Services: `src/services/*.ts`
 - Shared utils: `src/utils/*.ts`
+
+## 🧠 Karpathy Coding Guidelines
+
+These override the generic impulse to overcomplicate. Apply them to every code change:
+
+1. **Think Before Coding** — State assumptions. Surface ambiguity. Suggest simpler approaches. Ask when uncertain.
+2. **Simplicity First** — No speculative features, no unnecessary abstractions, no scope creep. Senior engineer test: "Is this overcomplicated?"
+3. **Surgical Changes** — Every changed line must trace to the request. No drive-by refactoring, no style fixes, no touching adjacent code.
+4. **Goal-Driven Execution** — Define verifiable success criteria before starting. Loop until they pass.
+
+These apply before and during every gstack pipeline step. The full guidelines live in `~/.claude/CLAUDE.md`.
 
 ## Skill routing
 

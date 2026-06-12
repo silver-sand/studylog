@@ -72,7 +72,7 @@ export const PATCH: APIRoute = async ({ params, request }) => {
       updateEntry(id, {
         content: content.trim(),
         hoursStudied: hoursStudied !== undefined ? Number(hoursStudied) : existing.hoursStudied,
-        studyType: studyType || existing.studyType,
+        studyType: studyType ?? existing.studyType,
         focusRating: focusRating !== undefined ? Number(focusRating) : existing.focusRating,
         examType: examType ?? existing.examType,
       });
@@ -83,7 +83,7 @@ export const PATCH: APIRoute = async ({ params, request }) => {
     const updated = updateEntry(id, {
       content: content?.trim() ?? existing.content,
       hoursStudied: hoursStudied !== undefined ? Number(hoursStudied) : existing.hoursStudied,
-      studyType: studyType || existing.studyType,
+      studyType: studyType ?? existing.studyType,
       focusRating: focusRating !== undefined ? Number(focusRating) : existing.focusRating,
       examType: examType ?? existing.examType,
     });

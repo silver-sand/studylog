@@ -34,6 +34,6 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(JSON.stringify(review), { status: 201 });
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Failed to generate daily review';
-    return new Response(JSON.stringify({ error: msg }), { status: 400 });
+    return new Response(JSON.stringify({ error: msg }), { status: 500 });
   }
 };

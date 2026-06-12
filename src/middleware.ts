@@ -3,12 +3,12 @@ import { getDb } from './db';
 import { getTokenFromCookie, getSessionUser } from './services/auth-service';
 
 // Paths accessible without authentication
-const PUBLIC_PATHS = new Set(['/', '/api/auth/login', '/api/auth/signup']);
+const PUBLIC_PATHS = new Set([
+  '/', '/api/auth/login', '/api/auth/signup', '/api/auth/guest',
+]);
 
 function isPublicPath(pathname: string): boolean {
   if (PUBLIC_PATHS.has(pathname)) return true;
-  // API routes are also public (individual handlers do their own auth)
-  if (pathname.startsWith('/api/')) return true;
   // Static assets
   if (pathname.startsWith('/_astro/') || pathname.startsWith('/favicon')) return true;
   return false;

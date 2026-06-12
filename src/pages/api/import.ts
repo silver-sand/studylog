@@ -41,14 +41,44 @@ export const POST: APIRoute = async ({ request, url }) => {
   const dryRun = url.searchParams.get('dryRun') === 'true';
 
   try {
-    const body = await request.json();
+    // Enforce 10 MB payload limit
+    const text = await request.text();
+    if (text.length > 10 * 1024 * 1024) {
+      return new Response(JSON.stringify({ error: 'Payload too large. Maximum size is 10 MB.' }), { status: 413 });
+    }
+    const body = JSON.parse(text);
 
     if (!validatePayload(body)) {
       return new Response(JSON.stringify({ error: 'Invalid import format. Expected version, data.entries, data.weeklyReviews, data.dailyReviews, data.syllabus, data.mockTests.' }), { status: 400 });
     }
 
-    const db = getDb();
+    const MAX_ROWS = 10_000;
     const { entries, weeklyReviews, dailyReviews, syllabus, mockTests } = body.data;
+    if (entries.length > MAX_ROWS || weeklyReviews.length > MAX_ROWS || dailyReviews.length > MAX_ROWS || syllabus.length > MAX_ROWS || mockTests.length > MAX_ROWS) {
+      return new Response(JSON.stringify({ error: `Too many rows. Maximum ${MAX_ROWS} per table.` }), { status: 413 });
+    }
+
+    // Validate row content before importing
+    const validationErrors: string[] = [];
+    for (const row of entries) {
+      if (typeof row.content !== 'string' || row.content.length < 1 || row.content.length > 10000) {
+        validationErrors.push(`Entry "${row.id}": content must be 1-10000 characters`);
+      }
+      if (row.hours_studied !== undefined && (typeof row.hours_studied !== 'number' || row.hours_studied < 0 || row.hours_studied > 24)) {
+        validationErrors.push(`Entry "${row.id}": hours_studied must be 0-24`);
+      }
+    }
+    for (const row of mockTests) {
+      if (row.score !== undefined && typeof row.score !== 'number') {
+        validationErrors.push(`Mock test "${row.id}": score must be a number`);
+      }
+      if (row.max_marks !== undefined && typeof row.max_marks !== 'number') {
+        validationErrors.push(`Mock test "${row.id}": max_marks must be a number`);
+      }
+    }
+    if (validationErrors.length > 0) {
+      return new Response(JSON.stringify({ error: 'Validation errors', details: validationErrors.slice(0, 20) }), { status: 400 });
+    }
 
     if (dryRun) {
       return new Response(JSON.stringify({
@@ -62,13 +92,7 @@ export const POST: APIRoute = async ({ request, url }) => {
       }));
     }
 
-    // Wipe existing data for this user — then re-insert all rows
-    // Wrapped in a single transaction so a mid-way failure doesn't lose data
-    const rawDb = (db as any)._getRawDb
-      ? (db as any)._getRawDb()
-      : (db as any).getDb
-        ? (db as any).getDb()
-        : null;
+    const db = getDb();
 
     try {
       db.rawQuery('BEGIN TRANSACTION');
@@ -124,6 +148,28 @@ export const POST: APIRoute = async ({ request, url }) => {
           `INSERT INTO mock_tests (id, user_id, exam_type, subject, test_name, score, max_marks, percentage, date, notes, created_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [row.id, userId, row.exam_type || '', row.subject, row.test_name, row.score, row.max_marks, row.percentage, row.date, row.notes || '', row.created_at || new Date().toISOString()]
+        );
+      }
+
+      // Re-insert settings (if present)
+      const settingsRow = body.data.settings;
+      if (settingsRow) {
+        db.rawQuery(
+          `INSERT INTO settings (id, user_id, target_hours_per_week, study_days_per_week, subjects, selected_exams, exam_type, exam_date, theme, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            settingsRow.id || Date.now(),
+            userId,
+            settingsRow.target_hours_per_week ?? 35,
+            settingsRow.study_days_per_week ?? 5,
+            settingsRow.subjects || '[]',
+            settingsRow.selected_exams || '[]',
+            settingsRow.exam_type || 'JEE',
+            settingsRow.exam_date || null,
+            settingsRow.theme || 'dark',
+            settingsRow.created_at || new Date().toISOString(),
+            settingsRow.updated_at || new Date().toISOString(),
+          ]
         );
       }
 
