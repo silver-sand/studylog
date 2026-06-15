@@ -21,8 +21,8 @@ const quickActions = [
       <div id="empty-state" class="flex flex-col items-center justify-center min-h-[65vh] text-center">
         <!-- Glow avatar -->
         <div class="relative mb-8">
-          <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500/15 via-purple-500/10 to-indigo-500/5 border border-indigo-500/20 flex items-center justify-center shadow-xl shadow-indigo-500/10">
-            <span class="material-symbols-outlined text-4xl text-indigo-400" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+          <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-[var(--ds-accent-500)]/15 via-purple-500/10 to-[var(--ds-accent-500)]/5 border border-[var(--ds-accent-500)]/20 flex items-center justify-center shadow-xl shadow-[var(--ds-accent-500)]/10">
+            <span class="material-symbols-outlined text-4xl text-[var(--ds-accent-400)]" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
           </div>
           <div class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
             <span class="w-2 h-2 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50"></span>
@@ -40,11 +40,11 @@ const quickActions = [
         <div class="grid grid-cols-2 gap-3 w-full max-w-xl mb-6">
           {quickActions.map(action => (
             <button
-              class="quick-action-btn group relative flex items-center gap-3 p-4 rounded-xl bg-[#0d1321]/60 border border-white/[0.06] hover:border-indigo-500/20 hover:bg-indigo-500/5 transition-all duration-200 text-left"
+              class="quick-action-btn group relative flex items-center gap-3 p-4 rounded-xl bg-[var(--ds-bg-base)]/60 border border-white/[0.06] hover:border-[var(--ds-accent-500)]/20 hover:bg-[var(--ds-accent-500)]/5 transition-all duration-200 text-left"
               data-prompt={action.prompt}
             >
-              <div class="w-9 h-9 rounded-lg bg-indigo-500/10 border border-indigo-500/10 flex items-center justify-center shrink-0 group-hover:bg-indigo-500/20 group-hover:border-indigo-500/20 transition-all">
-                <span class="material-symbols-outlined text-lg text-indigo-400">{action.icon}</span>
+              <div class="w-9 h-9 rounded-lg bg-[var(--ds-accent-500)]/10 border border-[var(--ds-accent-500)]/10 flex items-center justify-center shrink-0 group-hover:bg-[var(--ds-accent-500)]/20 group-hover:border-[var(--ds-accent-500)]/20 transition-all">
+                <span class="material-symbols-outlined text-lg text-[var(--ds-accent-400)]">{action.icon}</span>
               </div>
               <span class="text-sm font-medium text-neutral-300 group-hover:text-white transition-colors">{action.label}</span>
             </button>
@@ -55,7 +55,7 @@ const quickActions = [
         <div class="flex items-center gap-2 text-xs text-neutral-600">
           <span>Powered by</span>
           <div class="relative inline-block">
-            <select id="empty-model-select" class="appearance-none bg-[#0d1321] border border-white/10 rounded-lg px-3 py-1.5 pr-8 text-neutral-300 text-xs cursor-pointer hover:border-indigo-500/30 focus:outline-none focus:border-indigo-500/40 transition-colors">
+            <select id="empty-model-select" class="appearance-none bg-[var(--ds-bg-base)] border border-white/10 rounded-lg px-3 py-1.5 pr-8 text-neutral-300 text-xs cursor-pointer hover:border-[var(--ds-accent-500)]/30 focus:outline-none focus:border-[var(--ds-accent-500)]/40 transition-colors">
               <option value="gemini">Gemini 2.0</option>
               <option value="groq">Groq</option>
               <option value="llama">Llama 3</option>
@@ -75,47 +75,47 @@ const quickActions = [
     <div class="max-w-4xl mx-auto">
       <!-- Active Context Chips (shown in chat mode) -->
       <div id="context-chips" class="flex flex-wrap gap-2 mb-3" style="display: none;">
-        <button class="context-chip px-3 py-1.5 rounded-lg bg-[#0d1321]/60 border border-white/[0.06] text-[11px] text-neutral-500 hover:text-neutral-300 hover:border-indigo-500/20 hover:bg-indigo-500/5 transition-all" data-prompt="Analyze my study patterns this week and give me insights.">
+        <button class="context-chip px-3 py-1.5 rounded-lg bg-[var(--ds-bg-base)]/60 border border-white/[0.06] text-[11px] text-neutral-500 hover:text-neutral-300 hover:border-[var(--ds-accent-500)]/20 hover:bg-[var(--ds-accent-500)]/5 transition-all" data-prompt="Analyze my study patterns this week and give me insights.">
           <span class="material-symbols-outlined text-[14px] align-middle mr-1">summarize</span>
           Analyze my week
         </button>
-        <button class="context-chip px-3 py-1.5 rounded-lg bg-[#0d1321]/60 border border-white/[0.06] text-[11px] text-neutral-500 hover:text-neutral-300 hover:border-indigo-500/20 hover:bg-indigo-500/5 transition-all" data-prompt="Explain a physics concept I should know for competitive exams.">
+        <button class="context-chip px-3 py-1.5 rounded-lg bg-[var(--ds-bg-base)]/60 border border-white/[0.06] text-[11px] text-neutral-500 hover:text-neutral-300 hover:border-[var(--ds-accent-500)]/20 hover:bg-[var(--ds-accent-500)]/5 transition-all" data-prompt="Explain a physics concept I should know for competitive exams.">
           <span class="material-symbols-outlined text-[14px] align-middle mr-1">science</span>
           Explain concept
         </button>
-        <button class="context-chip px-3 py-1.5 rounded-lg bg-[#0d1321]/60 border border-white/[0.06] text-[11px] text-neutral-500 hover:text-neutral-300 hover:border-indigo-500/20 hover:bg-indigo-500/5 transition-all" data-prompt="Suggest a study plan for the next week.">
+        <button class="context-chip px-3 py-1.5 rounded-lg bg-[var(--ds-bg-base)]/60 border border-white/[0.06] text-[11px] text-neutral-500 hover:text-neutral-300 hover:border-[var(--ds-accent-500)]/20 hover:bg-[var(--ds-accent-500)]/5 transition-all" data-prompt="Suggest a study plan for the next week.">
           <span class="material-symbols-outlined text-[14px] align-middle mr-1">calendar_month</span>
           Study plan
         </button>
       </div>
 
       <!-- Gradient Glass Input -->
-      <div class="gradient-glass-input relative flex items-end gap-1.5 bg-[#0d1321]/80 backdrop-blur-xl border border-white/[0.07] rounded-2xl p-1.5 focus-within:border-indigo-500/25 focus-within:ring-1 focus-within:ring-indigo-500/15 transition-all duration-300 shadow-lg shadow-black/20" id="input-container">
+      <div class="gradient-glass-input relative flex items-end gap-1.5 bg-[var(--ds-bg-base)]/80 backdrop-blur-xl border border-white/[0.07] rounded-2xl p-1.5 focus-within:border-[var(--ds-accent-500)]/25 focus-within:ring-1 focus-within:ring-[var(--ds-accent-500)]/15 transition-all duration-300 shadow-lg shadow-black/20" id="input-container">
         <!-- Model Selector Dropdown -->
         <div class="relative shrink-0" id="model-selector-group">
           <button id="model-select-btn" class="model-select-btn flex items-center gap-1.5 px-2.5 py-2.5 rounded-xl text-[11px] text-neutral-500 hover:text-neutral-300 hover:bg-white/[0.04] transition-colors border border-transparent hover:border-white/[0.06]">
-            <span class="material-symbols-outlined text-[16px] text-indigo-400/70" id="model-icon">auto_awesome</span>
+            <span class="material-symbols-outlined text-[16px] text-[var(--ds-accent-400)]/70" id="model-icon">auto_awesome</span>
             <span id="model-name" class="hidden sm:inline font-medium">Gemini 2.0</span>
             <span class="material-symbols-outlined text-[14px] -mr-1">expand_more</span>
           </button>
-          <div id="model-dropdown" class="absolute bottom-full left-0 mb-2 w-48 bg-[#0d1321] border border-white/[0.08] rounded-xl shadow-2xl shadow-black/50 overflow-hidden z-50 backdrop-blur-xl" style="display: none;">
+          <div id="model-dropdown" class="absolute bottom-full left-0 mb-2 w-48 bg-[var(--ds-bg-base)] border border-white/[0.08] rounded-xl shadow-2xl shadow-black/50 overflow-hidden z-50 backdrop-blur-xl" style="display: none;">
             <div class="py-1">
-              <button class="model-option flex items-center gap-3 w-full px-4 py-2.5 text-xs text-neutral-400 hover:bg-indigo-500/10 hover:text-indigo-300 transition-colors" data-model="gemini" data-icon="auto_awesome">
-                <span class="material-symbols-outlined text-[18px] text-indigo-400/70">auto_awesome</span>
+              <button class="model-option flex items-center gap-3 w-full px-4 py-2.5 text-xs text-neutral-400 hover:bg-[var(--ds-accent-500)]/10 hover:text-[var(--ds-accent-300)] transition-colors" data-model="gemini" data-icon="auto_awesome">
+                <span class="material-symbols-outlined text-[18px] text-[var(--ds-accent-400)]/70">auto_awesome</span>
                 <div class="text-left">
                   <div class="font-medium">Gemini 2.0</div>
                   <div class="text-[10px] text-neutral-600">Fast & capable</div>
                 </div>
                 <span class="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-500/60"></span>
               </button>
-              <button class="model-option flex items-center gap-3 w-full px-4 py-2.5 text-xs text-neutral-400 hover:bg-indigo-500/10 hover:text-indigo-300 transition-colors" data-model="groq" data-icon="bolt">
+              <button class="model-option flex items-center gap-3 w-full px-4 py-2.5 text-xs text-neutral-400 hover:bg-[var(--ds-accent-500)]/10 hover:text-[var(--ds-accent-300)] transition-colors" data-model="groq" data-icon="bolt">
                 <span class="material-symbols-outlined text-[18px] text-neutral-500">bolt</span>
                 <div class="text-left">
                   <div class="font-medium">Groq</div>
                   <div class="text-[10px] text-neutral-600">Lightning fast</div>
                 </div>
               </button>
-              <button class="model-option flex items-center gap-3 w-full px-4 py-2.5 text-xs text-neutral-400 hover:bg-indigo-500/10 hover:text-indigo-300 transition-colors" data-model="llama" data-icon="psychiatry">
+              <button class="model-option flex items-center gap-3 w-full px-4 py-2.5 text-xs text-neutral-400 hover:bg-[var(--ds-accent-500)]/10 hover:text-[var(--ds-accent-300)] transition-colors" data-model="llama" data-icon="psychiatry">
                 <span class="material-symbols-outlined text-[18px] text-neutral-500">psychiatry</span>
                 <div class="text-left">
                   <div class="font-medium">Llama 3</div>
@@ -129,7 +129,7 @@ const quickActions = [
         <div class="h-7 w-px bg-white/[0.06] shrink-0"></div>
 
         <!-- Attachment Button -->
-        <button id="attach-btn" class="p-2.5 text-neutral-600 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-xl transition-all shrink-0 group relative" title="Upload image or file">
+        <button id="attach-btn" class="p-2.5 text-neutral-600 hover:text-[var(--ds-accent-400)] hover:bg-[var(--ds-accent-500)]/10 rounded-xl transition-all shrink-0 group relative" title="Upload image or file">
           <span class="material-symbols-outlined text-[20px]">attach_file</span>
           <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-neutral-800 text-[10px] text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-lg">
             Upload Image
@@ -145,7 +145,7 @@ const quickActions = [
         ></textarea>
 
         <!-- Send Button -->
-        <button id="send-btn" class="p-2.5 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-400 text-white rounded-xl transition-all shrink-0 flex items-center justify-center h-[44px] w-[44px] shadow-sm shadow-indigo-500/20 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-indigo-600" disabled>
+        <button id="send-btn" class="p-2.5 bg-[var(--ds-accent-600)] hover:bg-[var(--ds-accent-500)] active:bg-[var(--ds-accent-400)] text-white rounded-xl transition-all shrink-0 flex items-center justify-center h-[44px] w-[44px] shadow-sm shadow-[var(--ds-accent-500)]/20 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-[var(--ds-accent-600)]" disabled>
           <span class="material-symbols-outlined text-[20px]">arrow_upward</span>
         </button>
       </div>
@@ -193,9 +193,9 @@ const quickActions = [
     if (!text) return '<div class="text-neutral-400 text-sm italic">Empty response</div>';
     let html = escapeHtml(text);
     // Code blocks
-    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre class="p-4 rounded-xl bg-[#0a0f1a] border border-white/[0.06] text-sm text-indigo-300/80 overflow-x-auto my-4 font-mono leading-relaxed"><code>$2</code></pre>');
+    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre class="p-4 rounded-xl bg-[#0a0f1a] border border-white/[0.06] text-sm text-[var(--ds-accent-300)]/80 overflow-x-auto my-4 font-mono leading-relaxed"><code>$2</code></pre>');
     // Inline code
-    html = html.replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded-md bg-[#0a0f1a] text-indigo-300/80 text-xs font-mono border border-white/[0.04]">$1</code>');
+    html = html.replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded-md bg-[#0a0f1a] text-[var(--ds-accent-300)]/80 text-xs font-mono border border-white/[0.04]">$1</code>');
     // Bold
     html = html.replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-white">$1</strong>');
     // Italic
@@ -360,8 +360,8 @@ const quickActions = [
         </div>`;
       } else {
         wrapper.className = 'flex gap-3 message-entrance';
-        wrapper.innerHTML = `<div class="ai-avatar w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0 mt-1">
-          <span class="material-symbols-outlined text-[16px] text-indigo-400" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+        wrapper.innerHTML = `<div class="ai-avatar w-8 h-8 rounded-xl bg-gradient-to-br from-[var(--ds-accent-500)]/20 to-purple-500/10 border border-[var(--ds-accent-500)]/20 flex items-center justify-center shrink-0 mt-1">
+          <span class="material-symbols-outlined text-[16px] text-[var(--ds-accent-400)]" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
         </div>
         <div class="ai-bubble flex-1 max-w-[95%]">
           ${renderMarkdown(msg.content)}
@@ -405,15 +405,15 @@ const quickActions = [
     const aiWrapper = document.createElement('div');
     aiWrapper.className = 'flex gap-3 message-entrance';
     aiWrapper.id = 'streaming-msg';
-    aiWrapper.innerHTML = `<div class="ai-avatar w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0 mt-1">
-      <span class="material-symbols-outlined text-[16px] text-indigo-400" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+    aiWrapper.innerHTML = `<div class="ai-avatar w-8 h-8 rounded-xl bg-gradient-to-br from-[var(--ds-accent-500)]/20 to-purple-500/10 border border-[var(--ds-accent-500)]/20 flex items-center justify-center shrink-0 mt-1">
+      <span class="material-symbols-outlined text-[16px] text-[var(--ds-accent-400)]" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
     </div>
     <div class="ai-bubble flex-1 max-w-[95%]">
       <div class="flex items-center gap-2.5 text-neutral-500 py-1">
         <div class="thinking-dots flex items-center gap-1">
-          <span class="w-1.5 h-1.5 rounded-full bg-indigo-500/60 animate-bounce" style="animation-delay: 0ms;"></span>
-          <span class="w-1.5 h-1.5 rounded-full bg-indigo-500/60 animate-bounce" style="animation-delay: 150ms;"></span>
-          <span class="w-1.5 h-1.5 rounded-full bg-indigo-500/60 animate-bounce" style="animation-delay: 300ms;"></span>
+          <span class="w-1.5 h-1.5 rounded-full bg-[var(--ds-accent-500)]/60 animate-bounce" style="animation-delay: 0ms;"></span>
+          <span class="w-1.5 h-1.5 rounded-full bg-[var(--ds-accent-500)]/60 animate-bounce" style="animation-delay: 150ms;"></span>
+          <span class="w-1.5 h-1.5 rounded-full bg-[var(--ds-accent-500)]/60 animate-bounce" style="animation-delay: 300ms;"></span>
         </div>
         <span class="text-xs italic">Thinking...</span>
       </div>
@@ -460,7 +460,7 @@ const quickActions = [
               if (msgEl) {
                 const contentDiv = msgEl.querySelector('.streaming-content');
                 if (contentDiv) {
-                  contentDiv.innerHTML = renderMarkdown(reply) + '<span class="inline-block w-2 h-4 bg-indigo-400/70 ml-0.5 animate-pulse rounded-sm typewriter-cursor"></span>';
+                  contentDiv.innerHTML = renderMarkdown(reply) + '<span class="inline-block w-2 h-4 bg-[var(--ds-accent-400)]/70 ml-0.5 animate-pulse rounded-sm typewriter-cursor"></span>';
                   chatContainer?.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
                 }
               }
@@ -486,8 +486,8 @@ const quickActions = [
 
       const aiComplete = document.createElement('div');
       aiComplete.className = 'flex gap-3 message-entrance';
-      aiComplete.innerHTML = `<div class="ai-avatar w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0 mt-1">
-        <span class="material-symbols-outlined text-[16px] text-indigo-400" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+      aiComplete.innerHTML = `<div class="ai-avatar w-8 h-8 rounded-xl bg-gradient-to-br from-[var(--ds-accent-500)]/20 to-purple-500/10 border border-[var(--ds-accent-500)]/20 flex items-center justify-center shrink-0 mt-1">
+        <span class="material-symbols-outlined text-[16px] text-[var(--ds-accent-400)]" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
       </div>
       <div class="ai-bubble flex-1 max-w-[95%]">
         ${renderMarkdown(cleanReply)}
@@ -505,7 +505,7 @@ const quickActions = [
       </div>
       <div class="flex-1 bg-red-500/5 border border-red-500/10 rounded-2xl rounded-tl-sm p-4 max-w-[95%]">
         <p class="text-sm text-red-400/80 leading-relaxed">${escapeHtml(err.message)}</p>
-        <button onclick="retryLastMessage()" class="mt-2 text-xs text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1">
+        <button onclick="retryLastMessage()" class="mt-2 text-xs text-[var(--ds-accent-400)] hover:text-[var(--ds-accent-300)] transition-colors flex items-center gap-1">
           <span class="material-symbols-outlined text-[14px]">refresh</span> Try again
         </button>
       </div>`;

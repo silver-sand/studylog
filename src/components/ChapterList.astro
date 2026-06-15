@@ -14,8 +14,8 @@ const statusLabel = STATUS_LABELS[chapter.status] || 'Locked';
 const colorMap: Record<string, string> = {
   not_started: '#475569',
   studied: '#f59e0b',
-  revision_1: '#818cf8',
-  revision_2: '#a78bfa',
+  revision_1: 'var(--ds-accent-400)',
+  revision_2: 'var(--ds-accent-300)',
   revision_3: '#e879f9',
   mastered: '#22c55e',
 };
@@ -23,7 +23,7 @@ const colorMap: Record<string, string> = {
 const bgMap: Record<string, string> = {
   not_started: 'bg-slate-800/50 text-slate-500',
   studied: 'bg-yellow-500/10 text-yellow-500',
-  revision_1: 'bg-indigo-500/10 text-indigo-400',
+  revision_1: 'bg-[var(--ds-accent-500)]/10 text-[var(--ds-accent-400)]',
   revision_2: 'bg-purple-500/10 text-purple-400',
   revision_3: 'bg-pink-500/10 text-pink-400',
   mastered: 'bg-emerald-500/10 text-emerald-400',
@@ -33,11 +33,11 @@ const isCompleted = chapter.status === 'mastered';
 const isInProgress = chapter.status === 'studied';
 const iconColor = colorMap[chapter.status] || '#475569';
 const badgeClass = bgMap[chapter.status] || 'bg-slate-800/50 text-slate-500';
-const ringClass = chapter.status === 'studied' ? 'ring-1 ring-indigo-500/20 border-indigo-500/30' : 'border-white/5';
+const ringClass = chapter.status === 'studied' ? 'ring-1 ring-[var(--ds-accent-500)]/20 border-[var(--ds-accent-500)]/30' : 'border-white/5';
 ---
 
 <div
-  class="chapter-item flex items-center gap-3 p-3 bg-[#050b18] rounded-xl border transition-all group hover:border-indigo-500/30 {ringClass}"
+  class="chapter-item flex items-center gap-3 p-3 bg-[var(--ds-bg-base)] rounded-xl border transition-all group hover:border-[var(--ds-accent-500)]/30 {ringClass}"
   data-chapter-id={chapter.id}
   data-status={chapter.status}
   data-class-level={chapter.classLevel || ''}

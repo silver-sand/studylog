@@ -110,7 +110,7 @@ const insight = getInsight();
     <div class="ds-card-gradient rounded-2xl p-6 card-lift">
       <div class="flex items-center justify-between mb-6">
         <h3 class="text-sm font-bold text-white flex items-center gap-2">
-          <span class="material-symbols-outlined text-indigo-400 text-lg">checklist</span>
+          <span class="material-symbols-outlined text-[var(--ds-accent-400)] text-lg">checklist</span>
           Today's Priority
         </h3>
         <span class="text-[10px] text-neutral-500">{hasEntries ? `${entriesThisWeek} sessions` : 'Get started'}</span>
@@ -122,7 +122,7 @@ const insight = getInsight();
     <div class="obsidian-glass rounded-2xl p-6 card-lift">
       <div class="flex items-center justify-between mb-6">
         <h3 class="text-sm font-bold text-white flex items-center gap-2">
-          <span class="material-symbols-outlined text-indigo-400 text-lg">timer</span>
+          <span class="material-symbols-outlined text-[var(--ds-accent-400)] text-lg">timer</span>
           Weekly Study
         </h3>
         <div class="flex items-baseline gap-1">
@@ -135,10 +135,10 @@ const insight = getInsight();
           const pct = Math.max((bar.hours / maxBarHours) * 100, 2);
           const hasValue = bar.hours > 0;
           return (
-            <div class={`w-full rounded-t-sm relative group ${hasValue ? 'bg-indigo-500/20' : 'bg-white/5'}`}>
+            <div class={`w-full rounded-t-sm relative group ${hasValue ? 'bg-[var(--ds-accent-500)]/20' : 'bg-white/5'}`}>
               <div
                 class={`absolute bottom-0 w-full rounded-t-sm transition-all duration-700 ${
-                  hasValue ? 'bg-indigo-500' : 'bg-neutral-700'
+                  hasValue ? 'bg-[var(--ds-accent-500)]' : 'bg-neutral-700'
                 }`}
                 style={`height: ${hasValue ? pct : 5}%;`}
               ></div>
@@ -151,9 +151,9 @@ const insight = getInsight();
   </div>
 
   <!-- Weekly Insight -->
-  <div class="obsidian-glass rounded-2xl p-6 flex items-start gap-5 border-l-4 border-indigo-500 card-lift" style="--stagger-index:2">
-    <div class="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center shrink-0">
-      <span class="material-symbols-outlined text-indigo-400 text-2xl filled-icon">lightbulb</span>
+  <div class="obsidian-glass rounded-2xl p-6 flex items-start gap-5 border-l-4 border-[var(--ds-accent-500)] card-lift" style="--stagger-index:2">
+    <div class="w-12 h-12 rounded-xl bg-[var(--ds-accent-500)]/10 flex items-center justify-center shrink-0">
+      <span class="material-symbols-outlined text-[var(--ds-accent-400)] text-2xl filled-icon">lightbulb</span>
     </div>
     <div>
       <h4 class="text-sm font-bold text-white mb-1">{insight.title}</h4>
@@ -200,7 +200,7 @@ const insight = getInsight();
 
   <!-- Focus CTA -->
   <div class="mt-auto pt-4" style="--stagger-index:5">
-    <a href="/timer" class="w-full bg-indigo-500 hover:bg-indigo-400 text-white font-bold text-sm py-3 rounded-xl flex items-center justify-center gap-3 glow-button pulse-glow tracking-widest uppercase shadow-lg transition-all active:scale-[0.98] no-underline">
+    <a href="/timer" class="w-full bg-[var(--ds-accent-500)] hover:bg-[var(--ds-accent-400)] text-white font-bold text-sm py-3 rounded-xl flex items-center justify-center gap-3 glow-button pulse-glow tracking-widest uppercase shadow-lg transition-all active:scale-[0.98] no-underline">
       <span class="material-symbols-outlined">rocket_launch</span>
       START FOCUS SESSION
     </a>

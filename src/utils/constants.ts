@@ -11,7 +11,7 @@ export const SUBJECT_COLORS: Record<string, string> = {
   accountancy: 'bg-teal-500',
   business_studies: 'bg-orange-500',
   economics: 'bg-rose-500',
-  applied_mathematics: 'bg-indigo-500',
+  applied_mathematics: 'bg-[var(--ds-accent-500)]',
 };
 
 export const SUBJECT_TEXT_COLORS: Record<string, string> = {
@@ -23,7 +23,7 @@ export const SUBJECT_TEXT_COLORS: Record<string, string> = {
   accountancy: 'text-teal-400',
   business_studies: 'text-orange-400',
   economics: 'text-rose-400',
-  applied_mathematics: 'text-indigo-400',
+  applied_mathematics: 'text-[var(--ds-accent-400)]',
 };
 
 export function getSubjectColor(subject: string): string {

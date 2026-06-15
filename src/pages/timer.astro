@@ -11,7 +11,7 @@ const subjects = settings.subjects || [];
 const streak = db.getStreak();
 
 // Compute dynamic subject colors
-const TIMER_COLOR_PALETTE = ['#6366f1', '#22c55e', '#f59e0b', '#ec4899', '#a78bfa', '#06b6d4', '#f472b6', '#84cc16', '#fb923c', '#14b8a6'];
+const TIMER_COLOR_PALETTE = ['var(--ds-accent-500)', '#22c55e', '#f59e0b', '#ec4899', 'var(--ds-accent-300)', '#06b6d4', '#f472b6', '#84cc16', '#fb923c', '#14b8a6'];
 const timerSubjectColorMap: Record<string, string> = {};
 for (const s of subjects) {
   let hash = 0;
@@ -19,7 +19,7 @@ for (const s of subjects) {
   timerSubjectColorMap[s] = TIMER_COLOR_PALETTE[Math.abs(hash) % TIMER_COLOR_PALETTE.length];
 }
 // Standard subject overrides
-timerSubjectColorMap['Physics'] = '#6366f1';
+timerSubjectColorMap['Physics'] = 'var(--ds-accent-500)';
 timerSubjectColorMap['Chemistry'] = '#22c55e';
 timerSubjectColorMap['Mathematics'] = '#f59e0b';
 timerSubjectColorMap['Maths'] = '#f59e0b';
@@ -27,7 +27,7 @@ timerSubjectColorMap['Biology'] = '#ec4899';
 ---
 
 <BaseLayout title="Timer">
-  <main class="flex-1 px-4 md:px-8 py-8 overflow-y-auto bg-[#050b18] min-h-screen">
+  <main class="flex-1 px-4 md:px-8 py-8 overflow-y-auto bg-[var(--ds-bg-base)] min-h-screen">
     <div class="max-w-7xl mx-auto flex flex-col xl:flex-row gap-8">
 
       <!-- Left: Timer Experience -->
@@ -35,17 +35,17 @@ timerSubjectColorMap['Biology'] = '#ec4899';
 
         <!-- Top Stats Row — Stitch style -->
         <div class="grid grid-cols-3 gap-4 mb-10">
-          <div class="bg-[#0d1321] border border-white/5 rounded-xl p-4 flex flex-col justify-center items-center">
+          <div class="bg-[var(--ds-bg-base)] border border-white/5 rounded-xl p-4 flex flex-col justify-center items-center">
             <span class="text-slate-400 text-xs font-label uppercase tracking-wider mb-1">Today's Focus</span>
             <span class="text-xl font-headline font-bold text-[#f8fafc]" id="today-focus">0m</span>
           </div>
-          <div class="bg-[#0d1321] border border-white/5 rounded-xl p-4 flex flex-col justify-center items-center">
+          <div class="bg-[var(--ds-bg-base)] border border-white/5 rounded-xl p-4 flex flex-col justify-center items-center">
             <span class="text-slate-400 text-xs font-label uppercase tracking-wider mb-1">Sessions</span>
             <span class="text-xl font-headline font-bold text-[#f8fafc]" id="session-count">0</span>
           </div>
-          <div class="bg-[#0d1321] border border-white/5 rounded-xl p-4 flex flex-col justify-center items-center">
+          <div class="bg-[var(--ds-bg-base)] border border-white/5 rounded-xl p-4 flex flex-col justify-center items-center">
             <span class="text-slate-400 text-xs font-label uppercase tracking-wider mb-1">Current Streak</span>
-            <span class="text-xl font-headline font-bold text-[#6366f1] flex items-center gap-1">
+            <span class="text-xl font-headline font-bold text-[var(--ds-accent-500)] flex items-center gap-1">
               <span class="material-symbols-outlined text-sm filled-icon">local_fire_department</span>
               {streak} days
             </span>
@@ -53,19 +53,19 @@ timerSubjectColorMap['Biology'] = '#ec4899';
         </div>
 
         <!-- Timer Main Area — Stitch style -->
-        <div class="flex-1 bg-[#0d1321] border border-white/5 rounded-2xl p-8 flex flex-col items-center justify-center relative overflow-hidden">
+        <div class="flex-1 bg-[var(--ds-bg-base)] border border-white/5 rounded-2xl p-8 flex flex-col items-center justify-center relative overflow-hidden">
           <!-- Subtle background decoration -->
-          <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-lg bg-indigo-500/5 blur-[100px] rounded-full pointer-events-none"></div>
+          <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-lg bg-[var(--ds-accent-500)]/5 blur-[100px] rounded-full pointer-events-none"></div>
 
           <!-- Timer / Stopwatch Mode Toggle -->
-          <div class="flex bg-[#050b18] border border-white/5 rounded-full p-1 mb-4 z-10">
-            <button class="px-6 py-2 rounded-full bg-[#6366f1] text-white font-medium text-sm transition-all shadow-sm" id="mode-timer" data-timer-type="timer">Timer</button>
+          <div class="flex bg-[var(--ds-bg-base)] border border-white/5 rounded-full p-1 mb-4 z-10">
+            <button class="px-6 py-2 rounded-full bg-[var(--ds-accent-500)] text-white font-medium text-sm transition-all shadow-sm" id="mode-timer" data-timer-type="timer">Timer</button>
             <button class="px-6 py-2 rounded-full text-slate-400 hover:text-slate-200 font-medium text-sm transition-all hover:bg-white/5" id="mode-stopwatch" data-timer-type="stopwatch">Stopwatch</button>
           </div>
 
           <!-- Countdown Mode Selector Tabs (hidden in stopwatch mode) -->
-          <div id="countdown-mode-tabs" class="flex bg-[#050b18] border border-white/5 rounded-full p-1 mb-12 z-10">
-            <button class="px-6 py-2 rounded-full bg-[#6366f1] text-white font-medium text-sm transition-all shadow-sm" data-mode="focus">Focus 25m</button>
+          <div id="countdown-mode-tabs" class="flex bg-[var(--ds-bg-base)] border border-white/5 rounded-full p-1 mb-12 z-10">
+            <button class="px-6 py-2 rounded-full bg-[var(--ds-accent-500)] text-white font-medium text-sm transition-all shadow-sm" data-mode="focus">Focus 25m</button>
             <button class="px-6 py-2 rounded-full text-slate-400 hover:text-slate-200 font-medium text-sm transition-all hover:bg-white/5" data-mode="short">Short Break 5m</button>
             <button class="px-6 py-2 rounded-full text-slate-400 hover:text-slate-200 font-medium text-sm transition-all hover:bg-white/5" data-mode="long">Long Break 15m</button>
           </div>
@@ -75,9 +75,9 @@ timerSubjectColorMap['Biology'] = '#ec4899';
             <!-- SVG Progress Ring -->
             <svg class="w-80 h-80 drop-shadow-[0_0_15px_rgba(99,102,241,0.2)]" viewBox="0 0 100 100">
               <circle class="stroke-[#050b18]" cx="50" cy="50" fill="transparent" r="46" stroke-width="3"></circle>
-              <circle id="timer-svg-ring" class="stroke-[#6366f1] progress-ring__circle" cx="50" cy="50" fill="transparent" r="46" stroke-dasharray="289.026" stroke-dashoffset="0" stroke-linecap="round" stroke-width="3"></circle>
+              <circle id="timer-svg-ring" class="stroke-[var(--ds-accent-500)] progress-ring__circle" cx="50" cy="50" fill="transparent" r="46" stroke-dasharray="289.026" stroke-dashoffset="0" stroke-linecap="round" stroke-width="3"></circle>
             </svg>
-            <div class="absolute flex flex-col items-center justify-center w-64 h-64 bg-[#050b18] rounded-full border border-white/5 timer-glow-inner">
+            <div class="absolute flex flex-col items-center justify-center w-64 h-64 bg-[var(--ds-bg-base)] rounded-full border border-white/5 timer-glow-inner">
               <span class="text-7xl font-display font-black tracking-tighter text-[#f8fafc] tabular-nums" id="timer-display-main">25:00</span>
               <span class="text-sm font-label text-slate-400 mt-2 tracking-wide uppercase" id="timer-session-label">Focus Session</span>
             </div>
@@ -85,13 +85,13 @@ timerSubjectColorMap['Biology'] = '#ec4899';
 
           <!-- Action Buttons -->
           <div class="flex items-center gap-6 z-10">
-            <button id="timer-reset" class="w-14 h-14 rounded-full bg-[#050b18] border border-white/5 flex items-center justify-center text-slate-400 hover:text-slate-200 hover:border-slate-400 transition-all active:scale-95 group">
+            <button id="timer-reset" class="w-14 h-14 rounded-full bg-[var(--ds-bg-base)] border border-white/5 flex items-center justify-center text-slate-400 hover:text-slate-200 hover:border-slate-400 transition-all active:scale-95 group">
               <span class="material-symbols-outlined text-2xl group-hover:rotate-[-180deg] transition-transform duration-500">restart_alt</span>
             </button>
-            <button id="timer-play" class="w-20 h-20 rounded-full bg-[#6366f1] hover:bg-[#818cf8] text-white shadow-[0_0_20px_rgba(99,102,241,0.4)] flex items-center justify-center transition-all active:scale-95 hover:scale-105">
+            <button id="timer-play" class="w-20 h-20 rounded-full bg-[var(--ds-accent-500)] hover:bg-[var(--ds-accent-400)] text-white shadow-[0_0_20px_rgba(99,102,241,0.4)] flex items-center justify-center transition-all active:scale-95 hover:scale-105">
               <span class="material-symbols-outlined text-4xl ml-1 filled-icon">play_arrow</span>
             </button>
-            <button id="timer-pause" class="w-14 h-14 rounded-full bg-[#050b18] border border-white/5 flex items-center justify-center text-slate-400 hover:text-slate-200 hover:border-slate-400 transition-all active:scale-95">
+            <button id="timer-pause" class="w-14 h-14 rounded-full bg-[var(--ds-bg-base)] border border-white/5 flex items-center justify-center text-slate-400 hover:text-slate-200 hover:border-slate-400 transition-all active:scale-95">
               <span class="material-symbols-outlined text-2xl filled-icon">pause</span>
             </button>
           </div>
@@ -102,14 +102,14 @@ timerSubjectColorMap['Biology'] = '#ec4899';
           </div>
 
           <!-- Save to Daily Log (shown on session completion) -->
-          <div id="timer-completion-bar" class="hidden mt-6 w-full max-w-md z-10 bg-[#0d1321] border border-emerald-500/20 rounded-xl p-5">
+          <div id="timer-completion-bar" class="hidden mt-6 w-full max-w-md z-10 bg-[var(--ds-bg-base)] border border-emerald-500/20 rounded-xl p-5">
             <div class="flex items-center gap-3 mb-4">
               <div class="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400 shrink-0">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
               </div>
               <div>
-                <p class="text-sm font-medium text-white">Session Complete!</p>
-                <p class="text-xs text-[#94a3b8]" id="timer-completion-summary">25 min focused</p>
+                <p class="text-sm font-medium text-[var(--ds-text-primary)]">Session Complete!</p>
+                <p class="text-xs text-[var(--ds-text-secondary)]" id="timer-completion-summary">25 min focused</p>
               </div>
             </div>
             <div class="flex gap-3">
@@ -117,22 +117,22 @@ timerSubjectColorMap['Biology'] = '#ec4899';
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
                 Save to Daily Log
               </button>
-              <button id="save-and-go-daily-btn" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2">
+              <button id="save-and-go-daily-btn" class="px-4 py-2.5 bg-[var(--ds-accent-600)] hover:bg-[var(--ds-accent-500)] text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                 Log &amp; Go to Daily
               </button>
             </div>
-            <p class="text-xs text-[#94a3b8] mt-3 text-center" id="timer-save-status"></p>
+            <p class="text-xs text-[var(--ds-text-secondary)] mt-3 text-center" id="timer-save-status"></p>
           </div>
         </div>
       </div>
 
       <!-- Right Panel: Recent Sessions -->
       <div class="w-full xl:w-80 flex flex-col gap-6">
-        <div class="bg-[#0d1321] border border-white/5 rounded-2xl p-6 h-full flex flex-col">
+        <div class="bg-[var(--ds-bg-base)] border border-white/5 rounded-2xl p-6 h-full flex flex-col">
           <div class="flex items-center justify-between mb-6">
             <h3 class="text-lg font-headline font-semibold text-[#f8fafc]">Recent Sessions</h3>
-            <button id="clear-sessions-btn" class="text-slate-400 hover:text-[#6366f1] transition-colors">
+            <button id="clear-sessions-btn" class="text-slate-400 hover:text-[var(--ds-accent-500)] transition-colors">
               <span class="material-symbols-outlined text-sm">more_horiz</span>
             </button>
           </div>
@@ -165,7 +165,7 @@ timerSubjectColorMap['Biology'] = '#ec4899';
     var colorEl = document.getElementById('timer-colors-bridge');
     if (colorEl) TIMER_COLORS = JSON.parse(colorEl.dataset.colors);
   } catch(e) {}
-  function getTimerColor(subject) { return TIMER_COLORS[subject] || '#6366f1'; }
+  function getTimerColor(subject) { return TIMER_COLORS[subject] || 'var(--ds-accent-500)'; }
 
   // DOM refs
   const displayEl = document.getElementById('timer-display-main');
@@ -239,9 +239,9 @@ timerSubjectColorMap['Biology'] = '#ec4899';
     localStorage.setItem(MODE_KEY, type);
 
     document.querySelectorAll('[data-timer-type]').forEach(b => {
-      b.classList.remove('bg-[#6366f1]', 'text-white');
+      b.classList.remove('bg-[var(--ds-accent-500)]', 'text-white');
       if (b.dataset.timerType === type) {
-        b.classList.add('bg-[#6366f1]', 'text-white');
+        b.classList.add('bg-[var(--ds-accent-500)]', 'text-white');
       } else {
         b.classList.add('text-slate-400');
       }
@@ -492,11 +492,11 @@ timerSubjectColorMap['Biology'] = '#ec4899';
   document.querySelectorAll('#countdown-mode-tabs [data-mode]').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('#countdown-mode-tabs [data-mode]').forEach(b => {
-        b.classList.remove('bg-[#6366f1]', 'text-white');
+        b.classList.remove('bg-[var(--ds-accent-500)]', 'text-white');
         b.classList.add('text-slate-400');
       });
       btn.classList.remove('text-slate-400');
-      btn.classList.add('bg-[#6366f1]', 'text-white');
+      btn.classList.add('bg-[var(--ds-accent-500)]', 'text-white');
       setMode(btn.dataset.mode);
     });
   });
@@ -520,14 +520,14 @@ timerSubjectColorMap['Biology'] = '#ec4899';
     }
     sessions.forEach(s => {
       const card = document.createElement('div');
-      card.className = 'bg-[#050b18] border border-white/5 rounded-xl p-4 hover:border-[#6366f1]/30 transition-colors group cursor-default';
+      card.className = 'bg-[var(--ds-bg-base)] border border-white/5 rounded-xl p-4 hover:border-[var(--ds-accent-500)]/30 transition-colors group cursor-default';
       const topRow = document.createElement('div');
       topRow.className = 'flex justify-between items-start mb-2';
       const subjectInfo = document.createElement('div');
       subjectInfo.className = 'flex items-center gap-2';
       const dot = document.createElement('div');
       dot.className = 'w-2 h-2 rounded-full';
-      dot.style.background = s.color || '#6366f1';
+      dot.style.background = s.color || 'var(--ds-accent-500)';
       subjectInfo.appendChild(dot);
       const name = document.createElement('span');
       name.className = 'font-medium text-[#f8fafc] text-sm';
@@ -548,11 +548,11 @@ timerSubjectColorMap['Biology'] = '#ec4899';
       const bottomRow = document.createElement('div');
       bottomRow.className = 'flex justify-between items-end';
       const tag = document.createElement('span');
-      tag.className = 'text-xs font-label px-2 py-1 bg-[#0d1321] rounded-md text-[#f8fafc]';
+      tag.className = 'text-xs font-label px-2 py-1 bg-[var(--ds-bg-base)] rounded-md text-[#f8fafc]';
       tag.textContent = s.tag || 'Focus';
       bottomRow.appendChild(tag);
       const duration = document.createElement('span');
-      duration.className = 'font-headline font-semibold text-[#6366f1]';
+      duration.className = 'font-headline font-semibold text-[var(--ds-accent-500)]';
       duration.textContent = s.duration;
       bottomRow.appendChild(duration);
       card.appendChild(bottomRow);
@@ -596,30 +596,30 @@ timerSubjectColorMap['Biology'] = '#ec4899';
     const subjects = Object.keys(TIMER_COLORS).length ? Object.keys(TIMER_COLORS).sort() : ['Physics', 'Chemistry', 'Mathematics'];
     const form = document.createElement('div');
     form.id = 'manual-log-form';
-    form.className = 'bg-[#050b18] border border-white/5 rounded-xl p-4 mt-3 animate-slide-up';
+    form.className = 'bg-[var(--ds-bg-base)] border border-white/5 rounded-xl p-4 mt-3 animate-slide-up';
     form.innerHTML = `
       <h4 class="text-xs font-label text-slate-400 uppercase tracking-wider mb-3">Log Manual Session</h4>
       <div class="space-y-3">
         <div>
           <label class="text-[10px] text-slate-500 uppercase tracking-wider block mb-1">Subject</label>
           <div class="flex flex-wrap gap-1.5" id="manual-subject-chips">
-            ${subjects.map((s, i) => '<button type="button" class="manual-subj-chip px-3 py-1 rounded-full border text-xs font-medium transition-all border-slate-700 bg-[#050b18] text-slate-300 ' + (i === 0 ? 'selected' : '') + '" data-subject="' + s + '"><span class="w-1.5 h-1.5 rounded-full inline-block mr-1" style="background:' + getTimerColor(s) + '"></span>' + s + '</button>').join('')}
+            ${subjects.map((s, i) => '<button type="button" class="manual-subj-chip px-3 py-1 rounded-full border text-xs font-medium transition-all border-slate-700 bg-[var(--ds-bg-base)] text-slate-300 ' + (i === 0 ? 'selected' : '') + '" data-subject="' + s + '"><span class="w-1.5 h-1.5 rounded-full inline-block mr-1" style="background:' + getTimerColor(s) + '"></span>' + s + '</button>').join('')}
           </div>
         </div>
         <div>
           <label class="text-[10px] text-slate-500 uppercase tracking-wider block mb-1">Topic (optional)</label>
-          <input type="text" id="manual-topic" placeholder="e.g. Kinematics" class="w-full bg-[#0d1321] border border-slate-700 rounded-lg px-3 py-2 text-sm text-[#f8fafc] placeholder-slate-500 focus:outline-none focus:border-[#6366f1]" />
+          <input type="text" id="manual-topic" placeholder="e.g. Kinematics" class="w-full bg-[var(--ds-bg-base)] border border-slate-700 rounded-lg px-3 py-2 text-sm text-[#f8fafc] placeholder-slate-500 focus:outline-none focus:border-[var(--ds-accent-500)]" />
         </div>
         <div class="flex items-center gap-3">
           <label class="text-[10px] text-slate-500 uppercase tracking-wider">Duration</label>
           <div class="flex items-center gap-2">
-            <input type="number" id="manual-hours" min="0" max="12" value="0" class="w-16 bg-[#0d1321] border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-[#f8fafc] text-center focus:outline-none focus:border-[#6366f1]" />
+            <input type="number" id="manual-hours" min="0" max="12" value="0" class="w-16 bg-[var(--ds-bg-base)] border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-[#f8fafc] text-center focus:outline-none focus:border-[var(--ds-accent-500)]" />
             <span class="text-xs text-slate-400">h</span>
-            <input type="number" id="manual-minutes" min="0" max="59" value="30" class="w-16 bg-[#0d1321] border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-[#f8fafc] text-center focus:outline-none focus:border-[#6366f1]" />
+            <input type="number" id="manual-minutes" min="0" max="59" value="30" class="w-16 bg-[var(--ds-bg-base)] border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-[#f8fafc] text-center focus:outline-none focus:border-[var(--ds-accent-500)]" />
             <span class="text-xs text-slate-400">m</span>
           </div>
         </div>
-        <button id="manual-submit-btn" class="w-full bg-[#6366f1] hover:bg-[#818cf8] text-white font-semibold py-2 rounded-xl transition-all text-sm flex items-center justify-center gap-2">
+        <button id="manual-submit-btn" class="w-full bg-[var(--ds-accent-500)] hover:bg-[var(--ds-accent-400)] text-white font-semibold py-2 rounded-xl transition-all text-sm flex items-center justify-center gap-2">
           <span class="material-symbols-outlined text-sm filled-icon">check</span>
           Log Session
         </button>
@@ -693,9 +693,9 @@ timerSubjectColorMap['Biology'] = '#ec4899';
     transform-origin: 50% 50%;
   }
   .manual-subj-chip.selected {
-    background: #6366f1 !important;
+    background: var(--ds-accent-500) !important;
     color: #050b18 !important;
-    border-color: #6366f1 !important;
+    border-color: var(--ds-accent-500) !important;
   }
   .animate-slide-up {
     animation: slide-up-fade 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;

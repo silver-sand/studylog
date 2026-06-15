@@ -77,8 +77,8 @@ const subjectIcon: Record<string, string> = {
 };
 
 function getSubjectColor(subjectName: string): string {
-  const PALETTE = ['#6366f1', '#22c55e', '#f59e0b', '#ec4899', '#a78bfa', '#06b6d4', '#f472b6', '#84cc16', '#fb923c', '#14b8a6'];
-  const STANDARD_COLORS: Record<string, string> = { physics: '#6366f1', chemistry: '#22c55e', maths: '#f59e0b', mathematics: '#f59e0b', biology: '#ec4899' };
+  const PALETTE = ['var(--ds-accent-500)', '#22c55e', '#f59e0b', '#ec4899', 'var(--ds-accent-300)', '#06b6d4', '#f472b6', '#84cc16', '#fb923c', '#14b8a6'];
+  const STANDARD_COLORS: Record<string, string> = { physics: 'var(--ds-accent-500)', chemistry: '#22c55e', maths: '#f59e0b', mathematics: '#f59e0b', biology: '#ec4899' };
   const sName = subjectName.toLowerCase();
   for (const [key, color] of Object.entries(STANDARD_COLORS)) { if (sName.includes(key)) return color; }
   let hash = 0; for (let i = 0; i < subjectName.length; i++) { hash = ((hash << 5) - hash) + subjectName.charCodeAt(i); hash = hash & hash; }
@@ -87,15 +87,15 @@ function getSubjectColor(subjectName: string): string {
 ---
 
 <BaseLayout title="Syllabus">
-  <main class="min-h-screen pb-24 md:pb-8 bg-[#050b18]">
+  <main class="min-h-screen pb-24 md:pb-8 bg-[var(--ds-bg-base)]">
     <!-- Top bar -->
-    <header class="w-full h-16 flex justify-between items-center px-6 border-b border-white/[0.04] bg-[#050b18]/80 backdrop-blur-md sticky top-0 z-40">
+    <header class="w-full h-16 flex justify-between items-center px-6 border-b border-white/[0.04] bg-[var(--ds-bg-base)]/80 backdrop-blur-md sticky top-0 z-40">
       <div class="flex items-center gap-4">
         <span class="md:hidden material-symbols-outlined text-neutral-400">menu</span>
         <h2 class="font-headline text-xl font-black text-white tracking-tight">Syllabus Tracker</h2>
       </div>
       <div class="flex items-center gap-4">
-        <div class="hidden sm:flex items-center bg-[#0d1321]/60 px-3 py-1.5 rounded-full border border-white/5">
+        <div class="hidden sm:flex items-center bg-[var(--ds-bg-base)]/60 px-3 py-1.5 rounded-full border border-white/5">
           <span class="material-symbols-outlined text-neutral-500 text-sm">search</span>
           <input class="bg-transparent border-none focus:ring-0 text-sm text-neutral-300 w-48 placeholder-neutral-600" placeholder="Search chapters..." type="text" />
         </div>
@@ -109,12 +109,12 @@ function getSubjectColor(subjectName: string): string {
     <div class="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
       {filteredExams.length === 0 ? (
         <div class="obsidian-glass rounded-2xl p-12 text-center card-lift reveal-on-scroll">
-          <div class="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mx-auto mb-5">
-            <span class="material-symbols-outlined text-3xl text-indigo-400">assignment</span>
+          <div class="w-16 h-16 rounded-2xl bg-[var(--ds-accent-500)]/10 border border-[var(--ds-accent-500)]/20 flex items-center justify-center mx-auto mb-5">
+            <span class="material-symbols-outlined text-3xl text-[var(--ds-accent-400)]">assignment</span>
           </div>
           <p class="text-lg font-semibold text-white mb-2">No exams configured</p>
           <p class="text-sm text-neutral-500 mt-2 max-w-sm mx-auto">Select your exams in Settings to start tracking syllabus progress and chapter completion.</p>
-          <a href="/settings" class="inline-block mt-6 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-6 rounded-xl transition-all active:scale-95 shadow-lg shadow-indigo-500/20 glow-button ripple-btn">
+          <a href="/settings" class="inline-block mt-6 bg-[var(--ds-accent-600)] hover:bg-[var(--ds-accent-500)] text-white font-bold py-2.5 px-6 rounded-xl transition-all active:scale-95 shadow-lg shadow-[var(--ds-accent-500)]/20 glow-button ripple-btn">
             Go to Settings
           </a>
         </div>
@@ -128,15 +128,15 @@ function getSubjectColor(subjectName: string): string {
             <section class="relative overflow-hidden ds-card-gradient rounded-2xl p-6 md:p-8 card-lift reveal-on-scroll">
               <div class="relative z-10 grid md:grid-cols-2 gap-8 items-center">
                 <div>
-                  <span class="text-indigo-400 font-bold text-[10px] uppercase tracking-[0.2em] mb-3 block">Preparation Status</span>
+                  <span class="text-[var(--ds-accent-400)] font-bold text-[10px] uppercase tracking-[0.2em] mb-3 block">Preparation Status</span>
                   <h2 class="text-3xl md:text-4xl font-black text-white mb-3">You've covered {exam.overallPercent}% of your syllabus.</h2>
                   <p class="text-neutral-400 mb-6 max-w-md">Keep up the momentum! You've completed {exam.completedChapters} of {exam.totalChapters} chapters.</p>
                   <div class="flex gap-3">
-                    <a href="/daily" class="bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-400 text-white font-bold py-2.5 px-6 rounded-xl transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-indigo-500/20 glow-button ripple-btn">
+                    <a href="/daily" class="bg-[var(--ds-accent-600)] hover:bg-[var(--ds-accent-500)] active:bg-[var(--ds-accent-400)] text-white font-bold py-2.5 px-6 rounded-xl transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-[var(--ds-accent-500)]/20 glow-button ripple-btn">
                       <span class="material-symbols-outlined text-sm">rocket_launch</span>
                       Resume Studying
                     </a>
-                    <a href="/dashboard" class="bg-[#0d1321] hover:bg-[#1a2440] text-neutral-300 font-bold py-2.5 px-6 rounded-xl transition-all border border-white/5">
+                    <a href="/dashboard" class="bg-[var(--ds-bg-base)] hover:bg-[#1a2440] text-neutral-300 font-bold py-2.5 px-6 rounded-xl transition-all border border-white/5">
                       Dashboard
                     </a>
                   </div>
@@ -145,7 +145,7 @@ function getSubjectColor(subjectName: string): string {
                   <div class="relative w-40 h-40 flex items-center justify-center">
                     <svg class="w-full h-full transform -rotate-90">
                       <circle class="text-white/5" cx="80" cy="80" fill="transparent" r="70" stroke="currentColor" stroke-width="12"></circle>
-                      <circle class="text-indigo-500 progress-ring-circle" cx="80" cy="80" fill="transparent" r="70" stroke="currentColor" stroke-dasharray={circumference} stroke-dashoffset={offset} stroke-linecap="round" stroke-width="12" style="filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.3));"></circle>
+                      <circle class="text-[var(--ds-accent-500)] progress-ring-circle" cx="80" cy="80" fill="transparent" r="70" stroke="currentColor" stroke-dasharray={circumference} stroke-dashoffset={offset} stroke-linecap="round" stroke-width="12" style="filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.3));"></circle>
                     </svg>
                     <div class="absolute flex flex-col items-center">
                       <span class="text-4xl font-black text-white" id="overall-pct">{exam.overallPercent}%</span>
@@ -154,13 +154,13 @@ function getSubjectColor(subjectName: string): string {
                   </div>
                 </div>
               </div>
-              <div class="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-indigo-500/10 blur-[100px] rounded-full pointer-events-none"></div>
+              <div class="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-[var(--ds-accent-500)]/10 blur-[100px] rounded-full pointer-events-none"></div>
             </section>
 
             <!-- Class Level Filter -->
             <div class="flex items-center gap-3" data-class-filter>
               <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-500">Filter:</span>
-              <button class="px-3 py-1.5 rounded-lg text-[11px] font-medium border border-indigo-500 bg-indigo-500/10 text-indigo-400 transition-all" data-level="all">All</button>
+              <button class="px-3 py-1.5 rounded-lg text-[11px] font-medium border border-[var(--ds-accent-500)] bg-[var(--ds-accent-500)]/10 text-[var(--ds-accent-400)] transition-all" data-level="all">All</button>
               <button class="px-3 py-1.5 rounded-lg text-[11px] font-medium border border-white/10 text-neutral-400 hover:border-white/20 transition-all" data-level="11">Class 11</button>
               <button class="px-3 py-1.5 rounded-lg text-[11px] font-medium border border-white/10 text-neutral-400 hover:border-white/20 transition-all" data-level="12">Class 12</button>
             </div>
@@ -174,20 +174,20 @@ function getSubjectColor(subjectName: string): string {
                 const subjColor = getSubjectColor(p.subject);
                 return (
                   <div class="card-lift reveal-on-scroll" style={`--stagger-index:${subjIdx}`} key={p.subject}>
-                    <div class="bg-[#0d1321]/40 border border-white/5 rounded-2xl overflow-hidden transition-all hover:border-indigo-500/20 subject-section">
+                    <div class="bg-[var(--ds-bg-base)]/40 border border-white/5 rounded-2xl overflow-hidden transition-all hover:border-[var(--ds-accent-500)]/20 subject-section">
                       <button class="w-full flex flex-col md:flex-row md:items-center justify-between p-5 md:p-6 gap-4 text-left subject-toggle group">
                         <div class="flex items-center gap-4">
                           <div class="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: `${subjColor}15` }}>
                             <span class="material-symbols-outlined" style={{ color: subjColor, fontVariationSettings: "'FILL' 1" }}>{icon}</span>
                           </div>
                           <div>
-                            <h3 class="text-lg font-bold text-white group-hover:text-indigo-400 transition-colors">{p.subject}</h3>
+                            <h3 class="text-lg font-bold text-white group-hover:text-[var(--ds-accent-400)] transition-colors">{p.subject}</h3>
                             <p class="text-sm text-neutral-500">{p.completed} of {p.total} chapters completed</p>
                           </div>
                         </div>
                         <div class="flex-1 max-w-xs w-full md:ml-4">
                           <div class="flex justify-between text-[10px] font-bold mb-2">
-                            <span class="text-indigo-400 uppercase tracking-wider">Progress</span>
+                            <span class="text-[var(--ds-accent-400)] uppercase tracking-wider">Progress</span>
                             <span class="text-neutral-500 font-mono">{p.weightedPercent}%</span>
                           </div>
                           <div class="w-full bg-white/5 h-2 rounded-full overflow-hidden">
@@ -196,7 +196,7 @@ function getSubjectColor(subjectName: string): string {
                         </div>
                         <div class="flex items-center gap-2 shrink-0">
                           <span class="text-[10px] text-neutral-500 font-mono" id="subject-completed">{p.completed}/{p.total}</span>
-                          <span class="material-symbols-outlined text-indigo-400 transition-transform duration-300 subject-chevron">expand_more</span>
+                          <span class="material-symbols-outlined text-[var(--ds-accent-400)] transition-transform duration-300 subject-chevron">expand_more</span>
                         </div>
                       </button>
                       <div class="subject-content px-6 pb-7">
@@ -324,8 +324,8 @@ function getSubjectColor(subjectName: string): string {
   const STATUS_COLORS = {
     not_started: { icon: '#475569', label: '#475569' },
     studied: { icon: '#f59e0b', label: '#f59e0b' },
-    revision_1: { icon: '#818cf8', label: '#818cf8' },
-    revision_2: { icon: '#a78bfa', label: '#a78bfa' },
+    revision_1: { icon: 'var(--ds-accent-400)', label: 'var(--ds-accent-400)' },
+    revision_2: { icon: 'var(--ds-accent-300)', label: 'var(--ds-accent-300)' },
     revision_3: { icon: '#e879f9', label: '#e879f9' },
     mastered: { icon: '#22c55e', label: '#22c55e' },
   };
@@ -340,7 +340,7 @@ function getSubjectColor(subjectName: string): string {
   const STATUS_BG = {
     not_started: 'bg-slate-800/50 text-slate-500',
     studied: 'bg-yellow-500/10 text-yellow-500',
-    revision_1: 'bg-indigo-500/10 text-indigo-400',
+    revision_1: 'bg-[var(--ds-accent-500)]/10 text-[var(--ds-accent-400)]',
     revision_2: 'bg-purple-500/10 text-purple-400',
     revision_3: 'bg-pink-500/10 text-pink-400',
     mastered: 'bg-emerald-500/10 text-emerald-400',
@@ -420,11 +420,11 @@ function getSubjectColor(subjectName: string): string {
       const filterBar = container.querySelector('[data-class-filter]');
       if (!filterBar) return;
       filterBar.querySelectorAll('button').forEach(b => {
-        b.classList.remove('border-indigo-500', 'bg-indigo-500/10', 'text-indigo-400');
+        b.classList.remove('border-[var(--ds-accent-500)]', 'bg-[var(--ds-accent-500)]/10', 'text-[var(--ds-accent-400)]');
         b.classList.add('border-white/10', 'text-neutral-400');
       });
       btn.classList.remove('border-white/10', 'text-neutral-400');
-      btn.classList.add('border-indigo-500', 'bg-indigo-500/10', 'text-indigo-400');
+      btn.classList.add('border-[var(--ds-accent-500)]', 'bg-[var(--ds-accent-500)]/10', 'text-[var(--ds-accent-400)]');
 
       container.querySelectorAll('.chapter-item').forEach(item => {
         const cls = item.dataset.classLevel || '';

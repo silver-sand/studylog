@@ -51,7 +51,7 @@ const settingsBridgeData = {
     <div class="flex-1 overflow-hidden px-8 pb-8 flex flex-col lg:flex-row gap-4 lg:gap-8">
       <!-- Mobile tab navigation (visible below lg) -->
       <div class="flex lg:hidden gap-1 -mx-2 px-2 overflow-x-auto flex-shrink-0 scrollbar-hide" id="mobile-settings-nav">
-        <button class="px-4 py-2 rounded-lg text-sm font-medium text-indigo-400 bg-[var(--ds-bg-surface)] border border-[var(--ds-border-default)]/50 whitespace-nowrap settings-nav-btn active" data-tab="profile">Profile</button>
+        <button class="px-4 py-2 rounded-lg text-sm font-medium text-[var(--ds-accent-400)] bg-[var(--ds-bg-surface)] border border-[var(--ds-border-default)]/50 whitespace-nowrap settings-nav-btn active" data-tab="profile">Profile</button>
         <button class="px-4 py-2 rounded-lg text-sm font-medium text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] hover:bg-[var(--ds-bg-surface)]/50 whitespace-nowrap transition-colors settings-nav-btn" data-tab="preferences">Study Preferences</button>
         <button class="px-4 py-2 rounded-lg text-sm font-medium text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] hover:bg-[var(--ds-bg-surface)]/50 whitespace-nowrap transition-colors settings-nav-btn" data-tab="appearance">Appearance</button>
         <button class="px-4 py-2 rounded-lg text-sm font-medium text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] hover:bg-[var(--ds-bg-surface)]/50 whitespace-nowrap transition-colors settings-nav-btn" data-tab="notifications">Notifications</button>
@@ -61,7 +61,7 @@ const settingsBridgeData = {
 
       <!-- Secondary Navigation (Content Area) — matching Stitch 5-panel nav, hidden on mobile -->
       <nav class="w-48 flex-shrink-0 flex flex-col gap-1 overflow-y-auto pr-4 hidden lg:flex">
-        <button class="text-left px-4 py-2.5 rounded-lg text-sm font-medium text-indigo-400 bg-[var(--ds-bg-surface)] border border-[var(--ds-border-default)]/50 settings-nav-btn active" data-tab="profile">
+        <button class="text-left px-4 py-2.5 rounded-lg text-sm font-medium text-[var(--ds-accent-400)] bg-[var(--ds-bg-surface)] border border-[var(--ds-border-default)]/50 settings-nav-btn active" data-tab="profile">
           Profile
         </button>
         <button class="text-left px-4 py-2.5 rounded-lg text-sm font-medium text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] hover:bg-[var(--ds-bg-surface)]/50 transition-colors settings-nav-btn" data-tab="preferences">
@@ -89,7 +89,7 @@ const settingsBridgeData = {
           <h3 class="text-lg font-headline font-semibold text-[var(--ds-text-primary)] mb-6">Profile</h3>
           <div class="flex items-center gap-6 mb-8">
             <div class="relative group cursor-pointer">
-              <div class="w-20 h-20 rounded-full bg-indigo-500/10 border-2 border-[var(--ds-border-default)] flex items-center justify-center text-indigo-400 text-2xl font-bold">
+              <div class="w-20 h-20 rounded-full bg-[var(--ds-accent-500)]/10 border-2 border-[var(--ds-border-default)] flex items-center justify-center text-[var(--ds-accent-400)] text-2xl font-bold">
                 {user?.name?.charAt(0)?.toUpperCase() || 'U'}
               </div>
               <div class="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -104,14 +104,14 @@ const settingsBridgeData = {
           <div class="space-y-4">
             <div>
               <label class="block text-sm font-medium text-[var(--ds-text-secondary)] mb-1">Full Name</label>
-              <input class="w-full bg-[var(--ds-bg-elevated)] border border-[var(--ds-border-default)] rounded-lg px-4 py-2 text-[var(--ds-text-primary)] focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" type="text" value={user?.name || ''} />
+              <input class="w-full bg-[var(--ds-bg-elevated)] border border-[var(--ds-border-default)] rounded-lg px-4 py-2 text-[var(--ds-text-primary)] focus:ring-1 focus:ring-[var(--ds-accent-500)] focus:border-[var(--ds-accent-500)] transition-colors" type="text" value={user?.name || ''} />
             </div>
             <div>
               <label class="block text-sm font-medium text-[var(--ds-text-secondary)] mb-1">Email Address</label>
-              <input class="w-full bg-[var(--ds-bg-elevated)] border border-[var(--ds-border-default)] rounded-lg px-4 py-2 text-[var(--ds-text-primary)] focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" type="email" value={user?.email || ''} />
+              <input class="w-full bg-[var(--ds-bg-elevated)] border border-[var(--ds-border-default)] rounded-lg px-4 py-2 text-[var(--ds-text-primary)] focus:ring-1 focus:ring-[var(--ds-accent-500)] focus:border-[var(--ds-accent-500)] transition-colors" type="email" value={user?.email || ''} />
             </div>
             <div class="pt-2">
-              <button id="save-profile-btn" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors shadow-lg shadow-indigo-500/20 ripple-btn">Save Profile</button>
+              <button id="save-profile-btn" class="px-5 py-2.5 bg-[var(--ds-accent-600)] hover:bg-[var(--ds-accent-500)] text-white text-sm font-medium rounded-lg transition-colors shadow-lg shadow-[var(--ds-accent-500)]/20 ripple-btn">Save Profile</button>
             </div>
           </div>
         </section>
@@ -128,7 +128,7 @@ const settingsBridgeData = {
                   <button
                     class:list={{
                       'px-3 py-1.5 rounded-full border text-sm font-medium transition-all': true,
-                      'border-indigo-500 bg-indigo-500/10 text-indigo-400': userStream === key,
+                      'border-[var(--ds-accent-500)] bg-[var(--ds-accent-500)]/10 text-[var(--ds-accent-400)]': userStream === key,
                       'border-[var(--ds-border-default)] text-[var(--ds-text-secondary)] hover:border-[var(--ds-border-hover)] hover:text-[var(--ds-text-primary)]': userStream !== key,
                     }}
                     data-stream={key}
@@ -149,7 +149,7 @@ const settingsBridgeData = {
                     <button
                       class:list={{
                         'px-3 py-1.5 rounded-full border text-sm font-medium transition-all flex items-center gap-1': true,
-                        'border-indigo-500 bg-indigo-500/10 text-indigo-400': isSelected,
+                        'border-[var(--ds-accent-500)] bg-[var(--ds-accent-500)]/10 text-[var(--ds-accent-400)]': isSelected,
                         'border-[var(--ds-border-default)] text-[var(--ds-text-secondary)] hover:border-[var(--ds-border-hover)] hover:text-[var(--ds-text-primary)]': !isSelected,
                       }}
                       data-exam={exam.key}
@@ -173,7 +173,7 @@ const settingsBridgeData = {
                     <button
                       class:list={{
                         'px-3 py-1.5 rounded-full border text-sm font-medium transition-all': true,
-                        'border-indigo-500 bg-indigo-500/10 text-indigo-400': isActive,
+                        'border-[var(--ds-accent-500)] bg-[var(--ds-accent-500)]/10 text-[var(--ds-accent-400)]': isActive,
                         'border-[var(--ds-border-default)] text-[var(--ds-text-secondary)] hover:border-[var(--ds-border-hover)] hover:text-[var(--ds-text-primary)]': !isActive,
                       }}
                       data-subject={subject}
@@ -197,7 +197,7 @@ const settingsBridgeData = {
                   min="1"
                   max="168"
                   value={settings.targetHoursPerWeek || 35}
-                  class="w-24 bg-[var(--ds-bg-elevated)] border border-[var(--ds-border-default)] rounded-lg px-4 py-2 text-[var(--ds-text-primary)] focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                  class="w-24 bg-[var(--ds-bg-elevated)] border border-[var(--ds-border-default)] rounded-lg px-4 py-2 text-[var(--ds-text-primary)] focus:ring-1 focus:ring-[var(--ds-accent-500)] focus:border-[var(--ds-accent-500)] transition-colors"
                 />
                 <span class="text-sm text-[var(--ds-text-secondary)]">hours per week</span>
               </div>
@@ -211,7 +211,7 @@ const settingsBridgeData = {
                 min="1"
                 max="7"
                 value={settings.studyDaysPerWeek || 5}
-                class="w-24 bg-[var(--ds-bg-elevated)] border border-[var(--ds-border-default)] rounded-lg px-4 py-2 text-[var(--ds-text-primary)] focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                class="w-24 bg-[var(--ds-bg-elevated)] border border-[var(--ds-border-default)] rounded-lg px-4 py-2 text-[var(--ds-text-primary)] focus:ring-1 focus:ring-[var(--ds-accent-500)] focus:border-[var(--ds-accent-500)] transition-colors"
               />
               <span class="text-sm text-[var(--ds-text-secondary)]">days per week</span>
             </div>
@@ -224,14 +224,14 @@ const settingsBridgeData = {
                 id="exam-date"
                 name="examDate"
                 value={settings.examDate || ''}
-                class="bg-[var(--ds-bg-elevated)] border border-[var(--ds-border-default)] rounded-lg px-4 py-2 text-[var(--ds-text-primary)] focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                class="bg-[var(--ds-bg-elevated)] border border-[var(--ds-border-default)] rounded-lg px-4 py-2 text-[var(--ds-text-primary)] focus:ring-1 focus:ring-[var(--ds-accent-500)] focus:border-[var(--ds-accent-500)] transition-colors"
               />
               {daysUntilExam !== null && (
-                <span class="text-sm text-indigo-400 ml-3">{daysUntilExam === 0 ? 'Exam day!' : `${daysUntilExam} days away`}</span>
+                <span class="text-sm text-[var(--ds-accent-400)] ml-3">{daysUntilExam === 0 ? 'Exam day!' : `${daysUntilExam} days away`}</span>
               )}
             </div>
 
-            <button id="save-preferences-btn" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors shadow-lg shadow-indigo-500/20 ripple-btn">
+            <button id="save-preferences-btn" class="px-5 py-2.5 bg-[var(--ds-accent-600)] hover:bg-[var(--ds-accent-500)] text-white text-sm font-medium rounded-lg transition-colors shadow-lg shadow-[var(--ds-accent-500)]/20 ripple-btn">
               Save Preferences
             </button>
           </div>
@@ -297,7 +297,7 @@ const settingsBridgeData = {
               <div class="flex flex-wrap gap-3">
                 {['indigo', 'emerald', 'amber', 'rose', 'purple', 'teal'].map((color) => {
                   const accentColors = {
-                    indigo: { hex: '#6366f1', label: 'Indigo' },
+                    indigo: { hex: 'var(--ds-accent-500)', label: 'Indigo' },
                     emerald: { hex: '#10b981', label: 'Emerald' },
                     amber: { hex: '#f59e0b', label: 'Amber' },
                     rose: { hex: '#f43f5e', label: 'Rose' },
@@ -335,7 +335,7 @@ const settingsBridgeData = {
               </div>
               <label class="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" checked disabled class="sr-only peer" />
-                <div class="w-11 h-6 bg-[var(--ds-bg-elevated)] rounded-full peer peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+                <div class="w-11 h-6 bg-[var(--ds-bg-elevated)] rounded-full peer peer-checked:bg-[var(--ds-accent-600)] after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
               </label>
             </div>
             <div class="flex items-center justify-between py-4">
@@ -345,7 +345,7 @@ const settingsBridgeData = {
               </div>
               <label class="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" checked disabled class="sr-only peer" />
-                <div class="w-11 h-6 bg-[var(--ds-bg-elevated)] rounded-full peer peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+                <div class="w-11 h-6 bg-[var(--ds-bg-elevated)] rounded-full peer peer-checked:bg-[var(--ds-accent-600)] after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
               </label>
             </div>
             <div class="flex items-center justify-between py-4">
@@ -355,7 +355,7 @@ const settingsBridgeData = {
               </div>
               <label class="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" disabled class="sr-only peer" />
-                <div class="w-11 h-6 bg-[var(--ds-bg-elevated)] rounded-full peer peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                <div class="w-11 h-6 bg-[var(--ds-bg-elevated)] rounded-full peer peer-checked:bg-[var(--ds-accent-600)] after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
               </label>
             </div>
             <div class="flex items-center justify-between py-4">
@@ -365,7 +365,7 @@ const settingsBridgeData = {
               </div>
               <label class="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" checked disabled class="sr-only peer" />
-                <div class="w-11 h-6 bg-[var(--ds-bg-elevated)] rounded-full peer peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+                <div class="w-11 h-6 bg-[var(--ds-bg-elevated)] rounded-full peer peer-checked:bg-[var(--ds-accent-600)] after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
               </label>
             </div>
           </div>
@@ -376,7 +376,7 @@ const settingsBridgeData = {
         <section class="bg-[var(--ds-bg-surface)] rounded-xl border border-[var(--ds-border-subtle)] p-6 settings-section hidden" id="section-account">
           <h3 class="text-lg font-headline font-semibold text-[var(--ds-text-primary)] mb-6">Account</h3>
           <div class="flex items-center gap-4 mb-6">
-            <div class="w-14 h-14 rounded-full bg-indigo-500/10 border border-[var(--ds-border-default)] flex items-center justify-center text-indigo-400 text-lg font-bold shrink-0">
+            <div class="w-14 h-14 rounded-full bg-[var(--ds-accent-500)]/10 border border-[var(--ds-border-default)] flex items-center justify-center text-[var(--ds-accent-400)] text-lg font-bold shrink-0">
               {user?.name?.charAt(0)?.toUpperCase() || 'U'}
             </div>
             <div>
@@ -387,7 +387,7 @@ const settingsBridgeData = {
             </div>
           </div>
           {isGuest && (
-            <a href="#" id="guest-signup-btn" class="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm py-3 px-6 rounded-lg transition-colors">
+            <a href="#" id="guest-signup-btn" class="w-full flex items-center justify-center gap-2 bg-[var(--ds-accent-600)] hover:bg-[var(--ds-accent-500)] text-white font-medium text-sm py-3 px-6 rounded-lg transition-colors">
               <span class="material-symbols-outlined text-lg">login</span>
               Sign Up to Save Your Data
             </a>
@@ -507,7 +507,7 @@ const settingsBridgeData = {
       var isSelected = selectedKeys.indexOf(exam.key) !== -1;
       var btn = document.createElement('button');
       btn.className = 'px-3 py-1.5 rounded-full border text-sm font-medium transition-all flex items-center gap-1' +
-        (isSelected ? ' border-indigo-500 bg-indigo-500/10 text-indigo-400' : ' border-[var(--ds-border-default)] text-[var(--ds-text-secondary)] hover:border-[var(--ds-border-hover)] hover:text-[var(--ds-text-primary)]');
+        (isSelected ? ' border-[var(--ds-accent-500)] bg-[var(--ds-accent-500)]/10 text-[var(--ds-accent-400)]' : ' border-[var(--ds-border-default)] text-[var(--ds-text-secondary)] hover:border-[var(--ds-border-hover)] hover:text-[var(--ds-text-primary)]');
       btn.dataset.exam = exam.key;
       btn.textContent = exam.label;
       if (isSelected) {
@@ -517,9 +517,9 @@ const settingsBridgeData = {
         btn.appendChild(close);
       }
       btn.addEventListener('click', function() {
-        btn.classList.toggle('border-indigo-500');
-        btn.classList.toggle('bg-indigo-500/10');
-        btn.classList.toggle('text-indigo-400');
+        btn.classList.toggle('border-[var(--ds-accent-500)]');
+        btn.classList.toggle('bg-[var(--ds-accent-500)]/10');
+        btn.classList.toggle('text-[var(--ds-accent-400)]');
         btn.classList.toggle('border-[var(--ds-border-default)]');
         btn.classList.toggle('text-[var(--ds-text-secondary)]');
         // Also toggle hover classes
@@ -537,11 +537,11 @@ const settingsBridgeData = {
     if (!grid) return;
 
     // Get stream for the subject label text
-    var streamEl = document.querySelector('#stream-grid button.border-indigo-500');
+    var streamEl = document.querySelector('#stream-grid button.border-[var(--ds-accent-500)]');
     var stream = streamEl ? streamEl.dataset.stream : (SETTINGS_DATA.savedStream || 'science');
 
     // Collect selected exams
-    var selectedExamKeys = Array.from(document.querySelectorAll('#exam-grid button[data-exam].border-indigo-500'))
+    var selectedExamKeys = Array.from(document.querySelectorAll('#exam-grid button[data-exam].border-[var(--ds-accent-500)]'))
       .map(function(b) { return b.dataset.exam; }).filter(Boolean);
 
     var subjects;
@@ -552,7 +552,7 @@ const settingsBridgeData = {
     }
 
     // Get currently selected subjects
-    var currentSelected = Array.from(document.querySelectorAll('#active-subjects-grid button.border-indigo-500'))
+    var currentSelected = Array.from(document.querySelectorAll('#active-subjects-grid button.border-[var(--ds-accent-500)]'))
       .map(function(b) { return b.dataset.subject; }).filter(Boolean);
     var selectedSet = {};
     currentSelected.forEach(function(s) { selectedSet[s] = true; });
@@ -566,13 +566,13 @@ const settingsBridgeData = {
       var isActive = selectedSet[subject] || false;
       var btn = document.createElement('button');
       btn.className = 'px-3 py-1.5 rounded-full border text-sm font-medium transition-all' +
-        (isActive ? ' border-indigo-500 bg-indigo-500/10 text-indigo-400' : ' border-[var(--ds-border-default)] text-[var(--ds-text-secondary)] hover:border-[var(--ds-border-hover)] hover:text-[var(--ds-text-primary)]');
+        (isActive ? ' border-[var(--ds-accent-500)] bg-[var(--ds-accent-500)]/10 text-[var(--ds-accent-400)]' : ' border-[var(--ds-border-default)] text-[var(--ds-text-secondary)] hover:border-[var(--ds-border-hover)] hover:text-[var(--ds-text-primary)]');
       btn.dataset.subject = subject;
       btn.textContent = subject;
       btn.addEventListener('click', function() {
-        btn.classList.toggle('border-indigo-500');
-        btn.classList.toggle('bg-indigo-500/10');
-        btn.classList.toggle('text-indigo-400');
+        btn.classList.toggle('border-[var(--ds-accent-500)]');
+        btn.classList.toggle('bg-[var(--ds-accent-500)]/10');
+        btn.classList.toggle('text-[var(--ds-accent-400)]');
         btn.classList.toggle('border-[var(--ds-border-default)]');
         btn.classList.toggle('text-[var(--ds-text-secondary)]');
         btn.classList.toggle('hover:border-[var(--ds-border-hover)]');
@@ -597,10 +597,10 @@ const settingsBridgeData = {
 
       // Update nav
       navBtns.forEach(b => {
-        b.classList.remove('active', 'text-indigo-400', 'bg-[var(--ds-bg-surface)]', 'border', 'border-[var(--ds-border-default)]/50');
+        b.classList.remove('active', 'text-[var(--ds-accent-400)]', 'bg-[var(--ds-bg-surface)]', 'border', 'border-[var(--ds-border-default)]/50');
         b.classList.add('text-[var(--ds-text-secondary)]');
       });
-      btn.classList.add('active', 'text-indigo-400', 'bg-[var(--ds-bg-surface)]', 'border', 'border-[var(--ds-border-default)]/50');
+      btn.classList.add('active', 'text-[var(--ds-accent-400)]', 'bg-[var(--ds-bg-surface)]', 'border', 'border-[var(--ds-border-default)]/50');
       btn.classList.remove('text-[var(--ds-text-secondary)]');
 
       // Show section
@@ -615,11 +615,11 @@ const settingsBridgeData = {
     btn.addEventListener('click', function() {
       // Update visual state
       document.querySelectorAll('#stream-grid button').forEach(function(b) {
-        b.classList.remove('border-indigo-500', 'bg-indigo-500/10', 'text-indigo-400');
+        b.classList.remove('border-[var(--ds-accent-500)]', 'bg-[var(--ds-accent-500)]/10', 'text-[var(--ds-accent-400)]');
         b.classList.add('border-[var(--ds-border-default)]', 'text-[var(--ds-text-secondary)]');
       });
       btn.classList.remove('border-[var(--ds-border-default)]', 'text-[var(--ds-text-secondary)]');
-      btn.classList.add('border-indigo-500', 'bg-indigo-500/10', 'text-indigo-400');
+      btn.classList.add('border-[var(--ds-accent-500)]', 'bg-[var(--ds-accent-500)]/10', 'text-[var(--ds-accent-400)]');
 
       var stream = btn.dataset.stream;
       // Rebuild exam grid for this stream, auto-select first exam
@@ -634,9 +634,9 @@ const settingsBridgeData = {
   // ── Subject toggle ──
   document.querySelectorAll('#active-subjects-grid button').forEach(btn => {
     btn.addEventListener('click', function() {
-      btn.classList.toggle('border-indigo-500');
-      btn.classList.toggle('bg-indigo-500/10');
-      btn.classList.toggle('text-indigo-400');
+      btn.classList.toggle('border-[var(--ds-accent-500)]');
+      btn.classList.toggle('bg-[var(--ds-accent-500)]/10');
+      btn.classList.toggle('text-[var(--ds-accent-400)]');
       btn.classList.toggle('border-[var(--ds-border-default)]');
       btn.classList.toggle('text-[var(--ds-text-secondary)]');
       btn.classList.toggle('hover:border-[var(--ds-border-hover)]');
@@ -689,16 +689,16 @@ const settingsBridgeData = {
     btn.innerHTML = '<span class="ds-btn-spinner-icon" style="width:1rem;height:1rem;border-color:white;border-top-color:transparent;display:inline-block;margin-right:0.5rem;"></span>Saving...';
 
     // Collect selected exams
-    const selectedExams = Array.from(document.querySelectorAll('#exam-grid button[data-exam].border-indigo-500'))
+    const selectedExams = Array.from(document.querySelectorAll('#exam-grid button[data-exam].border-[var(--ds-accent-500)]'))
       .map(b => b.dataset.exam)
       .filter(Boolean);
 
     // Collect stream
-    const streamEl = document.querySelector('#stream-grid button.border-indigo-500');
+    const streamEl = document.querySelector('#stream-grid button.border-[var(--ds-accent-500)]');
     const stream = streamEl?.dataset?.stream || '';
 
     // Collect active subjects (toggled on)
-    const activeSubjects = Array.from(document.querySelectorAll('#active-subjects-grid button.border-indigo-500'))
+    const activeSubjects = Array.from(document.querySelectorAll('#active-subjects-grid button.border-[var(--ds-accent-500)]'))
       .map(b => b.dataset.subject)
       .filter(Boolean);
 

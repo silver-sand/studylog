@@ -16,7 +16,7 @@ function mdToHtml(md: string): string {
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-white">$1</strong>');
   html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
   html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
-  html = html.replace(/`(.+?)`/g, '<code class="px-1.5 py-0.5 rounded-md bg-[#0a0f1a] text-indigo-300/80 text-xs font-mono border border-white/5">$1</code>');
+  html = html.replace(/`(.+?)`/g, '<code class="px-1.5 py-0.5 rounded-md bg-[#0a0f1a] text-[var(--ds-accent-300)]/80 text-xs font-mono border border-white/5">$1</code>');
   html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
   html = html.replace(/((?:<li>.*?<\/li>\n?)+)/g, '<ul>$1</ul>');
   html = html.replace(/^---$/gm, '<hr class="my-3 border-white/5">');
@@ -40,8 +40,8 @@ const renderedContent = mdToHtml(review.content);
 <div class="daily-review-card">
   <div class="daily-review-header">
     <div class="flex items-center gap-2.5">
-      <div class="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
-        <span class="material-symbols-outlined text-base text-indigo-400">auto_awesome</span>
+      <div class="w-8 h-8 rounded-lg bg-[var(--ds-accent-500)]/10 border border-[var(--ds-accent-500)]/20 flex items-center justify-center">
+        <span class="material-symbols-outlined text-base text-[var(--ds-accent-400)]">auto_awesome</span>
       </div>
       <div>
         <h2 class="text-xs font-bold text-white">AI Daily Review</h2>
@@ -49,7 +49,7 @@ const renderedContent = mdToHtml(review.content);
       </div>
     </div>
     {review.totalHours > 0 && (
-      <span class="text-xs font-bold text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-lg">{Math.round(review.totalHours * 10) / 10}h studied</span>
+      <span class="text-xs font-bold text-[var(--ds-accent-400)] bg-[var(--ds-accent-500)]/10 px-2.5 py-1 rounded-lg">{Math.round(review.totalHours * 10) / 10}h studied</span>
     )}
   </div>
 
@@ -101,7 +101,7 @@ const renderedContent = mdToHtml(review.content);
 
   {review.recommendations.length > 0 && (
     <div class="recs-section">
-      <h3 class="section-label text-indigo-400">🎯 Recommendations</h3>
+      <h3 class="section-label text-[var(--ds-accent-400)]">🎯 Recommendations</h3>
       <ul class="recs-list">
         {review.recommendations.map(r => (
           <li>{r}</li>

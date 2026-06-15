@@ -32,14 +32,14 @@ function isActive(href: string): boolean {
 ---
 
 <!-- Desktop Sidebar -->
-<aside class="fixed left-0 top-0 h-full w-20 lg:w-64 bg-[#0d1321] border-r border-white/5 flex flex-col py-8 z-50 transition-all duration-300 ease-in-out hidden md:flex">
+<aside class="fixed left-0 top-0 h-full w-20 lg:w-64 bg-[var(--ds-bg-base)] border-r border-white/5 flex flex-col py-8 z-50 transition-all duration-300 ease-in-out hidden md:flex">
   <!-- Brand -->
   <div class="px-6 mb-10 flex items-center gap-3">
-    <div class="w-8 h-8 rounded bg-indigo-500/20 text-indigo-500 flex items-center justify-center shrink-0">
+    <div class="w-8 h-8 rounded bg-[var(--ds-accent-500)]/20 text-[var(--ds-accent-500)] flex items-center justify-center shrink-0">
       <span class="material-symbols-outlined filled-icon">menu_book</span>
     </div>
     <div class="hidden lg:block">
-      <h1 class="font-headline font-black text-indigo-500 tracking-tight leading-none text-xl">StudyLog</h1>
+      <h1 class="font-headline font-black text-[var(--ds-accent-500)] tracking-tight leading-none text-xl">StudyLog</h1>
       <p class="text-neutral-500 text-xs font-label uppercase tracking-wider mt-0.5">IIT-JEE Prep</p>
     </div>
   </div>
@@ -51,7 +51,7 @@ function isActive(href: string): boolean {
         href={link.href}
         class:list={{
           'flex items-center gap-4 px-3 py-2.5 rounded-lg font-label text-sm uppercase tracking-wider transition-all group': true,
-          'bg-indigo-500/10 text-indigo-400 border-r-4 border-indigo-500 font-bold': isActive(link.href),
+          'bg-[var(--ds-accent-500)]/10 text-[var(--ds-accent-400)] border-r-4 border-[var(--ds-accent-500)] font-bold': isActive(link.href),
           'text-neutral-500 hover:text-neutral-300 hover:bg-white/5': !isActive(link.href),
         }}
       >
@@ -67,13 +67,13 @@ function isActive(href: string): boolean {
   <!-- Footer: Start Focus button + User -->
   <div class="px-4 mt-auto space-y-1">
     <div class="px-3 mb-4 hidden lg:block">
-      <a href="/timer" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-label text-sm uppercase tracking-wider py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2">
+      <a href="/timer" class="w-full bg-[var(--ds-accent-600)] hover:bg-[var(--ds-accent-500)] text-white font-label text-sm uppercase tracking-wider py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2">
         <span class="material-symbols-outlined text-[18px] filled-icon">play_arrow</span>
         Start Focus
       </a>
     </div>
     <div class="flex items-center gap-3 px-3 py-2 rounded-lg">
-      <div class="w-8 h-8 rounded-full bg-indigo-500/10 border border-white/10 flex items-center justify-center text-indigo-400 font-semibold text-sm shrink-0">
+      <div class="w-8 h-8 rounded-full bg-[var(--ds-accent-500)]/10 border border-white/10 flex items-center justify-center text-[var(--ds-accent-400)] font-semibold text-sm shrink-0">
         {user?.name?.charAt(0)?.toUpperCase() || 'U'}
       </div>
       <div class="hidden lg:block min-w-0 flex-1">
@@ -85,14 +85,14 @@ function isActive(href: string): boolean {
 </aside>
 
 <!-- Mobile Bottom Nav (scrollable: all 7 items visible) -->
-<nav class="fixed bottom-0 w-full z-50 md:hidden bg-[#050b18]/95 backdrop-blur-xl border-t border-white/[0.06] shadow-[0_-8px_24px_rgba(0,0,0,0.4)] h-[68px]" style="padding-bottom: env(safe-area-inset-bottom, 0px);">
+<nav class="fixed bottom-0 w-full z-50 md:hidden bg-[var(--ds-bg-base)]/95 backdrop-blur-xl border-t border-white/[0.06] shadow-[0_-8px_24px_rgba(0,0,0,0.4)] h-[68px]" style="padding-bottom: env(safe-area-inset-bottom, 0px);">
   <div class="flex overflow-x-auto items-center justify-around h-full px-1 gap-0 scrollbar-none" style="-webkit-overflow-scrolling:touch;scrollbar-width:none;">
     {links.map(link => (
       <a
         href={link.href}
         class:list={{
           'flex flex-col items-center justify-center transition-all active:scale-90 duration-200 min-w-[48px] flex-shrink-0 py-1.5 px-1.5 rounded-xl': true,
-          'text-indigo-400 font-bold': isActive(link.href),
+          'text-[var(--ds-accent-400)] font-bold': isActive(link.href),
           'text-neutral-500 hover:text-neutral-300': !isActive(link.href),
         }}
       >

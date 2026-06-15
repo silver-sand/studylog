@@ -14,7 +14,7 @@ export interface Props {
 const { todo } = Astro.props;
 
 const priorityColors: Record<string, string> = {
-  low: 'text-[#94a3b8]',
+  low: 'text-[var(--ds-text-secondary)]',
   medium: 'text-[var(--ds-accent-500)]',
   high: 'text-amber-400',
   urgent: 'text-red-400',
