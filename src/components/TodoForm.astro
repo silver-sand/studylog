@@ -1,0 +1,60 @@
+---
+export interface Props {
+  categories?: { value: string; label: string }[];
+}
+
+const { categories = [
+  { value: 'general', label: 'General' },
+  { value: 'study', label: 'Study' },
+  { value: 'personal', label: 'Personal' },
+  { value: 'coaching', label: 'Coaching' },
+] } = Astro.props;
+---
+
+<div class="todo-form space-y-3">
+  <div class="flex gap-2">
+    <input
+      id="todo-title-input"
+      type="text"
+      placeholder="Add a new task..."
+      class="flex-1 px-4 py-2.5 rounded-xl border border-[var(--ds-border-default)] bg-[var(--ds-bg-surface)] text-sm text-[var(--ds-text-primary)] placeholder:text-[var(--ds-text-muted)] focus:outline-none focus:border-[var(--ds-accent-500)] focus:ring-1 focus:ring-[var(--ds-accent-500)] transition-all"
+      onkeydown="if (event.key === 'Enter') createTodo()"
+    />
+    <button
+      onclick="createTodo()"
+      class="px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-1.5"
+      style="background: var(--ds-accent-500); color: white;"
+    >
+      <span class="material-symbols-outlined text-lg">add</span>
+      Add
+    </button>
+  </div>
+
+  <!-- Quick options row -->
+  <div class="flex items-center gap-2 flex-wrap">
+    <select
+      id="todo-category-input"
+      class="px-3 py-1.5 rounded-lg border border-[var(--ds-border-default)] bg-[var(--ds-bg-surface)] text-xs text-[var(--ds-text-secondary)] focus:outline-none focus:border-[var(--ds-accent-500)] transition-all"
+    >
+      {categories.map(c => (
+        <option value={c.value}>{c.label}</option>
+      ))}
+    </select>
+
+    <select
+      id="todo-priority-input"
+      class="px-3 py-1.5 rounded-lg border border-[var(--ds-border-default)] bg-[var(--ds-bg-surface)] text-xs text-[var(--ds-text-secondary)] focus:outline-none focus:border-[var(--ds-accent-500)] transition-all"
+    >
+      <option value="low">Low</option>
+      <option value="medium" selected>Medium</option>
+      <option value="high">High</option>
+      <option value="urgent">Urgent</option>
+    </select>
+
+    <input
+      id="todo-due-input"
+      type="date"
+      class="px-3 py-1.5 rounded-lg border border-[var(--ds-border-default)] bg-[var(--ds-bg-surface)] text-xs text-[var(--ds-text-secondary)] focus:outline-none focus:border-[var(--ds-accent-500)] transition-all [color-scheme:dark]"
+    />
+  </div>
+</div>

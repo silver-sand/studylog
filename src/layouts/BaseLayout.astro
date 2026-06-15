@@ -2,6 +2,8 @@
 import Sidebar from '../components/Sidebar.astro';
 import AuthPopup from '../components/AuthPopup.astro';
 import { getSessionUser, getTokenFromCookie } from '../services/auth-service';
+import { getDb } from '../db';
+import { scopeDbToUser } from '../services/user-scope';
 import '../styles/design-system.css';
 
 export interface Props {
@@ -9,15 +11,20 @@ export interface Props {
 }
 
 const { title } = Astro.props;
+scopeDbToUser(Astro.request);
+const db = getDb();
+const settings = db.getSettings();
 const user = getSessionUser(getTokenFromCookie(Astro.request));
 const currentPath = Astro.url.pathname;
+const theme = settings?.theme || 'dark';
+const accent = settings?.accentColor || 'indigo';
 // Auth popup is always rendered (hidden by default) for sidebar button trigger
 // Guest users are auto-created by middleware, no gate needed
 const showAuthPopup = false;
 ---
 
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" class={theme} data-theme={theme} data-accent={accent}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -33,7 +40,7 @@ const showAuthPopup = false;
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/src/styles/design-system.css" />
   </head>
-  <body class="bg-[#050505] text-[#E5E5E5] antialiased min-h-screen font-sans">
+  <body class="bg-[var(--ds-bg-base)] text-[var(--ds-text-primary)] antialiased min-h-screen font-sans">
     <div class="flex min-h-screen">
       <Sidebar currentPath={Astro.url.pathname} user={user} />
       <main class="flex-1 ml-0 md:ml-20 lg:ml-64 min-w-0 pb-[80px] md:pb-0 page-enter">

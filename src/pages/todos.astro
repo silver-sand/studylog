@@ -1,0 +1,217 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import TodoForm from '../components/TodoForm.astro';
+import TodoItem from '../components/TodoItem.astro';
+import EmptyState from '../components/EmptyState.astro';
+import { getDb } from '../db';
+import { scopeDbToUser } from '../services/user-scope';
+
+scopeDbToUser(Astro.request);
+const db = getDb();
+const allTodos = db.listTodos();
+const pendingTodos = allTodos.filter(t => t.status === 'pending');
+const completedTodos = allTodos.filter(t => t.status === 'completed');
+---
+
+<BaseLayout title="Tasks">
+  <div class="h-full min-h-screen grid grid-cols-1 xl:grid-cols-3 overflow-hidden">
+
+    <!-- Left Column — Add form + filters -->
+    <section class="xl:col-span-1 border-r border-[var(--ds-border-subtle)] bg-[var(--ds-bg-surface)] p-6 lg:p-8 overflow-y-auto custom-scrollbar">
+      <div class="space-y-6">
+        <div>
+          <h2 class="text-lg font-headline font-semibold tracking-tight" style="color:var(--ds-text-primary)">Add Task</h2>
+          <p class="text-xs mt-1" style="color:var(--ds-text-tertiary)">Create a task and the AI Mentor can help manage it</p>
+        </div>
+
+        <TodoForm />
+
+        <!-- Filters -->
+        <div class="pt-4 border-t border-[var(--ds-border-subtle)]">
+          <p class="text-xs font-medium uppercase tracking-wider mb-3" style="color:var(--ds-text-tertiary)">Filter</p>
+          <div class="flex flex-wrap gap-2" id="filter-chips">
+            <button class="filter-chip px-3 py-1.5 rounded-full text-xs font-medium transition-all border bg-[var(--ds-accent-500)] text-white border-[var(--ds-accent-500)]" data-filter="all">All</button>
+            <button class="filter-chip px-3 py-1.5 rounded-full text-xs font-medium transition-all border border-[var(--ds-border-default)] text-[var(--ds-text-secondary)] hover:border-[var(--ds-border-hover)]" data-filter="study">Study</button>
+            <button class="filter-chip px-3 py-1.5 rounded-full text-xs font-medium transition-all border border-[var(--ds-border-default)] text-[var(--ds-text-secondary)] hover:border-[var(--ds-border-hover)]" data-filter="personal">Personal</button>
+            <button class="filter-chip px-3 py-1.5 rounded-full text-xs font-medium transition-all border border-[var(--ds-border-default)] text-[var(--ds-text-secondary)] hover:border-[var(--ds-border-hover)]" data-filter="coaching">Coaching</button>
+            <button class="filter-chip px-3 py-1.5 rounded-full text-xs font-medium transition-all border border-[var(--ds-border-default)] text-[var(--ds-text-secondary)] hover:border-[var(--ds-border-hover)]" data-filter="general">General</button>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="pt-4 border-t border-[var(--ds-border-subtle)]">
+          <div class="flex items-center justify-between text-sm">
+            <span style="color:var(--ds-text-secondary)">Pending</span>
+            <span class="font-semibold" style="color:var(--ds-text-primary)">{pendingTodos.length}</span>
+          </div>
+          <div class="flex items-center justify-between text-sm mt-2">
+            <span style="color:var(--ds-text-secondary)">Completed</span>
+            <span class="font-semibold" style="color:var(--ds-text-primary)">{completedTodos.length}</span>
+          </div>
+          {allTodos.length > 0 && (
+            <div class="mt-3 h-2 rounded-full bg-[var(--ds-bg-elevated)] overflow-hidden">
+              <div
+                class="h-full rounded-full transition-all duration-500"
+                style="width: {Math.round((completedTodos.length / allTodos.length) * 100)}%; background: var(--ds-accent-500);"
+              ></div>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Column — Todo List -->
+    <section class="xl:col-span-2 bg-[var(--ds-bg-base)] p-6 lg:p-8 overflow-y-auto custom-scrollbar">
+      <div class="max-w-3xl mx-auto space-y-6">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-headline font-semibold tracking-tight" style="color:var(--ds-text-primary)">Tasks</h2>
+            <p class="text-sm mt-1" style="color:var(--ds-text-tertiary)">{pendingTodos.length} pending · {completedTodos.length} completed</p>
+          </div>
+        </div>
+
+        <!-- Pending Todos -->
+        <div id="pending-todos" class="space-y-2">
+          {pendingTodos.length === 0 ? (
+            <EmptyState
+              title="No pending tasks"
+              description="Add a task above or ask the AI Mentor to create one"
+              icon="checklist"
+            />
+          ) : (
+            pendingTodos.map(todo => <TodoItem todo={todo} />)
+          )}
+        </div>
+
+        <!-- Completed Todos -->
+        {completedTodos.length > 0 && (
+          <div class="pt-4">
+            <details class="group">
+              <summary class="flex items-center gap-2 cursor-pointer text-sm font-medium" style="color:var(--ds-text-secondary)">
+                <span class="material-symbols-outlined text-lg transition-transform group-open:rotate-90">chevron_right</span>
+                Completed ({completedTodos.length})
+              </summary>
+              <div id="completed-todos" class="mt-3 space-y-2">
+                {completedTodos.map(todo => <TodoItem todo={todo} />)}
+              </div>
+            </details>
+          </div>
+        )}
+
+      </div>
+    </section>
+
+  </div>
+</BaseLayout>
+
+<script>
+  // ── Create Todo ──
+  window.createTodo = async function () {
+    const titleInput = document.getElementById('todo-title-input');
+    const categorySelect = document.getElementById('todo-category-input');
+    const prioritySelect = document.getElementById('todo-priority-input');
+    const dueInput = document.getElementById('todo-due-input');
+    if (!titleInput || !titleInput.value.trim()) return;
+
+    try {
+      const res = await fetch('/api/todos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: titleInput.value.trim(),
+          category: categorySelect?.value || 'general',
+          priority: prioritySelect?.value || 'medium',
+          dueDate: dueInput?.value || null,
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to create');
+      titleInput.value = '';
+      if (dueInput) dueInput.value = '';
+      // Reload the page to show new todo
+      window.location.reload();
+    } catch (err) {
+      console.error('Failed to create todo:', err);
+    }
+  };
+
+  // ── Toggle Todo (complete/incomplete) ──
+  window.toggleTodo = async function (id) {
+    try {
+      const item = document.querySelector(`[data-todo-id="${id}"]`);
+      const currentStatus = item?.dataset.todoStatus;
+      const newStatus = currentStatus === 'completed' ? 'pending' : 'completed';
+
+      const res = await fetch(`/api/todos/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) throw new Error('Failed to update');
+      window.location.reload();
+    } catch (err) {
+      console.error('Failed to toggle todo:', err);
+    }
+  };
+
+  // ── Delete Todo ──
+  window.deleteTodo = async function (id) {
+    if (!confirm('Delete this task?')) return;
+    try {
+      const res = await fetch(`/api/todos/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete');
+      window.location.reload();
+    } catch (err) {
+      console.error('Failed to delete todo:', err);
+    }
+  };
+
+  // ── Filter chips ──
+  document.querySelectorAll('.filter-chip').forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      // Update active state
+      document.querySelectorAll('.filter-chip').forEach(function (c) {
+        c.classList.remove('bg-[var(--ds-accent-500)]', 'text-white', 'border-[var(--ds-accent-500)]');
+        c.classList.add('border-[var(--ds-border-default)]', 'text-[var(--ds-text-secondary)]');
+      });
+      this.classList.remove('border-[var(--ds-border-default)]', 'text-[var(--ds-text-secondary)]');
+      this.classList.add('bg-[var(--ds-accent-500)]', 'text-white', 'border-[var(--ds-accent-500)]');
+
+      const filter = this.dataset.filter;
+      const pendingSection = document.getElementById('pending-todos');
+      const completedSection = document.getElementById('completed-todos');
+      if (!pendingSection) return;
+
+      // Show/hide based on filter (client-side filtering)
+      const allItems = document.querySelectorAll('.todo-item');
+      allItems.forEach(function (item) {
+        if (filter === 'all') {
+          item.style.display = '';
+        } else {
+          const badge = item.querySelector('span:contains("' + filter + '")');
+          // Fallback: check all text content in badges
+          const badges = item.querySelectorAll('.todo-item span.rounded-full');
+          let matches = false;
+          badges.forEach(function (b) {
+            if (b.textContent.toLowerCase().includes(filter)) matches = true;
+          });
+          item.style.display = matches ? '' : 'none';
+        }
+      });
+    });
+  });
+</script>
+
+<style>
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+  }
+</style>

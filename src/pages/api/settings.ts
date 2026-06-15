@@ -22,7 +22,7 @@ export const PUT: APIRoute = async ({ request }) => {
   scopeDbToUser(request);
   try {
     const body = await request.json();
-    const { targetHoursPerWeek, studyDaysPerWeek, selectedExams, subjects, examDate, theme, stream, name } = body;
+    const { targetHoursPerWeek, studyDaysPerWeek, selectedExams, subjects, examDate, theme, accentColor, stream, name } = body;
 
     if (targetHoursPerWeek !== undefined) {
       const h = Number(targetHoursPerWeek);
@@ -70,6 +70,7 @@ export const PUT: APIRoute = async ({ request }) => {
       subjects: computedSubjects !== undefined ? computedSubjects : undefined,
       examDate: examDate !== undefined ? examDate : undefined,
       theme: theme !== undefined ? theme : undefined,
+      accentColor: accentColor !== undefined ? accentColor : undefined,
     });
 
     // Seed syllabus for newly selected exams — convert exam keys to syllabus keys

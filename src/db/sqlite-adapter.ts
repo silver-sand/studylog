@@ -12,6 +12,7 @@ import { EXAM_SYLLABI } from '../utils/syllabus-data';
 import { legacyExamToSelected, getSubjectsForExamKeys } from '../utils/exam-map';
 import type { Settings, UpdateSettingsData } from '../types/settings';
 import type { MockTest, CreateMockTestData, MockTestAnalytics } from '../types/mock-test';
+import type { Todo, CreateTodoData, UpdateTodoData, TodoFilters } from '../types/todo';
 import type { User, Session, CreateUserData } from '../types/auth';
 
 function parseJSON<T>(val: string | null | Uint8Array | undefined, fallback: T): T {
@@ -108,7 +109,8 @@ function toSettings(row: Record<string, any>): Settings {
     selectedExams: Array.isArray(selectedExams) && selectedExams.length > 0 ? selectedExams : legacyExamToSelected(row.exam_type || 'JEE'),
     examType: row.exam_type || 'JEE',
     examDate: row.exam_date || null,
-    theme: row.theme,
+    theme: row.theme || 'dark',
+    accentColor: row.accent_color || 'indigo',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -177,6 +179,9 @@ export class SQLiteAdapter implements DatabaseInterface {
       `ALTER TABLE users ADD COLUMN target_rank TEXT`,
       // Phase 10: notes column for weekly reviews
       `ALTER TABLE weekly_reviews ADD COLUMN notes TEXT NOT NULL DEFAULT ''`,
+      // Phase 11: accent_color for theme system
+      `ALTER TABLE settings ADD COLUMN accent_color TEXT NOT NULL DEFAULT 'indigo'`,
+      // Phase 12: todos table (no ALTER needed — CREATE TABLE IF NOT EXISTS handles it)
     ];
     for (const sql of migrations) {
       try { db.run(sql); } catch (e) {
@@ -829,8 +834,8 @@ export class SQLiteAdapter implements DatabaseInterface {
     const id = Date.now();
     const defaultExams = ['JEE'];
     db.run(
-      `INSERT INTO settings (id, user_id, target_hours_per_week, study_days_per_week, subjects, selected_exams, exam_type, theme, created_at, updated_at)
-       VALUES (?, ?, 35, 5, '["Physics","Chemistry","Mathematics"]', ?, 'JEE', 'dark', datetime('now'), datetime('now'))`,
+      `INSERT INTO settings (id, user_id, target_hours_per_week, study_days_per_week, subjects, selected_exams, exam_type, theme, accent_color, created_at, updated_at)
+       VALUES (?, ?, 35, 5, '["Physics","Chemistry","Mathematics"]', ?, 'JEE', 'dark', 'indigo', datetime('now'), datetime('now'))`,
       [id, this.userId, JSON.stringify(defaultExams)]
     );
     this.save();
@@ -854,8 +859,8 @@ export class SQLiteAdapter implements DatabaseInterface {
       const selectedExams = data.selectedExams ?? legacyExamToSelected(data.examType ?? current.examType ?? 'JEE');
       const subjects = data.subjects ?? getSubjectsForExamKeys(selectedExams);
       db.run(
-        `INSERT INTO settings (id, user_id, target_hours_per_week, study_days_per_week, subjects, selected_exams, exam_type, exam_date, theme, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+        `INSERT INTO settings (id, user_id, target_hours_per_week, study_days_per_week, subjects, selected_exams, exam_type, exam_date, theme, accent_color, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
         [
           newId, this.userId,
           data.targetHoursPerWeek ?? 35,
@@ -865,6 +870,7 @@ export class SQLiteAdapter implements DatabaseInterface {
           data.examType ?? 'JEE',
           data.examDate ?? null,
           data.theme ?? 'dark',
+          data.accentColor ?? 'indigo',
         ]
       );
       this.save();
@@ -872,7 +878,7 @@ export class SQLiteAdapter implements DatabaseInterface {
     }
 
     db.run(
-      `UPDATE settings SET target_hours_per_week=?, study_days_per_week=?, subjects=?, selected_exams=?, exam_type=?, exam_date=?, theme=?, updated_at=datetime('now') WHERE user_id=?`,
+      `UPDATE settings SET target_hours_per_week=?, study_days_per_week=?, subjects=?, selected_exams=?, exam_type=?, exam_date=?, theme=?, accent_color=?, updated_at=datetime('now') WHERE user_id=?`,
       [
         data.targetHoursPerWeek ?? current.targetHoursPerWeek,
         data.studyDaysPerWeek ?? current.studyDaysPerWeek,
@@ -881,6 +887,7 @@ export class SQLiteAdapter implements DatabaseInterface {
         data.examType ?? current.examType,
         data.examDate !== undefined ? data.examDate : current.examDate,
         data.theme ?? current.theme,
+        data.accentColor ?? current.accentColor,
         this.userId,
       ]
     );
@@ -1124,6 +1131,112 @@ export class SQLiteAdapter implements DatabaseInterface {
       date: row.date,
       notes: row.notes || '',
       createdAt: row.created_at,
+    };
+  }
+
+  // ── Todos ──
+
+  createTodo(data: CreateTodoData): Todo {
+    const id = generateId();
+    const db = this.getDb();
+    db.run(
+      `INSERT INTO todos (id, user_id, title, description, category, priority, due_date, status, sort_order)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', 0)`,
+      [
+        id, this.userId, data.title, data.description || '',
+        data.category || 'general', data.priority || 'medium',
+        data.dueDate || null,
+      ]
+    );
+    this.save();
+    return this.getTodo(id)!;
+  }
+
+  getTodo(id: string): Todo | null {
+    const db = this.getDb();
+    const stmt = db.prepare(`SELECT * FROM todos WHERE id = ? AND user_id = ?`);
+    stmt.bind([id, this.userId]);
+    if (stmt.step()) {
+      const row = stmt.getAsObject();
+      stmt.free();
+      return this.toTodo(row);
+    }
+    stmt.free();
+    return null;
+  }
+
+  listTodos(filters?: TodoFilters): Todo[] {
+    const db = this.getDb();
+    let sql = `SELECT * FROM todos WHERE user_id = ?`;
+    const params: any[] = [this.userId];
+
+    if (filters?.status) {
+      sql += ` AND status = ?`;
+      params.push(filters.status);
+    }
+    if (filters?.category) {
+      sql += ` AND category = ?`;
+      params.push(filters.category);
+    }
+    if (filters?.priority) {
+      sql += ` AND priority = ?`;
+      params.push(filters.priority);
+    }
+
+    sql += ` ORDER BY sort_order ASC, created_at DESC`;
+
+    const stmt = db.prepare(sql);
+    stmt.bind(params);
+    const todos: Todo[] = [];
+    while (stmt.step()) {
+      todos.push(this.toTodo(stmt.getAsObject()));
+    }
+    stmt.free();
+    return todos;
+  }
+
+  updateTodo(id: string, data: UpdateTodoData): Todo | null {
+    const existing = this.getTodo(id);
+    if (!existing) return null;
+
+    const db = this.getDb();
+    db.run(
+      `UPDATE todos SET title=?, description=?, category=?, priority=?, due_date=?, status=?, sort_order=?, updated_at=datetime('now')
+       WHERE id=? AND user_id=?`,
+      [
+        data.title ?? existing.title,
+        data.description ?? existing.description,
+        data.category ?? existing.category,
+        data.priority ?? existing.priority,
+        data.dueDate !== undefined ? data.dueDate : existing.dueDate,
+        data.status ?? existing.status,
+        data.sortOrder ?? existing.sortOrder,
+        id, this.userId,
+      ]
+    );
+    this.save();
+    return this.getTodo(id);
+  }
+
+  deleteTodo(id: string): boolean {
+    const db = this.getDb();
+    db.run(`DELETE FROM todos WHERE id = ? AND user_id = ?`, [id, this.userId]);
+    this.save();
+    return this.getTodo(id) === null;
+  }
+
+  private toTodo(row: Record<string, any>): Todo {
+    return {
+      id: row.id,
+      title: row.title,
+      description: row.description || '',
+      category: row.category || 'general',
+      priority: row.priority || 'medium',
+      dueDate: row.due_date || null,
+      status: row.status || 'pending',
+      sortOrder: row.sort_order ?? 0,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
     };
   }
 

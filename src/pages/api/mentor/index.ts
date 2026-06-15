@@ -76,6 +76,19 @@ export const POST: APIRoute = async ({ request }) => {
 
     const settingsStr = `Target: ${settings.targetHoursPerWeek}h/week, Subjects: ${settings.subjects?.join(', ') || 'none'}`;
 
+    // Build todo context
+    const allTodos = db.listTodos();
+    const pendingTodos = allTodos.filter(t => t.status === 'pending');
+    const completedToday = allTodos.filter(t =>
+      t.status === 'completed' && t.updatedAt?.startsWith(new Date().toISOString().slice(0, 10))
+    );
+    const todoStr = pendingTodos.length > 0
+      ? pendingTodos.map(t => `- ${t.title} (${t.priority}, ${t.category}${t.dueDate ? `, due: ${t.dueDate}` : ''})`).join('\n')
+      : 'No pending tasks.';
+    const completedTodoStr = completedToday.length > 0
+      ? `Completed today:\n${completedToday.map(t => `- ${t.title}`).join('\n')}`
+      : '';
+
     const context: MentorContext = {
       examType: primaryExam,
       recentEntries: entriesStr,
@@ -83,6 +96,7 @@ export const POST: APIRoute = async ({ request }) => {
       weakChapters: weakStr,
       settings: settingsStr,
       userProfile,
+      todoList: `Pending tasks:\n${todoStr}\n${completedTodoStr}`,
     };
 
     // Validate and sanitize history

@@ -34,6 +34,7 @@ export interface MentorContext {
   weakChapters: string;
   settings: string;
   userProfile: string;
+  todoList: string;         // Pending + recent todos as formatted text
 }
 
 export interface ChatMessage {

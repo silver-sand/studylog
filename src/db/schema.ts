@@ -134,4 +134,21 @@ CREATE TABLE IF NOT EXISTS sessions (
 
 CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
+
+CREATE TABLE IF NOT EXISTS todos (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL DEFAULT '1' REFERENCES users(id),
+  title TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  category TEXT NOT NULL DEFAULT 'general',
+  priority TEXT NOT NULL DEFAULT 'medium',
+  due_date TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_todos_user ON todos(user_id);
+CREATE INDEX IF NOT EXISTS idx_todos_user_status ON todos(user_id, status);
 `;

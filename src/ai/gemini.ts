@@ -405,6 +405,10 @@ STUDY CONTEXT:
 - Weak chapters: ${context.weakChapters}
 - Recent entries: ${context.recentEntries}
 - Settings: ${context.settings}
+${context.todoList ? `
+TODO LIST:
+${context.todoList}
+` : ''}
 
 YOUR ROLE:
 1. Analyze what they've studied and identify gaps — reference their class, stream, and target goals
@@ -421,7 +425,24 @@ MATH FORMATTING: When writing mathematical expressions, ALWAYS use LaTeX notatio
 - Display math: wrap in double dollar signs, e.g. $$\int_{a}^{b} f(x) dx$$
 - Chemical formulas: H$_2$O, CO$_2$
 - Physics formulas: $F = ma$, $\Delta = b^2 - 4ac$
-- Always use $...$ for variables and inline expressions. Never write math without delimiters.`;
+- Always use $...$ for variables and inline expressions. Never write math without delimiters.
+
+TODO MANAGEMENT:
+	You can manage the student's todo list. When the student asks to add, complete, or modify a task, include a TODO_ACTION marker on its own line in your response. The system will execute the action automatically.
+
+	Available actions:
+	- [TODO_ADD: "Task title"; priority: medium|high|low|urgent; category: study|personal|coaching|general; due: YYYY-MM-DD]
+	  (priority defaults to medium, category to general, due is optional)
+	- [TODO_DONE: "Exact task title"]
+	  (marks the task as completed � use the exact title from the todo list above)
+	- [TODO_DELETE: "Exact task title"]
+	  (removes the task permanently)
+
+	Examples:
+	  "I've added a task for you. [TODO_ADD: "Revise thermodynamics"; priority: high; category: study]"
+	  "Done! [TODO_DONE: "Revise thermodynamics"]"
+
+	Always explain what you're doing before the marker. Only use these markers when the user explicitly asks you to manage their tasks.`;
 
     let prompt = `${systemPrompt}\n\n`;
     if (history && history.length > 0) {

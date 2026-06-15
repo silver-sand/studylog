@@ -2,6 +2,7 @@ import type { Entry, CreateEntryData, EntryFilters } from '../types/entry';
 import type { WeeklyReview, CreateReviewData, DailyReview, CreateDailyReviewData, SyllabusChapter, SyllabusProgress } from '../types/review';
 import type { Settings, UpdateSettingsData } from '../types/settings';
 import type { MockTest, CreateMockTestData, MockTestAnalytics } from '../types/mock-test';
+import type { Todo, CreateTodoData, UpdateTodoData, TodoFilters } from '../types/todo';
 import type { User, Session, CreateUserData } from '../types/auth';
 
 export interface Database {
@@ -50,6 +51,13 @@ export interface Database {
   createMockTest(data: CreateMockTestData): MockTest;
   getMockTests(filters?: { subject?: string; limit?: number }): MockTest[];
   getMockTestAnalytics(): MockTestAnalytics;
+
+  // Todos
+  createTodo(data: CreateTodoData): Todo;
+  getTodo(id: string): Todo | null;
+  listTodos(filters?: TodoFilters): Todo[];
+  updateTodo(id: string, data: UpdateTodoData): Todo | null;
+  deleteTodo(id: string): boolean;
 
   // Auth
   createUser(data: CreateUserData): User;

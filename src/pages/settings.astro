@@ -42,41 +42,41 @@ const settingsBridgeData = {
 
 <BaseLayout title="Settings">
   <!-- Main content area matching Stitch's layout -->
-  <main class="flex-1 flex flex-col h-full overflow-hidden pt-16 md:pt-0 bg-[#050b18]">
+  <main class="flex-1 flex flex-col h-full overflow-hidden pt-16 md:pt-0 bg-[var(--ds-bg-base)]">
     <header class="px-8 py-6 flex-shrink-0">
-      <h2 class="font-headline text-2xl font-bold tracking-tight text-[#f1f5f9]">Settings</h2>
-      <p class="text-[#94a3b8] text-sm mt-1">Manage your account, study preferences, and app appearance.</p>
+      <h2 class="font-headline text-2xl font-bold tracking-tight text-[var(--ds-text-primary)]">Settings</h2>
+      <p class="text-[var(--ds-text-secondary)] text-sm mt-1">Manage your account, study preferences, and app appearance.</p>
     </header>
 
     <div class="flex-1 overflow-hidden px-8 pb-8 flex flex-col lg:flex-row gap-4 lg:gap-8">
       <!-- Mobile tab navigation (visible below lg) -->
       <div class="flex lg:hidden gap-1 -mx-2 px-2 overflow-x-auto flex-shrink-0 scrollbar-hide" id="mobile-settings-nav">
-        <button class="px-4 py-2 rounded-lg text-sm font-medium text-indigo-400 bg-[#0d1321] border border-slate-700/50 whitespace-nowrap settings-nav-btn active" data-tab="profile">Profile</button>
-        <button class="px-4 py-2 rounded-lg text-sm font-medium text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#0d1321]/50 whitespace-nowrap transition-colors settings-nav-btn" data-tab="preferences">Study Preferences</button>
-        <button class="px-4 py-2 rounded-lg text-sm font-medium text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#0d1321]/50 whitespace-nowrap transition-colors settings-nav-btn" data-tab="appearance">Appearance</button>
-        <button class="px-4 py-2 rounded-lg text-sm font-medium text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#0d1321]/50 whitespace-nowrap transition-colors settings-nav-btn" data-tab="notifications">Notifications</button>
-        <button class="px-4 py-2 rounded-lg text-sm font-medium text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#0d1321]/50 whitespace-nowrap transition-colors settings-nav-btn" data-tab="account">Account</button>
-        <button class="px-4 py-2 rounded-lg text-sm font-medium text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#0d1321]/50 whitespace-nowrap transition-colors settings-nav-btn" data-tab="data">Data</button>
+        <button class="px-4 py-2 rounded-lg text-sm font-medium text-indigo-400 bg-[var(--ds-bg-surface)] border border-[var(--ds-border-default)]/50 whitespace-nowrap settings-nav-btn active" data-tab="profile">Profile</button>
+        <button class="px-4 py-2 rounded-lg text-sm font-medium text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] hover:bg-[var(--ds-bg-surface)]/50 whitespace-nowrap transition-colors settings-nav-btn" data-tab="preferences">Study Preferences</button>
+        <button class="px-4 py-2 rounded-lg text-sm font-medium text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] hover:bg-[var(--ds-bg-surface)]/50 whitespace-nowrap transition-colors settings-nav-btn" data-tab="appearance">Appearance</button>
+        <button class="px-4 py-2 rounded-lg text-sm font-medium text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] hover:bg-[var(--ds-bg-surface)]/50 whitespace-nowrap transition-colors settings-nav-btn" data-tab="notifications">Notifications</button>
+        <button class="px-4 py-2 rounded-lg text-sm font-medium text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] hover:bg-[var(--ds-bg-surface)]/50 whitespace-nowrap transition-colors settings-nav-btn" data-tab="account">Account</button>
+        <button class="px-4 py-2 rounded-lg text-sm font-medium text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] hover:bg-[var(--ds-bg-surface)]/50 whitespace-nowrap transition-colors settings-nav-btn" data-tab="data">Data</button>
       </div>
 
       <!-- Secondary Navigation (Content Area) — matching Stitch 5-panel nav, hidden on mobile -->
       <nav class="w-48 flex-shrink-0 flex flex-col gap-1 overflow-y-auto pr-4 hidden lg:flex">
-        <button class="text-left px-4 py-2.5 rounded-lg text-sm font-medium text-indigo-400 bg-[#0d1321] border border-slate-700/50 settings-nav-btn active" data-tab="profile">
+        <button class="text-left px-4 py-2.5 rounded-lg text-sm font-medium text-indigo-400 bg-[var(--ds-bg-surface)] border border-[var(--ds-border-default)]/50 settings-nav-btn active" data-tab="profile">
           Profile
         </button>
-        <button class="text-left px-4 py-2.5 rounded-lg text-sm font-medium text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#0d1321]/50 transition-colors settings-nav-btn" data-tab="preferences">
+        <button class="text-left px-4 py-2.5 rounded-lg text-sm font-medium text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] hover:bg-[var(--ds-bg-surface)]/50 transition-colors settings-nav-btn" data-tab="preferences">
           Study Preferences
         </button>
-        <button class="text-left px-4 py-2.5 rounded-lg text-sm font-medium text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#0d1321]/50 transition-colors settings-nav-btn" data-tab="appearance">
+        <button class="text-left px-4 py-2.5 rounded-lg text-sm font-medium text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] hover:bg-[var(--ds-bg-surface)]/50 transition-colors settings-nav-btn" data-tab="appearance">
           Appearance
         </button>
-        <button class="text-left px-4 py-2.5 rounded-lg text-sm font-medium text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#0d1321]/50 transition-colors settings-nav-btn" data-tab="notifications">
+        <button class="text-left px-4 py-2.5 rounded-lg text-sm font-medium text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] hover:bg-[var(--ds-bg-surface)]/50 transition-colors settings-nav-btn" data-tab="notifications">
           Notifications
         </button>
-        <button class="text-left px-4 py-2.5 rounded-lg text-sm font-medium text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#0d1321]/50 transition-colors settings-nav-btn" data-tab="account">
+        <button class="text-left px-4 py-2.5 rounded-lg text-sm font-medium text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] hover:bg-[var(--ds-bg-surface)]/50 transition-colors settings-nav-btn" data-tab="account">
           Account
         </button>
-        <button class="text-left px-4 py-2.5 rounded-lg text-sm font-medium text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#0d1321]/50 transition-colors settings-nav-btn" data-tab="data">
+        <button class="text-left px-4 py-2.5 rounded-lg text-sm font-medium text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] hover:bg-[var(--ds-bg-surface)]/50 transition-colors settings-nav-btn" data-tab="data">
           Data
         </button>
       </nav>
@@ -85,30 +85,30 @@ const settingsBridgeData = {
       <div class="flex-1 overflow-y-auto pr-4 space-y-8 max-w-3xl pb-24 md:pb-8 scroll-smooth" id="settings-content">
 
         <!-- ═══════ PROFILE ═══════ -->
-        <section class="bg-[#0d1321] rounded-xl border border-slate-800 p-6 settings-section" id="section-profile">
-          <h3 class="text-lg font-headline font-semibold text-[#f1f5f9] mb-6">Profile</h3>
+        <section class="bg-[var(--ds-bg-surface)] rounded-xl border border-[var(--ds-border-subtle)] p-6 settings-section" id="section-profile">
+          <h3 class="text-lg font-headline font-semibold text-[var(--ds-text-primary)] mb-6">Profile</h3>
           <div class="flex items-center gap-6 mb-8">
             <div class="relative group cursor-pointer">
-              <div class="w-20 h-20 rounded-full bg-indigo-500/10 border-2 border-slate-700 flex items-center justify-center text-indigo-400 text-2xl font-bold">
+              <div class="w-20 h-20 rounded-full bg-indigo-500/10 border-2 border-[var(--ds-border-default)] flex items-center justify-center text-indigo-400 text-2xl font-bold">
                 {user?.name?.charAt(0)?.toUpperCase() || 'U'}
               </div>
               <div class="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <span class="material-symbols-outlined text-white text-xl">photo_camera</span>
+                <span class="material-symbols-outlined text-[var(--ds-text-primary)] text-xl">photo_camera</span>
               </div>
             </div>
             <div>
-              <button class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-sm font-medium rounded-lg transition-colors mb-2 text-white">Change Avatar</button>
-              <p class="text-xs text-[#94a3b8]">JPG, GIF or PNG. Max size of 2MB.</p>
+              <button class="px-4 py-2 bg-[var(--ds-bg-elevated)] hover:bg-[var(--ds-bg-hover)] text-sm font-medium rounded-lg transition-colors mb-2 text-[var(--ds-text-primary)]">Change Avatar</button>
+              <p class="text-xs text-[var(--ds-text-secondary)]">JPG, GIF or PNG. Max size of 2MB.</p>
             </div>
           </div>
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-[#94a3b8] mb-1">Full Name</label>
-              <input class="w-full bg-[#050b18] border border-slate-700 rounded-lg px-4 py-2 text-[#f1f5f9] focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" type="text" value={user?.name || ''} />
+              <label class="block text-sm font-medium text-[var(--ds-text-secondary)] mb-1">Full Name</label>
+              <input class="w-full bg-[var(--ds-bg-elevated)] border border-[var(--ds-border-default)] rounded-lg px-4 py-2 text-[var(--ds-text-primary)] focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" type="text" value={user?.name || ''} />
             </div>
             <div>
-              <label class="block text-sm font-medium text-[#94a3b8] mb-1">Email Address</label>
-              <input class="w-full bg-[#050b18] border border-slate-700 rounded-lg px-4 py-2 text-[#f1f5f9] focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" type="email" value={user?.email || ''} />
+              <label class="block text-sm font-medium text-[var(--ds-text-secondary)] mb-1">Email Address</label>
+              <input class="w-full bg-[var(--ds-bg-elevated)] border border-[var(--ds-border-default)] rounded-lg px-4 py-2 text-[var(--ds-text-primary)] focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" type="email" value={user?.email || ''} />
             </div>
             <div class="pt-2">
               <button id="save-profile-btn" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors shadow-lg shadow-indigo-500/20 ripple-btn">Save Profile</button>
@@ -117,19 +117,19 @@ const settingsBridgeData = {
         </section>
 
         <!-- ═══════ STUDY PREFERENCES ═══════ -->
-        <section class="bg-[#0d1321] rounded-xl border border-slate-800 p-6 settings-section hidden" id="section-preferences">
-          <h3 class="text-lg font-headline font-semibold text-[#f1f5f9] mb-6">Study Preferences</h3>
+        <section class="bg-[var(--ds-bg-surface)] rounded-xl border border-[var(--ds-border-subtle)] p-6 settings-section hidden" id="section-preferences">
+          <h3 class="text-lg font-headline font-semibold text-[var(--ds-text-primary)] mb-6">Study Preferences</h3>
           <div class="space-y-6">
             <!-- Stream -->
             <div>
-              <label class="block text-sm font-medium text-[#94a3b8] mb-2">Stream</label>
+              <label class="block text-sm font-medium text-[var(--ds-text-secondary)] mb-2">Stream</label>
               <div class="flex flex-wrap gap-2" id="stream-grid">
                 {Object.entries(STREAMS).map(([key, stream]) => (
                   <button
                     class:list={{
                       'px-3 py-1.5 rounded-full border text-sm font-medium transition-all': true,
                       'border-indigo-500 bg-indigo-500/10 text-indigo-400': userStream === key,
-                      'border-slate-700 text-[#94a3b8] hover:border-slate-500 hover:text-white': userStream !== key,
+                      'border-[var(--ds-border-default)] text-[var(--ds-text-secondary)] hover:border-[var(--ds-border-hover)] hover:text-[var(--ds-text-primary)]': userStream !== key,
                     }}
                     data-stream={key}
                   >
@@ -141,7 +141,7 @@ const settingsBridgeData = {
 
             <!-- Exams -->
             <div>
-              <label class="block text-sm font-medium text-[#94a3b8] mb-2">Target Exams</label>
+              <label class="block text-sm font-medium text-[var(--ds-text-secondary)] mb-2">Target Exams</label>
               <div class="flex flex-wrap gap-2" id="exam-grid">
                 {EXAM_DEFINITIONS.filter(exam => exam.groups.includes(userStream)).map(exam => {
                   const isSelected = defaultExams.includes(exam.key);
@@ -150,7 +150,7 @@ const settingsBridgeData = {
                       class:list={{
                         'px-3 py-1.5 rounded-full border text-sm font-medium transition-all flex items-center gap-1': true,
                         'border-indigo-500 bg-indigo-500/10 text-indigo-400': isSelected,
-                        'border-slate-700 text-[#94a3b8] hover:border-slate-500 hover:text-white': !isSelected,
+                        'border-[var(--ds-border-default)] text-[var(--ds-text-secondary)] hover:border-[var(--ds-border-hover)] hover:text-[var(--ds-text-primary)]': !isSelected,
                       }}
                       data-exam={exam.key}
                     >
@@ -164,8 +164,8 @@ const settingsBridgeData = {
 
             <!-- Active Subjects (toggleable) -->
             <div>
-              <label class="block text-sm font-medium text-[#94a3b8] mb-2">Active Subjects</label>
-              <p class="text-xs text-[#94a3b8] mb-2">Toggle the subjects you want tracked in your syllabus.</p>
+              <label class="block text-sm font-medium text-[var(--ds-text-secondary)] mb-2">Active Subjects</label>
+              <p class="text-xs text-[var(--ds-text-secondary)] mb-2">Toggle the subjects you want tracked in your syllabus.</p>
               <div class="flex flex-wrap gap-2" id="active-subjects-grid">
                 {allSubjects.map(subject => {
                   const isActive = activeSubjects.includes(subject);
@@ -174,7 +174,7 @@ const settingsBridgeData = {
                       class:list={{
                         'px-3 py-1.5 rounded-full border text-sm font-medium transition-all': true,
                         'border-indigo-500 bg-indigo-500/10 text-indigo-400': isActive,
-                        'border-slate-700 text-[#94a3b8] hover:border-slate-500 hover:text-white': !isActive,
+                        'border-[var(--ds-border-default)] text-[var(--ds-text-secondary)] hover:border-[var(--ds-border-hover)] hover:text-[var(--ds-text-primary)]': !isActive,
                       }}
                       data-subject={subject}
                     >
@@ -182,13 +182,13 @@ const settingsBridgeData = {
                     </button>
                   );
                 })}
-                {allSubjects.length === 0 && <p class="text-xs text-[#94a3b8]">Select at least one exam to see subjects.</p>}
+                {allSubjects.length === 0 && <p class="text-xs text-[var(--ds-text-secondary)]">Select at least one exam to see subjects.</p>}
               </div>
             </div>
 
             <!-- Weekly Target -->
-            <div class="pt-4 border-t border-slate-800">
-              <label class="block text-sm font-medium text-[#94a3b8] mb-2">Daily Study Goal (Hours)</label>
+            <div class="pt-4 border-t border-[var(--ds-border-subtle)]">
+              <label class="block text-sm font-medium text-[var(--ds-text-secondary)] mb-2">Daily Study Goal (Hours)</label>
               <div class="flex items-center gap-3">
                 <input
                   type="number"
@@ -197,9 +197,9 @@ const settingsBridgeData = {
                   min="1"
                   max="168"
                   value={settings.targetHoursPerWeek || 35}
-                  class="w-24 bg-[#050b18] border border-slate-700 rounded-lg px-4 py-2 text-[#f1f5f9] focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                  class="w-24 bg-[var(--ds-bg-elevated)] border border-[var(--ds-border-default)] rounded-lg px-4 py-2 text-[var(--ds-text-primary)] focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                 />
-                <span class="text-sm text-[#94a3b8]">hours per week</span>
+                <span class="text-sm text-[var(--ds-text-secondary)]">hours per week</span>
               </div>
             </div>
 
@@ -211,20 +211,20 @@ const settingsBridgeData = {
                 min="1"
                 max="7"
                 value={settings.studyDaysPerWeek || 5}
-                class="w-24 bg-[#050b18] border border-slate-700 rounded-lg px-4 py-2 text-[#f1f5f9] focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                class="w-24 bg-[var(--ds-bg-elevated)] border border-[var(--ds-border-default)] rounded-lg px-4 py-2 text-[var(--ds-text-primary)] focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
               />
-              <span class="text-sm text-[#94a3b8]">days per week</span>
+              <span class="text-sm text-[var(--ds-text-secondary)]">days per week</span>
             </div>
 
             <!-- Exam Date -->
-            <div class="pt-4 border-t border-slate-800">
-              <label class="block text-sm font-medium text-[#94a3b8] mb-2">Exam Date</label>
+            <div class="pt-4 border-t border-[var(--ds-border-subtle)]">
+              <label class="block text-sm font-medium text-[var(--ds-text-secondary)] mb-2">Exam Date</label>
               <input
                 type="date"
                 id="exam-date"
                 name="examDate"
                 value={settings.examDate || ''}
-                class="bg-[#050b18] border border-slate-700 rounded-lg px-4 py-2 text-[#f1f5f9] focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                class="bg-[var(--ds-bg-elevated)] border border-[var(--ds-border-default)] rounded-lg px-4 py-2 text-[var(--ds-text-primary)] focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
               />
               {daysUntilExam !== null && (
                 <span class="text-sm text-indigo-400 ml-3">{daysUntilExam === 0 ? 'Exam day!' : `${daysUntilExam} days away`}</span>
@@ -238,108 +238,150 @@ const settingsBridgeData = {
         </section>
 
         <!-- ═══════ APPEARANCE ═══════ -->
-        <section class="bg-[#0d1321] rounded-xl border border-slate-800 p-6 settings-section hidden" id="section-appearance">
-          <h3 class="text-lg font-headline font-semibold text-[#f1f5f9] mb-6">Appearance</h3>
-          <div class="space-y-6">
+        <section class="bg-[var(--ds-bg-surface)] rounded-xl border border-[var(--ds-border-subtle)] p-6 settings-section hidden" id="section-appearance">
+          <h3 class="text-lg font-headline font-semibold text-[var(--ds-text-primary)] mb-6">Appearance</h3>
+          <div class="space-y-8">
+
+            <!-- ═══ Theme Toggle ═══ -->
             <div>
-              <p class="text-sm text-[#94a3b8] mb-4">Currently the app uses a dark-first design. Light mode support is coming soon.</p>
-              <div class="space-y-3">
-                <div class="flex items-center gap-4 p-4 bg-[#050b18] rounded-xl border border-indigo-500/30">
-                  <div class="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400">
-                    <span class="material-symbols-outlined">dark_mode</span>
+              <p class="text-sm text-[var(--ds-text-secondary)] mb-4">Choose your preferred theme</p>
+              <div class="grid grid-cols-2 gap-4">
+                <!-- Dark Mode Card -->
+                <button
+                  class="theme-option relative flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all duration-200 text-center {settings.theme === 'dark' ? 'border-[var(--ds-accent-500)] bg-[var(--ds-bg-elevated)]' : 'border-[var(--ds-border-default)] bg-[var(--ds-bg-surface)] hover:border-[var(--ds-border-hover)]'}"
+                  data-theme-value="dark"
+                  onclick="updateSetting('theme', 'dark')"
+                >
+                  <div class="w-full h-24 rounded-lg overflow-hidden border border-[var(--ds-border-subtle)]">
+                    <div class="h-full w-full bg-[#050505] flex items-center justify-center">
+                      <div class="flex flex-col items-center gap-1">
+                        <div class="w-12 h-1.5 rounded-full bg-[#2a2a2e]"></div>
+                        <div class="w-10 h-1 rounded-full bg-[#1D1D20]"></div>
+                        <div class="w-8 h-1 rounded-full bg-[rgba(99,102,241,0.3)]"></div>
+                      </div>
+                    </div>
                   </div>
-                  <div class="flex-1">
-                    <p class="text-sm font-medium text-white">Dark Mode</p>
-                    <p class="text-xs text-[#94a3b8]">Current default — optimized for focus</p>
+                  <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-lg" style="color:var(--ds-accent-500)">dark_mode</span>
+                    <span class="text-sm font-medium" style="color:var(--ds-text-primary)">Dark</span>
                   </div>
-                  <span class="material-symbols-outlined text-indigo-400 filled-icon text-lg">check_circle</span>
-                </div>
-                <div class="flex items-center gap-4 p-4 bg-[#050b18] rounded-xl border border-slate-800 opacity-50">
-                  <div class="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-slate-500">
-                    <span class="material-symbols-outlined">light_mode</span>
+                  {settings.theme === 'dark' && <span class="material-symbols-outlined text-lg absolute top-3 right-3 filled-icon" style="color:var(--ds-accent-500)">check_circle</span>}
+                </button>
+                <!-- Light Mode Card -->
+                <button
+                  class="theme-option relative flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all duration-200 text-center {settings.theme === 'light' ? 'border-[var(--ds-accent-500)] bg-[var(--ds-bg-elevated)]' : 'border-[var(--ds-border-default)] bg-[var(--ds-bg-surface)] hover:border-[var(--ds-border-hover)]'}"
+                  data-theme-value="light"
+                  onclick="updateSetting('theme', 'light')"
+                >
+                  <div class="w-full h-24 rounded-lg overflow-hidden border border-[var(--ds-border-subtle)]">
+                    <div class="h-full w-full bg-[#fafafa] flex items-center justify-center">
+                      <div class="flex flex-col items-center gap-1">
+                        <div class="w-12 h-1.5 rounded-full bg-[#e0e0e0]"></div>
+                        <div class="w-10 h-1 rounded-full bg-[#eeeeee]"></div>
+                        <div class="w-8 h-1 rounded-full bg-[rgba(99,102,241,0.2)]"></div>
+                      </div>
+                    </div>
                   </div>
-                  <div class="flex-1">
-                    <p class="text-sm font-medium text-white">Light Mode</p>
-                    <p class="text-xs text-[#94a3b8]">Coming soon</p>
+                  <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-lg" style="color:var(--ds-accent-500)">light_mode</span>
+                    <span class="text-sm font-medium" style="color:var(--ds-text-primary)">Light</span>
                   </div>
-                </div>
+                  {settings.theme === 'light' && <span class="material-symbols-outlined text-lg absolute top-3 right-3 filled-icon" style="color:var(--ds-accent-500)">check_circle</span>}
+                </button>
               </div>
             </div>
-            <div class="pt-4 border-t border-slate-800">
-              <div class="flex items-center justify-between py-2">
-                <div>
-                  <p class="text-sm font-medium text-white">Font Size</p>
-                  <p class="text-xs text-[#94a3b8]">Uses system default</p>
-                </div>
-              </div>
-              <div class="flex items-center justify-between py-2">
-                <div>
-                  <p class="text-sm font-medium text-white">Reduce Motion</p>
-                  <p class="text-xs text-[#94a3b8]">Respects system preference</p>
-                </div>
+
+            <!-- ═══ Accent Color Picker ═══ -->
+            <div>
+              <p class="text-sm text-[var(--ds-text-secondary)] mb-4">Choose your accent color</p>
+              <div class="flex flex-wrap gap-3">
+                {['indigo', 'emerald', 'amber', 'rose', 'purple', 'teal'].map((color) => {
+                  const accentColors = {
+                    indigo: { hex: '#6366f1', label: 'Indigo' },
+                    emerald: { hex: '#10b981', label: 'Emerald' },
+                    amber: { hex: '#f59e0b', label: 'Amber' },
+                    rose: { hex: '#f43f5e', label: 'Rose' },
+                    purple: { hex: '#8b5cf6', label: 'Purple' },
+                    teal: { hex: '#14b8a6', label: 'Teal' },
+                  };
+                  const c = accentColors[color];
+                  const isActive = settings.accentColor === color;
+                  return (
+                    <button
+                      class="accent-option relative flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all duration-200 {isActive ? 'border-[var(--ds-accent-500)] bg-[var(--ds-bg-elevated)]' : 'border-[var(--ds-border-default)] bg-[var(--ds-bg-surface)] hover:border-[var(--ds-border-hover)]'}"
+                      data-accent-value={color}
+                      onclick={`updateSetting('accentColor', '${color}')`}
+                    >
+                      <div class="w-10 h-10 rounded-full" style="background-color: {c.hex}; box-shadow: {isActive ? `0 0 0 3px rgba(var(--ds-accent-rgb), 0.3)` : 'none'}"></div>
+                      <span class="text-xs font-medium" style="color:var(--ds-text-secondary)">{c.label}</span>
+                      {isActive && <span class="material-symbols-outlined text-sm absolute -top-1 -right-1 filled-icon rounded-full bg-[var(--ds-bg-surface)]" style="color:var(--ds-accent-500)">check_circle</span>}
+                    </button>
+                  );
+                })}
               </div>
             </div>
+
           </div>
         </section>
 
         <!-- ═══════ NOTIFICATIONS ═══════ -->
-        <section class="bg-[#0d1321] rounded-xl border border-slate-800 p-6 settings-section hidden" id="section-notifications">
-          <h3 class="text-lg font-headline font-semibold text-[#f1f5f9] mb-6">Notifications</h3>
-          <div class="space-y-0 divide-y divide-slate-800">
+        <section class="bg-[var(--ds-bg-surface)] rounded-xl border border-[var(--ds-border-subtle)] p-6 settings-section hidden" id="section-notifications">
+          <h3 class="text-lg font-headline font-semibold text-[var(--ds-text-primary)] mb-6">Notifications</h3>
+          <div class="space-y-0 divide-y divide-[var(--ds-border-subtle)]">
             <div class="flex items-center justify-between py-4">
               <div>
-                <p class="text-sm font-medium text-white">Study Reminders</p>
-                <p class="text-xs text-[#94a3b8]">Get reminded to log your study sessions daily</p>
+                <p class="text-sm font-medium text-[var(--ds-text-primary)]">Study Reminders</p>
+                <p class="text-xs text-[var(--ds-text-secondary)]">Get reminded to log your study sessions daily</p>
               </div>
               <label class="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" checked disabled class="sr-only peer" />
-                <div class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+                <div class="w-11 h-6 bg-[var(--ds-bg-elevated)] rounded-full peer peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
               </label>
             </div>
             <div class="flex items-center justify-between py-4">
               <div>
-                <p class="text-sm font-medium text-white">Weekly Review Ready</p>
-                <p class="text-xs text-[#94a3b8]">Notify when your weekly AI review is generated</p>
+                <p class="text-sm font-medium text-[var(--ds-text-primary)]">Weekly Review Ready</p>
+                <p class="text-xs text-[var(--ds-text-secondary)]">Notify when your weekly AI review is generated</p>
               </div>
               <label class="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" checked disabled class="sr-only peer" />
-                <div class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+                <div class="w-11 h-6 bg-[var(--ds-bg-elevated)] rounded-full peer peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
               </label>
             </div>
             <div class="flex items-center justify-between py-4">
               <div>
-                <p class="text-sm font-medium text-white">Streak Alerts</p>
-                <p class="text-xs text-[#94a3b8]">Remind you to keep your study streak alive</p>
+                <p class="text-sm font-medium text-[var(--ds-text-primary)]">Streak Alerts</p>
+                <p class="text-xs text-[var(--ds-text-secondary)]">Remind you to keep your study streak alive</p>
               </div>
               <label class="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" disabled class="sr-only peer" />
-                <div class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                <div class="w-11 h-6 bg-[var(--ds-bg-elevated)] rounded-full peer peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
               </label>
             </div>
             <div class="flex items-center justify-between py-4">
               <div>
-                <p class="text-sm font-medium text-white">AI Mentor Suggestions</p>
-                <p class="text-xs text-[#94a3b8]">Get proactive tips from your AI mentor</p>
+                <p class="text-sm font-medium text-[var(--ds-text-primary)]">AI Mentor Suggestions</p>
+                <p class="text-xs text-[var(--ds-text-secondary)]">Get proactive tips from your AI mentor</p>
               </div>
               <label class="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" checked disabled class="sr-only peer" />
-                <div class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+                <div class="w-11 h-6 bg-[var(--ds-bg-elevated)] rounded-full peer peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
               </label>
             </div>
           </div>
-          <p class="text-xs text-center text-[#94a3b8] mt-6 pt-4 border-t border-slate-800">Notifications are currently disabled. Coming in a future update.</p>
+          <p class="text-xs text-center text-[var(--ds-text-secondary)] mt-6 pt-4 border-t border-[var(--ds-border-subtle)]">Notifications are currently disabled. Coming in a future update.</p>
         </section>
 
         <!-- ═══════ ACCOUNT ═══════ -->
-        <section class="bg-[#0d1321] rounded-xl border border-slate-800 p-6 settings-section hidden" id="section-account">
-          <h3 class="text-lg font-headline font-semibold text-[#f1f5f9] mb-6">Account</h3>
+        <section class="bg-[var(--ds-bg-surface)] rounded-xl border border-[var(--ds-border-subtle)] p-6 settings-section hidden" id="section-account">
+          <h3 class="text-lg font-headline font-semibold text-[var(--ds-text-primary)] mb-6">Account</h3>
           <div class="flex items-center gap-4 mb-6">
-            <div class="w-14 h-14 rounded-full bg-indigo-500/10 border border-slate-700 flex items-center justify-center text-indigo-400 text-lg font-bold shrink-0">
+            <div class="w-14 h-14 rounded-full bg-indigo-500/10 border border-[var(--ds-border-default)] flex items-center justify-center text-indigo-400 text-lg font-bold shrink-0">
               {user?.name?.charAt(0)?.toUpperCase() || 'U'}
             </div>
             <div>
-              <p class="text-base font-semibold text-white">{user?.name || 'User'}</p>
-              <p class="text-sm text-[#94a3b8]">{user?.email || ''}</p>
+              <p class="text-base font-semibold text-[var(--ds-text-primary)]">{user?.name || 'User'}</p>
+              <p class="text-sm text-[var(--ds-text-secondary)]">{user?.email || ''}</p>
               {isGuest && <p class="text-xs text-yellow-400 mt-1">Guest account — data is temporary</p>}
               {!isGuest && <p class="text-xs text-emerald-400 mt-1">Signed in — your data is saved permanently</p>}
             </div>
@@ -359,20 +401,20 @@ const settingsBridgeData = {
         </section>
 
         <!-- ═══════ DATA ═══════ -->
-        <section class="bg-[#0d1321] rounded-xl border border-slate-800 p-6 settings-section hidden" id="section-data">
-          <h3 class="text-lg font-headline font-semibold text-[#f1f5f9] mb-6">Data</h3>
-          <p class="text-sm text-[#94a3b8] mb-6">Download your study data as a backup, or restore from a previous backup. Restoring will <strong class="text-red-400">replace all</strong> your current data.</p>
+        <section class="bg-[var(--ds-bg-surface)] rounded-xl border border-[var(--ds-border-subtle)] p-6 settings-section hidden" id="section-data">
+          <h3 class="text-lg font-headline font-semibold text-[var(--ds-text-primary)] mb-6">Data</h3>
+          <p class="text-sm text-[var(--ds-text-secondary)] mb-6">Download your study data as a backup, or restore from a previous backup. Restoring will <strong class="text-red-400">replace all</strong> your current data.</p>
 
           <!-- Download -->
           <div class="space-y-4">
-            <div class="bg-[#050b18] rounded-xl border border-slate-700 p-5">
+            <div class="bg-[var(--ds-bg-elevated)] rounded-xl border border-[var(--ds-border-default)] p-5">
               <div class="flex items-center gap-4">
                 <div class="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 shrink-0">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 </div>
                 <div class="flex-1">
-                  <p class="text-sm font-medium text-white">Download Backup</p>
-                  <p class="text-xs text-[#94a3b8]">Save all your entries, reviews, syllabus progress, and settings as a JSON file.</p>
+                  <p class="text-sm font-medium text-[var(--ds-text-primary)]">Download Backup</p>
+                  <p class="text-xs text-[var(--ds-text-secondary)]">Save all your entries, reviews, syllabus progress, and settings as a JSON file.</p>
                 </div>
                 <button id="data-download-btn" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg transition-colors shrink-0 ripple-btn">
                   Download
@@ -381,14 +423,14 @@ const settingsBridgeData = {
             </div>
 
             <!-- Upload / Restore -->
-            <div class="bg-[#050b18] rounded-xl border border-slate-700 p-5">
+            <div class="bg-[var(--ds-bg-elevated)] rounded-xl border border-[var(--ds-border-default)] p-5">
               <div class="flex items-center gap-4">
                 <div class="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 shrink-0">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                 </div>
                 <div class="flex-1">
-                  <p class="text-sm font-medium text-white">Restore from Backup</p>
-                  <p class="text-xs text-[#94a3b8]">Upload a previously downloaded backup file to restore your data. This replaces all existing data.</p>
+                  <p class="text-sm font-medium text-[var(--ds-text-primary)]">Restore from Backup</p>
+                  <p class="text-xs text-[var(--ds-text-secondary)]">Upload a previously downloaded backup file to restore your data. This replaces all existing data.</p>
                 </div>
                 <button id="data-upload-btn" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium rounded-lg transition-colors shrink-0 ripple-btn">
                   Upload
@@ -402,12 +444,12 @@ const settingsBridgeData = {
 
             <!-- Confirmation dialog (hidden by default) -->
             <div id="data-confirm-overlay" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/60" style="backdrop-filter:blur(4px);">
-              <div class="bg-[#0d1321] border border-slate-700 rounded-xl p-6 max-w-md mx-4 shadow-2xl">
-                <h4 class="text-lg font-headline font-semibold text-[#f1f5f9] mb-3">Restore Backup?</h4>
-                <div id="data-confirm-preview" class="text-sm text-[#94a3b8] mb-4 space-y-1"></div>
+              <div class="bg-[var(--ds-bg-surface)] border border-[var(--ds-border-default)] rounded-xl p-6 max-w-md mx-4 shadow-2xl">
+                <h4 class="text-lg font-headline font-semibold text-[var(--ds-text-primary)] mb-3">Restore Backup?</h4>
+                <div id="data-confirm-preview" class="text-sm text-[var(--ds-text-secondary)] mb-4 space-y-1"></div>
                 <p class="text-sm text-red-400 mb-5 font-medium">This will replace ALL your current data. This cannot be undone.</p>
                 <div class="flex gap-3 justify-end">
-                  <button id="data-confirm-cancel" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium rounded-lg transition-colors ripple-btn">Cancel</button>
+                  <button id="data-confirm-cancel" class="px-4 py-2 bg-[var(--ds-bg-elevated)] hover:bg-[var(--ds-bg-hover)] text-[var(--ds-text-primary)] text-sm font-medium rounded-lg transition-colors ripple-btn">Cancel</button>
                   <button id="data-confirm-proceed" class="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-sm font-medium rounded-lg transition-colors ripple-btn">Restore Data</button>
                 </div>
               </div>
@@ -465,7 +507,7 @@ const settingsBridgeData = {
       var isSelected = selectedKeys.indexOf(exam.key) !== -1;
       var btn = document.createElement('button');
       btn.className = 'px-3 py-1.5 rounded-full border text-sm font-medium transition-all flex items-center gap-1' +
-        (isSelected ? ' border-indigo-500 bg-indigo-500/10 text-indigo-400' : ' border-slate-700 text-[#94a3b8] hover:border-slate-500 hover:text-white');
+        (isSelected ? ' border-indigo-500 bg-indigo-500/10 text-indigo-400' : ' border-[var(--ds-border-default)] text-[var(--ds-text-secondary)] hover:border-[var(--ds-border-hover)] hover:text-[var(--ds-text-primary)]');
       btn.dataset.exam = exam.key;
       btn.textContent = exam.label;
       if (isSelected) {
@@ -478,11 +520,11 @@ const settingsBridgeData = {
         btn.classList.toggle('border-indigo-500');
         btn.classList.toggle('bg-indigo-500/10');
         btn.classList.toggle('text-indigo-400');
-        btn.classList.toggle('border-slate-700');
-        btn.classList.toggle('text-[#94a3b8]');
+        btn.classList.toggle('border-[var(--ds-border-default)]');
+        btn.classList.toggle('text-[var(--ds-text-secondary)]');
         // Also toggle hover classes
-        btn.classList.toggle('hover:border-slate-500');
-        btn.classList.toggle('hover:text-white');
+        btn.classList.toggle('hover:border-[var(--ds-border-hover)]');
+        btn.classList.toggle('hover:text-[var(--ds-text-primary)]');
         // Rebuild subjects
         rebuildSubjectGrid();
       });
@@ -517,24 +559,24 @@ const settingsBridgeData = {
 
     grid.innerHTML = '';
     if (subjects.length === 0) {
-      grid.innerHTML = '<p class="text-xs text-[#94a3b8]">Select at least one exam to see subjects.</p>';
+      grid.innerHTML = '<p class="text-xs text-[var(--ds-text-secondary)]">Select at least one exam to see subjects.</p>';
       return;
     }
     subjects.forEach(function(subject) {
       var isActive = selectedSet[subject] || false;
       var btn = document.createElement('button');
       btn.className = 'px-3 py-1.5 rounded-full border text-sm font-medium transition-all' +
-        (isActive ? ' border-indigo-500 bg-indigo-500/10 text-indigo-400' : ' border-slate-700 text-[#94a3b8] hover:border-slate-500 hover:text-white');
+        (isActive ? ' border-indigo-500 bg-indigo-500/10 text-indigo-400' : ' border-[var(--ds-border-default)] text-[var(--ds-text-secondary)] hover:border-[var(--ds-border-hover)] hover:text-[var(--ds-text-primary)]');
       btn.dataset.subject = subject;
       btn.textContent = subject;
       btn.addEventListener('click', function() {
         btn.classList.toggle('border-indigo-500');
         btn.classList.toggle('bg-indigo-500/10');
         btn.classList.toggle('text-indigo-400');
-        btn.classList.toggle('border-slate-700');
-        btn.classList.toggle('text-[#94a3b8]');
-        btn.classList.toggle('hover:border-slate-500');
-        btn.classList.toggle('hover:text-white');
+        btn.classList.toggle('border-[var(--ds-border-default)]');
+        btn.classList.toggle('text-[var(--ds-text-secondary)]');
+        btn.classList.toggle('hover:border-[var(--ds-border-hover)]');
+        btn.classList.toggle('hover:text-[var(--ds-text-primary)]');
       });
       grid.appendChild(btn);
     });
@@ -555,11 +597,11 @@ const settingsBridgeData = {
 
       // Update nav
       navBtns.forEach(b => {
-        b.classList.remove('active', 'text-indigo-400', 'bg-[#0d1321]', 'border', 'border-slate-700/50');
-        b.classList.add('text-[#94a3b8]');
+        b.classList.remove('active', 'text-indigo-400', 'bg-[var(--ds-bg-surface)]', 'border', 'border-[var(--ds-border-default)]/50');
+        b.classList.add('text-[var(--ds-text-secondary)]');
       });
-      btn.classList.add('active', 'text-indigo-400', 'bg-[#0d1321]', 'border', 'border-slate-700/50');
-      btn.classList.remove('text-[#94a3b8]');
+      btn.classList.add('active', 'text-indigo-400', 'bg-[var(--ds-bg-surface)]', 'border', 'border-[var(--ds-border-default)]/50');
+      btn.classList.remove('text-[var(--ds-text-secondary)]');
 
       // Show section
       Object.entries(sections).forEach(([key, el]) => {
@@ -574,9 +616,9 @@ const settingsBridgeData = {
       // Update visual state
       document.querySelectorAll('#stream-grid button').forEach(function(b) {
         b.classList.remove('border-indigo-500', 'bg-indigo-500/10', 'text-indigo-400');
-        b.classList.add('border-slate-700', 'text-[#94a3b8]');
+        b.classList.add('border-[var(--ds-border-default)]', 'text-[var(--ds-text-secondary)]');
       });
-      btn.classList.remove('border-slate-700', 'text-[#94a3b8]');
+      btn.classList.remove('border-[var(--ds-border-default)]', 'text-[var(--ds-text-secondary)]');
       btn.classList.add('border-indigo-500', 'bg-indigo-500/10', 'text-indigo-400');
 
       var stream = btn.dataset.stream;
@@ -595,10 +637,10 @@ const settingsBridgeData = {
       btn.classList.toggle('border-indigo-500');
       btn.classList.toggle('bg-indigo-500/10');
       btn.classList.toggle('text-indigo-400');
-      btn.classList.toggle('border-slate-700');
-      btn.classList.toggle('text-[#94a3b8]');
-      btn.classList.toggle('hover:border-slate-500');
-      btn.classList.toggle('hover:text-white');
+      btn.classList.toggle('border-[var(--ds-border-default)]');
+      btn.classList.toggle('text-[var(--ds-text-secondary)]');
+      btn.classList.toggle('hover:border-[var(--ds-border-hover)]');
+      btn.classList.toggle('hover:text-[var(--ds-text-primary)]');
     });
   });
 
@@ -770,19 +812,19 @@ const settingsBridgeData = {
 
       let dateRange = 'N/A';
       if (entriesCount > 0) {
-        const dates = data.data.entries.map((e: any) => e.date).filter(Boolean).sort();
+        const dates = data.data.entries.map(function(e) { return e.date; }).filter(Boolean).sort();
         if (dates.length > 0) {
           dateRange = `${dates[0]} — ${dates[dates.length - 1]}`;
         }
       }
 
       preview.innerHTML = `
-        <p><strong class="text-white">Entries:</strong> ${entriesCount}</p>
-        <p><strong class="text-white">Date range:</strong> ${dateRange}</p>
-        <p><strong class="text-white">Weekly reviews:</strong> ${reviewsCount}</p>
-        <p><strong class="text-white">Daily reviews:</strong> ${dailyCount}</p>
-        <p><strong class="text-white">Syllabus chapters:</strong> ${syllabusCount}</p>
-        <p><strong class="text-white">Mock tests:</strong> ${mockTestsCount}</p>
+        <p><strong class="text-[var(--ds-text-primary)]">Entries:</strong> ${entriesCount}</p>
+        <p><strong class="text-[var(--ds-text-primary)]">Date range:</strong> ${dateRange}</p>
+        <p><strong class="text-[var(--ds-text-primary)]">Weekly reviews:</strong> ${reviewsCount}</p>
+        <p><strong class="text-[var(--ds-text-primary)]">Daily reviews:</strong> ${dailyCount}</p>
+        <p><strong class="text-[var(--ds-text-primary)]">Syllabus chapters:</strong> ${syllabusCount}</p>
+        <p><strong class="text-[var(--ds-text-primary)]">Mock tests:</strong> ${mockTestsCount}</p>
       `;
 
       pendingImportData = data;
@@ -839,6 +881,67 @@ const settingsBridgeData = {
       cancelBtn.disabled = false;
     }
   });
+
+  // ── Theme & Accent update: called by Appearance section buttons ──
+  window.updateSetting = async function (key, value) {
+    const body = {};
+    body[key] = value;
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error('Failed to save');
+      // Immediately apply theme/accent to <html> for instant feedback
+      if (key === 'theme') {
+        document.documentElement.className = value;
+        document.documentElement.setAttribute('data-theme', value);
+        // Update active state on theme cards
+        document.querySelectorAll('.theme-option').forEach(function (el) {
+          const val = el.dataset.themeValue;
+          const isActive = val === value;
+          el.classList.toggle('border-[var(--ds-accent-500)]', isActive);
+          el.classList.toggle('bg-[var(--ds-bg-elevated)]', isActive);
+          el.classList.toggle('border-[var(--ds-border-default)]', !isActive);
+          el.classList.toggle('bg-[var(--ds-bg-surface)]', !isActive);
+          // Toggle checkmark
+          var check = el.querySelector('.material-symbols-outlined.filled-icon');
+          if (check) check.remove();
+          if (isActive) {
+            var newCheck = document.createElement('span');
+            newCheck.className = 'material-symbols-outlined text-lg absolute top-3 right-3 filled-icon';
+            newCheck.style.color = 'var(--ds-accent-500)';
+            newCheck.textContent = 'check_circle';
+            el.appendChild(newCheck);
+          }
+        });
+      } else if (key === 'accentColor') {
+        document.documentElement.setAttribute('data-accent', value);
+        // Update active state on accent swatches
+        document.querySelectorAll('.accent-option').forEach(function (el) {
+          const val = el.dataset.accentValue;
+          const isActive = val === value;
+          el.classList.toggle('border-[var(--ds-accent-500)]', isActive);
+          el.classList.toggle('bg-[var(--ds-bg-elevated)]', isActive);
+          el.classList.toggle('border-[var(--ds-border-default)]', !isActive);
+          el.classList.toggle('bg-[var(--ds-bg-surface)]', !isActive);
+          // Toggle checkmark
+          var check = el.querySelector('.material-symbols-outlined.filled-icon');
+          if (check) check.remove();
+          if (isActive) {
+            var newCheck = document.createElement('span');
+            newCheck.className = 'material-symbols-outlined text-sm absolute -top-1 -right-1 filled-icon rounded-full bg-[var(--ds-bg-surface)]';
+            newCheck.style.color = 'var(--ds-accent-500)';
+            newCheck.textContent = 'check_circle';
+            el.appendChild(newCheck);
+          }
+        });
+      }
+    } catch (err) {
+      console.error('Failed to update setting:', err);
+    }
+  };
 </script>
 
 <style>

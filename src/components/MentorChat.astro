@@ -208,6 +208,70 @@ const quickActions = [
     return `<p class="text-neutral-300 leading-[1.75]">${html}</p>`;
   }
 
+  // ── Parse and execute TODO_ACTION markers ──
+  function parseTodoActions(text) {
+    if (!text) return text;
+    let cleaned = text;
+
+    // Extract and execute TODO_ADD markers
+    cleaned = cleaned.replace(/\[TODO_ADD:\s*"([^"]+)"(.*?)\]/g, function(_, title, rest) {
+      const parts = rest.split(';').map(s => s.trim()).filter(Boolean);
+      let priority = 'medium';
+      let category = 'general';
+      let dueDate = null;
+      for (const part of parts) {
+        if (part.startsWith('priority:')) priority = part.split(':')[1].trim();
+        if (part.startsWith('category:')) category = part.split(':')[1].trim();
+        if (part.startsWith('due:')) dueDate = part.split(':')[1].trim();
+      }
+      fetch('/api/todos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, priority, category, dueDate }),
+      }).catch(function(err) { console.error('TODO_ADD failed:', err); });
+      return '';
+    });
+
+    // Extract and execute TODO_DONE markers
+    cleaned = cleaned.replace(/\[TODO_DONE:\s*"([^"]+)"\]/g, function(_, title) {
+      // Find the todo by title and mark it complete
+      // We need to look at the DOM or do a fetch. Let's fetch the list and match.
+      fetch('/api/todos')
+        .then(function(r) { return r.json(); })
+        .then(function(todos) {
+          var match = todos.find(function(t) { return t.title === title && t.status === 'pending'; });
+          if (match) {
+            fetch('/api/todos/' + match.id, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: 'completed' }),
+            }).catch(function(err) { console.error('TODO_DONE failed:', err); });
+          }
+        })
+        .catch(function(err) { console.error('TODO_DONE lookup failed:', err); });
+      return '';
+    });
+
+    // Extract and execute TODO_DELETE markers
+    cleaned = cleaned.replace(/\[TODO_DELETE:\s*"([^"]+)"\]/g, function(_, title) {
+      fetch('/api/todos')
+        .then(function(r) { return r.json(); })
+        .then(function(todos) {
+          var match = todos.find(function(t) { return t.title === title; });
+          if (match) {
+            fetch('/api/todos/' + match.id, { method: 'DELETE' })
+              .catch(function(err) { console.error('TODO_DELETE failed:', err); });
+          }
+        })
+        .catch(function(err) { console.error('TODO_DELETE lookup failed:', err); });
+      return '';
+    });
+
+    // Clean up any extra whitespace from removed markers
+    cleaned = cleaned.replace(/\n{3,}/g, '\n\n').trim();
+    return cleaned;
+  }
+
   // ── State ──
   const CHAT_STORAGE_KEY = 'sl-mentor-history';
   const MODEL_STORAGE_KEY = 'sl-mentor-model';
@@ -414,7 +478,10 @@ const quickActions = [
       const streaming = document.getElementById('streaming-msg');
       if (streaming) streaming.remove();
 
-      history.push({ role: 'assistant', content: reply });
+      // Parse and execute TODO_ACTION markers from the reply
+      const cleanReply = parseTodoActions(reply);
+
+      history.push({ role: 'assistant', content: cleanReply });
       saveHistory();
 
       const aiComplete = document.createElement('div');
@@ -423,7 +490,7 @@ const quickActions = [
         <span class="material-symbols-outlined text-[16px] text-indigo-400" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
       </div>
       <div class="ai-bubble flex-1 max-w-[95%]">
-        ${renderMarkdown(reply)}
+        ${renderMarkdown(cleanReply)}
       </div>`;
       historyMessages.appendChild(aiComplete);
       chatContainer?.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });

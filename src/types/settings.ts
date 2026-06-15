@@ -7,6 +7,7 @@ export interface Settings {
   examType: string;              // Legacy single exam — kept for backward compat
   examDate: string | null;
   theme: 'dark' | 'light';
+  accentColor: string;           // 'indigo' | 'emerald' | 'amber' | 'rose' | 'purple' | 'teal'
   createdAt: string;
   updatedAt: string;
 }
@@ -19,4 +20,5 @@ export interface UpdateSettingsData {
   examType?: string;
   examDate?: string | null;
   theme?: 'dark' | 'light';
+  accentColor?: string;
 }

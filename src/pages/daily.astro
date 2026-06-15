@@ -47,19 +47,19 @@ const dateDisplay = todayDate.toLocaleDateString('en-US', {
 
 <BaseLayout title="Daily Log">
   <!-- Main Content Area -->
-  <main class="p-6 md:p-10 min-h-screen pb-24 md:pb-10 bg-[#050b18]">
+  <main class="p-6 md:p-10 min-h-screen pb-24 md:pb-10 bg-[var(--ds-bg-base)]">
 
     <!-- Header -->
     <header class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10 animate-stagger" style="--stagger-index:0">
       <div>
-        <h2 class="text-3xl md:text-4xl font-headline font-bold text-white tracking-tight">Daily Log</h2>
+        <h2 class="text-3xl md:text-4xl font-headline font-bold text-[var(--ds-text-primary)] tracking-tight">Daily Log</h2>
         <p class="text-neutral-500 mt-1 flex items-center gap-2">
           <span class="material-symbols-outlined text-sm">event</span>
           {dateDisplay}
         </p>
       </div>
       <div class="hidden md:flex items-center gap-4">
-        <div id="live-session-badge" class="bg-[#0d1321]/50 border border-white/5 rounded-lg px-4 py-2 flex items-center gap-3 hidden">
+        <div id="live-session-badge" class="bg-[var(--ds-bg-surface)]/50 border-[var(--ds-border-subtle)] rounded-lg px-4 py-2 flex items-center gap-3 hidden">
           <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
           <span class="text-xs font-label text-neutral-500">Live Study Session Active</span>
         </div>
@@ -78,7 +78,7 @@ const dateDisplay = todayDate.toLocaleDateString('en-US', {
             <div class="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
               <span class="material-symbols-outlined text-lg text-indigo-400">edit_note</span>
             </div>
-            <h3 class="text-xl font-bold text-white">New Entry</h3>
+            <h3 class="text-xl font-bold text-[var(--ds-text-primary)]">New Entry</h3>
           </div>
           <EntryForm
             todayEntry={todayEntry ? {
@@ -109,7 +109,7 @@ const dateDisplay = todayDate.toLocaleDateString('en-US', {
                 <p class="text-sm text-neutral-400 mb-6 leading-relaxed max-w-md mx-auto">
                   You have entries for today. Generate an AI-powered daily review to summarize your progress and get insights.
                 </p>
-                <button id="generate-daily-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-8 rounded-xl transition-all active:scale-[0.98] shadow-lg inline-flex items-center gap-2 glow-button ripple-btn">
+                <button id="generate-daily-btn" class="bg-indigo-600 hover:bg-indigo-500 text-[var(--ds-text-primary)] font-bold py-3 px-8 rounded-xl transition-all active:scale-[0.98] shadow-lg inline-flex items-center gap-2 glow-button ripple-btn">
                   <span class="material-symbols-outlined text-[18px]">auto_awesome</span>
                   Generate Review
                 </button>
@@ -129,13 +129,13 @@ const dateDisplay = todayDate.toLocaleDateString('en-US', {
         <!-- History Section — Past Week table -->
         <section class="card-lift reveal-on-scroll" style="--stagger-index:3">
           <div class="flex items-center justify-between mb-5 px-1">
-            <h3 class="text-lg font-bold text-white flex items-center gap-2.5">
+            <h3 class="text-lg font-bold text-[var(--ds-text-primary)] flex items-center gap-2.5">
               <span class="material-symbols-outlined text-neutral-500">history</span>
               Past Week
             </h3>
           </div>
           {recentEntries.length > 0 ? (
-            <div class="overflow-hidden rounded-2xl border border-white/5 bg-[#0d1321]/30">
+            <div class="overflow-hidden rounded-2xl border-[var(--ds-border-subtle)] bg-[var(--ds-bg-surface)]/30">
               <EntryList entries={recentEntries} />
             </div>
           ) : (
@@ -161,11 +161,11 @@ const dateDisplay = todayDate.toLocaleDateString('en-US', {
               <div class="flex items-center justify-between mb-2">
                 <span class="text-sm text-neutral-400">Hours Studied</span>
                 <div class="text-right">
-                  <span class="text-2xl font-bold text-white font-mono tabular-nums">{todayHours.toFixed(1)}</span>
+                  <span class="text-2xl font-bold text-[var(--ds-text-primary)] font-mono tabular-nums">{todayHours.toFixed(1)}</span>
                   <span class="text-sm text-neutral-600">/{targetHours}.0</span>
                 </div>
               </div>
-              <div class="w-full bg-[#050b18] h-2 rounded-full overflow-hidden">
+              <div class="w-full bg-[var(--ds-bg-elevated)] h-2 rounded-full overflow-hidden">
                 <div
                   class="bg-indigo-500 h-full rounded-full transition-all duration-1000 ease-out"
                   style={`width:${Math.min((todayHours / targetHours) * 100, 100)}%; box-shadow: 0 0 12px rgba(99, 102, 241, 0.4);`}
@@ -191,7 +191,7 @@ const dateDisplay = todayDate.toLocaleDateString('en-US', {
               <span class="material-symbols-outlined text-amber-400 filled-icon" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
               <h3 class="text-[11px] font-label text-neutral-500 uppercase tracking-widest">Study Streak</h3>
             </div>
-            <p class="text-4xl font-headline font-black text-white">{streak} Days</p>
+            <p class="text-4xl font-headline font-black text-[var(--ds-text-primary)]">{streak} Days</p>
             <p class="text-xs text-amber-400/70 mt-2 font-medium">Keep it going! You're building great momentum.</p>
           </div>
         </div>
@@ -204,7 +204,7 @@ const dateDisplay = todayDate.toLocaleDateString('en-US', {
             </div>
           </div>
           <div class="p-5">
-            <h4 class="font-bold text-white text-sm mb-1.5">💡 Did you know?</h4>
+            <h4 class="font-bold text-[var(--ds-text-primary)] text-sm mb-1.5">💡 Did you know?</h4>
             <p class="text-sm text-neutral-400 leading-relaxed italic">
               Taking a 10-minute break every hour increases long-term retention by up to 20%.
             </p>
