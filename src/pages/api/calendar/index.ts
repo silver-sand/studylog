@@ -1,9 +1,7 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../../db';
-import { scopeDbToUser } from '../../../services/user-scope';
 
-export const GET: APIRoute = async ({ request, url }) => {
-  scopeDbToUser(request);
+export const GET: APIRoute = async ({ url }) => {
   const year = parseInt(url.searchParams.get('year') || '0');
   const month = parseInt(url.searchParams.get('month') || '0');
   if (!year || !month || month < 1 || month > 12) {
@@ -12,7 +10,7 @@ export const GET: APIRoute = async ({ request, url }) => {
   const pad = (n: number) => n.toString().padStart(2, '0');
   const prefix = `${year}-${pad(month)}`;
   const db = getDb();
-  const entries = db.listEntries({ from: `${prefix}-01`, to: `${prefix}-31` });
+  const entries = await db.listEntries({ from: `${prefix}-01`, to: `${prefix}-31` });
   const dates: string[] = [];
   const set = new Set<string>();
   for (const entry of entries) {

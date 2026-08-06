@@ -12,37 +12,40 @@ function getAI(): AIService {
 export async function createEntry(data: CreateEntryData): Promise<Entry> {
   const db = getDb();
 
-  const entry = db.createEntry(data);
+  const entry = await db.createEntry(data);
 
   try {
     const analysis = await getAI().analyzeEntry(data.content);
-    return db.updateEntry(entry.id, {
-      subjects: analysis.subjects,
+    const updated = await db.updateEntry(entry.id, {
+      // User's explicit chip selection is authoritative; AI extraction is a fallback.
+      subjects: data.subjects?.length ? data.subjects : analysis.subjects,
       chapters: analysis.chapters,
       hoursStudied: data.hoursStudied ?? analysis.hoursStudied ?? 0,
       tags: analysis.tags,
       aiRaw: JSON.stringify(analysis),
       aiStatus: 'done',
-    })!;
+    });
+    return updated!;
   } catch (e) {
-    return db.updateEntry(entry.id, {
+    const updated = await db.updateEntry(entry.id, {
       aiStatus: 'error',
       aiRaw: e instanceof Error ? e.message : String(e),
-    })!;
+    });
+    return updated!;
   }
 }
 
 export async function reanalyzeEntry(id: string): Promise<Entry | null> {
   const db = getDb();
-  const entry = db.getEntry(id);
+  const entry = await db.getEntry(id);
   if (!entry) return null;
 
-  const pending = db.updateEntry(id, { aiStatus: 'processing' });
+  const pending = await db.updateEntry(id, { aiStatus: 'processing' });
   if (!pending) return null;
 
   try {
     const analysis = await getAI().analyzeEntry(entry.content);
-    return db.updateEntry(id, {
+    return await db.updateEntry(id, {
       subjects: analysis.subjects,
       chapters: analysis.chapters,
       // Preserve user-set hoursStudied — AI extraction is a fallback hint
@@ -50,31 +53,31 @@ export async function reanalyzeEntry(id: string): Promise<Entry | null> {
       tags: analysis.tags,
       aiRaw: JSON.stringify(analysis),
       aiStatus: 'done',
-    })!;
+    });
   } catch (e) {
     return db.updateEntry(id, {
       aiStatus: 'error',
       aiRaw: e instanceof Error ? e.message : String(e),
-    })!;
+    });
   }
 }
 
-export function getEntry(id: string): Entry | null {
+export async function getEntry(id: string): Promise<Entry | null> {
   return getDb().getEntry(id);
 }
 
-export function getEntryByDate(date: string): Entry | null {
+export async function getEntryByDate(date: string): Promise<Entry | null> {
   return getDb().getEntryByDate(date);
 }
 
-export function listEntries(filters?: EntryFilters): Entry[] {
+export async function listEntries(filters?: EntryFilters): Promise<Entry[]> {
   return getDb().listEntries(filters);
 }
 
-export function updateEntry(id: string, data: Partial<Entry>): Entry | null {
+export async function updateEntry(id: string, data: Partial<Entry>): Promise<Entry | null> {
   return getDb().updateEntry(id, data);
 }
 
-export function deleteEntry(id: string): boolean {
+export async function deleteEntry(id: string): Promise<boolean> {
   return getDb().deleteEntry(id);
 }

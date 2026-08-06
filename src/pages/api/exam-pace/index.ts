@@ -1,29 +1,27 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../../db';
-import { scopeDbToUser } from '../../../services/user-scope';
 import { getSyllabusKeyForExam } from '../../../utils/exam-map';
 
 export const GET: APIRoute = async ({ request }) => {
-  scopeDbToUser(request);
   try {
     const db = getDb();
-    const settings = db.getSettings();
+    const settings = await db.getSettings();
 
-    db.seedSyllabusData();
+    await db.seedSyllabusData();
 
     // Support multi-exam: return pace for each selected exam
     const selectedExams = settings.selectedExams?.length ? settings.selectedExams : ['JEE'];
 
     // Get first study date (earliest entry, not most recent)
-    const allEntries = db.listEntries({ limit: 10000 });
+    const allEntries = await db.listEntries({ limit: 10000 });
     const firstEntry = allEntries.length > 0 ? allEntries[allEntries.length - 1] : null;
     const firstDate = firstEntry ? new Date(firstEntry.date) : new Date();
     const today = new Date();
     const daysSinceStart = Math.max(1, Math.floor((today.getTime() - firstDate.getTime()) / 86400000));
 
-    const results = selectedExams.map(examKey => {
+    const results = await Promise.all(selectedExams.map(async examKey => {
       const syllabusKey = getSyllabusKeyForExam(examKey);
-      const progress = db.getSyllabusProgress(syllabusKey);
+      const progress = await db.getSyllabusProgress(syllabusKey);
       const totalChapters = progress.reduce((s, p) => s + p.total, 0);
       const weightedSum = progress.reduce((s, p) => s + p.weightedPercent * p.total, 0);
       const overallPercent = totalChapters > 0 ? Math.round(weightedSum / totalChapters) : 0;
@@ -73,7 +71,7 @@ export const GET: APIRoute = async ({ request }) => {
           ? Math.round((totalChapters * overallPercent / 100) / daysSinceStart * 100) / 100
           : 0,
       };
-    });
+    }));
 
     return new Response(JSON.stringify({ exams: results }));
   } catch (e) {

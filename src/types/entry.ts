@@ -23,6 +23,7 @@ export interface CreateEntryData {
   studyType?: StudyType;
   focusRating?: number;
   examType?: string;
+  subjects?: string[];
 }
 
 export interface EntryFilters {

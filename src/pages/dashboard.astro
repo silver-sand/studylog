@@ -6,16 +6,15 @@ import DashboardRightColumn from '../components/DashboardRightColumn.astro';
 import CalendarWidget from '../components/CalendarWidget.astro';
 import { getDashboardStats, getMonthlyEntryDates } from '../services/stats-service';
 import { getDb } from '../db';
-import { scopeDbToUser } from '../services/user-scope';
+import { getCurrentUserId } from '../db/user-context';
 import { getSyllabusKeyForExam, getSubjectsForExamKeys } from '../utils/exam-map';
 import { getExamsForStream } from '../utils/stream-map';
 
-scopeDbToUser(Astro.request);
 const db = getDb();
-const stats = getDashboardStats();
-const settings = db.getSettings();
-const userId = db.getCurrentUser();
-const user = userId ? db.getUserById(userId) : null;
+const stats = await getDashboardStats();
+const settings = await db.getSettings();
+const userId = getCurrentUserId();
+const user = userId ? await db.getUserById(userId) : null;
 const userStream = user?.stream || '';
 const defaultExamCandidates = userStream ? getExamsForStream(userStream) : ['JEE'];
 const selectedExams = settings.selectedExams?.length ? settings.selectedExams : (defaultExamCandidates.length > 0 ? [defaultExamCandidates[0]] : ['JEE']);
@@ -24,7 +23,7 @@ const activeSubjects = settings.subjects?.length ? settings.subjects : getSubjec
 const hasEntries = stats.totalHoursThisWeek > 0 || stats.entriesThisMonth > 0;
 
 // Progress for syllabus bar
-const syllProgress = db.getSyllabusProgress(examKey);
+const syllProgress = await db.getSyllabusProgress(examKey);
 const hasAnyProgress = syllProgress.some(p => p.weightedPercent > 0);
 const syllabusPercent = hasAnyProgress
   ? Math.round(syllProgress.reduce((s, p) => s + p.weightedPercent, 0) / syllProgress.length)
@@ -34,7 +33,7 @@ const syllabusPercent = hasAnyProgress
 const now = new Date();
 const thisYear = now.getFullYear();
 const thisMonth = now.getMonth() + 1;
-const entryDates = getMonthlyEntryDates(thisYear, thisMonth);
+const entryDates = await getMonthlyEntryDates(thisYear, thisMonth);
 ---
 
 <BaseLayout title="Dashboard">

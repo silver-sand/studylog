@@ -3,17 +3,15 @@ import { getDb } from '../../db';
 import { STREAMS, getExamsForStream } from '../../utils/stream-map';
 import { getSubjectsForExamKeys } from '../../utils/exam-map';
 import { getTokenFromCookie, getSessionUser } from '../../services/auth-service';
-import { scopeDbToUser } from '../../services/user-scope';
 import { validateOrigin } from './_csrf';
 
 export const POST: APIRoute = async ({ request }) => {
   if (!validateOrigin(request)) {
     return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
   }
-  scopeDbToUser(request);
   try {
     const token = getTokenFromCookie(request);
-    const user = getSessionUser(token);
+    const user = await getSessionUser(token);
     if (!user) {
       return new Response(JSON.stringify({ error: 'Not authenticated' }), { status: 401 });
     }
@@ -23,7 +21,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Update user profile
     if (name || stream || classLevel || weakSubjects || coaching || targetRank) {
-      db.updateUser(user.id, {
+      await db.updateUser(user.id, {
         name: name || undefined,
         stream: stream || undefined,
         classLevel: classLevel || undefined,
@@ -35,14 +33,14 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Pre-fill settings
     if (targetHours || studyDaysPerWeek || selectedExams?.length) {
-      const current = db.getSettings();
+      const current = await db.getSettings();
 
       // Use explicitly selected exams, fall back to stream defaults
       const exams = selectedExams?.length ? selectedExams : (stream ? getExamsForStream(stream) : (current.selectedExams?.length ? current.selectedExams : ['JEE']));
       // Use explicit subjects if provided, otherwise auto-compute from selected exams
       const computedSubjects = subjects?.length ? subjects : getSubjectsForExamKeys(exams);
 
-      db.updateSettings({
+      await db.updateSettings({
         targetHoursPerWeek: targetHours ? Number(targetHours) : current.targetHoursPerWeek,
         studyDaysPerWeek: studyDaysPerWeek ? Number(studyDaysPerWeek) : current.studyDaysPerWeek,
         selectedExams: exams,
@@ -51,7 +49,7 @@ export const POST: APIRoute = async ({ request }) => {
 
       // Seed syllabus for all selected exams (filtered by subjects so commerce doesn't get science)
       for (const examKey of exams) {
-        db.seedSyllabusData(examKey, computedSubjects);
+        await db.seedSyllabusData(examKey, computedSubjects);
       }
     }
 

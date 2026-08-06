@@ -1,5 +1,6 @@
 export interface Settings {
-  id: number;
+  /** '1' for the sqlite adapter; the uid for the Firestore adapter (doc id = uid). */
+  id: string;
   targetHoursPerWeek: number;
   studyDaysPerWeek: number;
   subjects: string[];            // Derived from selectedExams, stored as cache

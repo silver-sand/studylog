@@ -61,8 +61,8 @@ const weekBars = Array.from({ length: 7 }, (_, i) => {
   });
   return {
     day: dayNames[i].charAt(0),
-    hours: trend?.hoursStudied || 0,
-    maxHours: Math.max(...(dailyTrend?.map(d => d.hoursStudied) || [1]), 1),
+    hours: trend?.hours || 0,
+    maxHours: Math.max(...(dailyTrend?.map(d => d.hours) || [1]), 1),
   };
 });
 

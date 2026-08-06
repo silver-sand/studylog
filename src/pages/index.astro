@@ -3,7 +3,7 @@ import AuthPopup from '../components/AuthPopup.astro';
 import { getSessionUser, getTokenFromCookie } from '../services/auth-service';
 import '../styles/design-system.css';
 
-const user = getSessionUser(getTokenFromCookie(Astro.request));
+const user = await getSessionUser(getTokenFromCookie(Astro.request));
 const isAuthenticated = !!user;
 ---
 

@@ -4,7 +4,7 @@ import { getSessionUser, getTokenFromCookie } from '../../../services/auth-servi
 export const GET: APIRoute = async ({ request }) => {
   try {
     const token = getTokenFromCookie(request);
-    const user = getSessionUser(token);
+    const user = await getSessionUser(token);
 
     if (!user) {
       return new Response(JSON.stringify({ user: null }), { status: 200, headers: { 'Content-Type': 'application/json' } });

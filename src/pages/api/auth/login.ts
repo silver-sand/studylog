@@ -1,11 +1,15 @@
 import type { APIRoute } from 'astro';
-import { login } from '../../../services/auth-service';
+import { login, AuthError, SESSION_COOKIE_MAX_AGE_SECONDS } from '../../../services/auth-service';
 import { validateOrigin } from '../_csrf';
+import { rateLimit, rateLimitResponse } from '../../../services/rate-limit';
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, clientAddress, cookies }) => {
   if (!validateOrigin(request)) {
     return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
   }
+  // 5 attempts / 15 min per IP — throttles credential stuffing
+  const limited = rateLimitResponse(rateLimit(`login:${clientAddress || 'unknown'}`, 5, 15 * 60 * 1000));
+  if (limited) return limited;
   try {
     const { email, password } = await request.json();
 
@@ -14,17 +18,21 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     const result = await login(email.trim().toLowerCase(), password);
-    const secureFlag = import.meta.env.PROD ? '; Secure' : '';
+    cookies.set('session_token', result.sessionCookie, {
+      httpOnly: true,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: SESSION_COOKIE_MAX_AGE_SECONDS,
+      secure: import.meta.env.PROD,
+    });
 
     return new Response(JSON.stringify({ user: result.user }), {
       status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Set-Cookie': `session_token=${result.token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${7 * 24 * 60 * 60}${secureFlag}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
     });
   } catch (e) {
+    const status = e instanceof AuthError ? e.status : 401;
     const msg = e instanceof Error ? e.message : 'Login failed';
-    return new Response(JSON.stringify({ error: msg }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ error: msg }), { status, headers: { 'Content-Type': 'application/json' } });
   }
 };

@@ -3,7 +3,6 @@ import Sidebar from '../components/Sidebar.astro';
 import AuthPopup from '../components/AuthPopup.astro';
 import { getSessionUser, getTokenFromCookie } from '../services/auth-service';
 import { getDb } from '../db';
-import { scopeDbToUser } from '../services/user-scope';
 import '../styles/design-system.css';
 
 export interface Props {
@@ -11,10 +10,9 @@ export interface Props {
 }
 
 const { title } = Astro.props;
-scopeDbToUser(Astro.request);
 const db = getDb();
-const settings = db.getSettings();
-const user = getSessionUser(getTokenFromCookie(Astro.request));
+const settings = await db.getSettings();
+const user = await getSessionUser(getTokenFromCookie(Astro.request));
 const currentPath = Astro.url.pathname;
 const theme = settings?.theme || 'dark';
 const accent = settings?.accentColor || 'indigo';

@@ -13,7 +13,12 @@ export function getSunday(date: Date = new Date()): string {
 }
 
 export function formatDate(date: Date): string {
-  return date.toISOString().split('T')[0];
+  // Local calendar date, not UTC — a session logged at 1am IST should land on
+  // that local day. (toISOString() is UTC, which mis-dated evening entries.)
+  const d = new Date(date);
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${month}-${day}`;
 }
 
 export function isToday(dateStr: string): boolean {

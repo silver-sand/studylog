@@ -4,12 +4,10 @@ import ReviewCard from '../../components/ReviewCard.astro';
 import EmptyState from '../../components/EmptyState.astro';
 import { getDb } from '../../db';
 import { formatDisplayDate, getMonday, getSunday } from '../../utils/date';
-import { scopeDbToUser } from '../../services/user-scope';
 
 const { weekStart } = Astro.params;
-scopeDbToUser(Astro.request);
 const db = getDb();
-const review = weekStart ? db.getReviewByWeek(weekStart) : null;
+const review = weekStart ? await db.getReviewByWeek(weekStart) : null;
 const validDate = weekStart && /^\d{4}-\d{2}-\d{2}$/.test(weekStart);
 
 // Compute prev/next week for navigation
@@ -20,8 +18,8 @@ function shiftWeek(dateStr: string, delta: number): string {
 }
 const prevWeekStart = weekStart ? shiftWeek(weekStart, -7) : '';
 const nextWeekStart = weekStart ? shiftWeek(weekStart, 7) : '';
-const hasPrev = !!db.getReviewByWeek(prevWeekStart);
-const hasNext = !!db.getReviewByWeek(nextWeekStart);
+const hasPrev = prevWeekStart ? !!(await db.getReviewByWeek(prevWeekStart)) : false;
+const hasNext = nextWeekStart ? !!(await db.getReviewByWeek(nextWeekStart)) : false;
 ---
 
 <BaseLayout title={review ? 'Weekly Review' : 'Not Found'}>

@@ -128,6 +128,25 @@ export class MockAIService implements AIService {
     if (avgFocus > 0 && avgFocus < 3) weaknesses.push('Focus could be improved — try shorter intervals.');
     if (subjects.length === 0) weaknesses.push('No specific subjects logged.');
 
+    const recommendations = [
+      totalHours < 2
+        ? 'Try to study at least 2 hours per day — short sessions make it hard to build depth.'
+        : totalHours >= 4
+          ? 'Great study volume today. Keep this pace up!'
+          : 'Good session length. Try adding 30 more minutes tomorrow.',
+      subjects.length > 0 && entries.some(e => e.chapters?.length > 0)
+        ? `Review ${entries[0].chapters?.[0] || subjects[0]} briefly before tomorrow's session to lock it in.`
+        : 'Review what you learned today before starting fresh topics.',
+      avgFocus > 0 && avgFocus < 3
+        ? 'Try the Pomodoro technique: 25 min study, 5 min break to improve focus.'
+        : avgFocus >= 4
+          ? 'Your focus was sharp today — leverage that for tougher topics.'
+          : 'A short walk or stretch between sessions can help reset concentration.',
+      subjects.length >= 2
+        ? 'Alternate between subjects to keep engagement high.'
+        : 'Consider mixing in a second subject tomorrow for variety.',
+    ];
+
     const content = `## Overview
 - Studied ${subjects.join(', ') || 'various topics'} for ${Math.round(totalHours * 10) / 10}h total across ${entries.length} session(s).
 - ${subjects.length >= 2 ? 'Good spread across multiple subjects.' : 'Focused primarily on one area.'}
@@ -157,24 +176,7 @@ ${recommendations.map(r => `- ${r}`).join('\n')}`;
       subjects,
       strengths,
       weaknesses,
-      recommendations: [
-        totalHours < 2
-          ? 'Try to study at least 2 hours per day — short sessions make it hard to build depth.'
-          : totalHours >= 4
-            ? 'Great study volume today. Keep this pace up!'
-            : 'Good session length. Try adding 30 more minutes tomorrow.',
-        subjects.length > 0 && entries.some(e => e.chapters?.length > 0)
-          ? `Review ${entries[0].chapters?.[0] || subjects[0]} briefly before tomorrow's session to lock it in.`
-          : 'Review what you learned today before starting fresh topics.',
-        avgFocus > 0 && avgFocus < 3
-          ? 'Try the Pomodoro technique: 25 min study, 5 min break to improve focus.'
-          : avgFocus >= 4
-            ? 'Your focus was sharp today — leverage that for tougher topics.'
-            : 'A short walk or stretch between sessions can help reset concentration.',
-        subjects.length >= 2
-          ? 'Alternate between subjects to keep engagement high.'
-          : 'Consider mixing in a second subject tomorrow for variety.',
-      ],
+      recommendations,
     };
   }
 

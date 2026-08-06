@@ -1,19 +1,17 @@
 import type { APIRoute } from 'astro';
 import { getEntry, updateEntry, deleteEntry, reanalyzeEntry } from '../../../services/entry-service';
-import { scopeDbToUser } from '../../../services/user-scope';
 import { validateOrigin } from '../_csrf';
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
 
-export const GET: APIRoute = async ({ params, request }) => {
-  scopeDbToUser(request);
+export const GET: APIRoute = async ({ params }) => {
   try {
     const { id } = params;
     if (!id) {
       return new Response(JSON.stringify({ error: 'Entry ID is required' }), { status: 400, headers: JSON_HEADERS });
     }
 
-    const entry = getEntry(id);
+    const entry = await getEntry(id);
     if (!entry) {
       return new Response(JSON.stringify({ error: 'Entry not found' }), { status: 404, headers: JSON_HEADERS });
     }
@@ -28,7 +26,6 @@ export const PATCH: APIRoute = async ({ params, request }) => {
   if (!validateOrigin(request)) {
     return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: JSON_HEADERS });
   }
-  scopeDbToUser(request);
   try {
     const { id } = params;
     if (!id) {
@@ -36,9 +33,9 @@ export const PATCH: APIRoute = async ({ params, request }) => {
     }
 
     const body = await request.json();
-    const { content, hoursStudied, studyType, focusRating, examType } = body;
+    const { content, hoursStudied, studyType, focusRating, examType, subjects } = body;
 
-    const existing = getEntry(id);
+    const existing = await getEntry(id);
     if (!existing) {
       return new Response(JSON.stringify({ error: 'Entry not found' }), { status: 404, headers: JSON_HEADERS });
     }
@@ -69,7 +66,7 @@ export const PATCH: APIRoute = async ({ params, request }) => {
     }
 
     if (content && content !== existing.content) {
-      updateEntry(id, {
+      await updateEntry(id, {
         content: content.trim(),
         hoursStudied: hoursStudied !== undefined ? Number(hoursStudied) : existing.hoursStudied,
         studyType: studyType ?? existing.studyType,
@@ -77,15 +74,16 @@ export const PATCH: APIRoute = async ({ params, request }) => {
         examType: examType ?? existing.examType,
       });
       const updated = await reanalyzeEntry(id);
-      return new Response(JSON.stringify(updated ?? getEntry(id)), { headers: JSON_HEADERS });
+      return new Response(JSON.stringify(updated ?? await getEntry(id)), { headers: JSON_HEADERS });
     }
 
-    const updated = updateEntry(id, {
+    const updated = await updateEntry(id, {
       content: content?.trim() ?? existing.content,
       hoursStudied: hoursStudied !== undefined ? Number(hoursStudied) : existing.hoursStudied,
       studyType: studyType ?? existing.studyType,
       focusRating: focusRating !== undefined ? Number(focusRating) : existing.focusRating,
       examType: examType ?? existing.examType,
+      subjects: Array.isArray(subjects) && subjects.length ? subjects : existing.subjects,
     });
 
     return new Response(JSON.stringify(updated), { headers: JSON_HEADERS });
@@ -98,14 +96,13 @@ export const DELETE: APIRoute = async ({ params, request }) => {
   if (!validateOrigin(request)) {
     return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: JSON_HEADERS });
   }
-  scopeDbToUser(request);
   try {
     const { id } = params;
     if (!id) {
       return new Response(JSON.stringify({ error: 'Entry ID is required' }), { status: 400, headers: JSON_HEADERS });
     }
 
-    const deleted = deleteEntry(id);
+    const deleted = await deleteEntry(id);
     if (!deleted) {
       return new Response(JSON.stringify({ error: 'Entry not found' }), { status: 404, headers: JSON_HEADERS });
     }

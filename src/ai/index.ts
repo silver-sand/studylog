@@ -35,11 +35,12 @@ export function createAIService(config?: AIServiceConfig): AIService {
  *   AI_MODEL       — model override (defaults per provider)
  */
 export function createAIServiceFromEnv(): AIService {
-  // Use both import.meta.env (build-time) and process.env (runtime fallback)
-  const provider = (import.meta.env.AI_PROVIDER || process.env.AI_PROVIDER) as string | undefined;
-  const geminiKey = (import.meta.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY) as string | undefined;
-  const groqKey = (import.meta.env.GROQ_API_KEY || process.env.GROQ_API_KEY) as string | undefined;
-  const modelName = (import.meta.env.AI_MODEL || process.env.AI_MODEL) as string | undefined;
+  // Runtime-only env access — never import.meta.env for secrets: Vite inlines
+  // those at build time, which would bake API keys into the server bundle.
+  const provider = process.env.AI_PROVIDER as string | undefined;
+  const geminiKey = process.env.GEMINI_API_KEY as string | undefined;
+  const groqKey = process.env.GROQ_API_KEY as string | undefined;
+  const modelName = process.env.AI_MODEL as string | undefined;
 
   // Auto-detect provider: explicit > gemini key > groq key > mock
   let resolvedProvider = provider;

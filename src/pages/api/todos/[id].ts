@@ -1,6 +1,5 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../../db';
-import { scopeDbToUser } from '../../../services/user-scope';
 import { validateOrigin } from '../_csrf';
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
@@ -13,7 +12,6 @@ export const PATCH: APIRoute = async ({ params, request }) => {
   if (!validateOrigin(request)) {
     return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: JSON_HEADERS });
   }
-  scopeDbToUser(request);
   try {
     const { id } = params;
     if (!id) {
@@ -37,12 +35,12 @@ export const PATCH: APIRoute = async ({ params, request }) => {
       return new Response(JSON.stringify({ error: `Status must be one of: ${VALID_STATUSES.join(', ')}` }), { status: 400, headers: JSON_HEADERS });
     }
 
-    const existing = getDb().getTodo(id);
+    const existing = await getDb().getTodo(id);
     if (!existing) {
       return new Response(JSON.stringify({ error: 'Todo not found' }), { status: 404, headers: JSON_HEADERS });
     }
 
-    const updated = getDb().updateTodo(id, {
+    const updated = await getDb().updateTodo(id, {
       title: title !== undefined ? title.trim() : undefined,
       description,
       category,
@@ -62,19 +60,18 @@ export const DELETE: APIRoute = async ({ params, request }) => {
   if (!validateOrigin(request)) {
     return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: JSON_HEADERS });
   }
-  scopeDbToUser(request);
   try {
     const { id } = params;
     if (!id) {
       return new Response(JSON.stringify({ error: 'Todo ID is required' }), { status: 400, headers: JSON_HEADERS });
     }
 
-    const existing = getDb().getTodo(id);
+    const existing = await getDb().getTodo(id);
     if (!existing) {
       return new Response(JSON.stringify({ error: 'Todo not found' }), { status: 404, headers: JSON_HEADERS });
     }
 
-    getDb().deleteTodo(id);
+    await getDb().deleteTodo(id);
     return new Response(JSON.stringify({ success: true }), { headers: JSON_HEADERS });
   } catch (e) {
     return new Response(JSON.stringify({ error: 'Failed to delete todo' }), { status: 500, headers: JSON_HEADERS });

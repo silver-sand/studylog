@@ -4,6 +4,7 @@ import path from 'node:path';
 import { SCHEMA_SQL } from './schema';
 import { generateId } from '../utils/uuid';
 import { formatDate, getSunday } from '../utils/date';
+import { getCurrentUserId } from './user-context';
 import type { Database as DatabaseInterface } from './interface';
 import type { Entry, CreateEntryData, EntryFilters } from '../types/entry';
 import type { WeeklyReview, CreateReviewData, DailyReview, CreateDailyReviewData, SyllabusChapter, SyllabusProgress, ChapterStatus } from '../types/review';
@@ -13,7 +14,8 @@ import { legacyExamToSelected, getSubjectsForExamKeys } from '../utils/exam-map'
 import type { Settings, UpdateSettingsData } from '../types/settings';
 import type { MockTest, CreateMockTestData, MockTestAnalytics } from '../types/mock-test';
 import type { Todo, CreateTodoData, UpdateTodoData, TodoFilters } from '../types/todo';
-import type { User, Session, CreateUserData } from '../types/auth';
+import type { User, CreateUserData } from '../types/auth';
+import type { UserDataExport, ImportResult } from '../types/data-port';
 
 function parseJSON<T>(val: string | null | Uint8Array | undefined, fallback: T): T {
   if (!val) return fallback;
@@ -102,7 +104,7 @@ function toSettings(row: Record<string, any>): Settings {
   const selectedExams = parseJSON(row.selected_exams, []);
   const subjects = parseJSON(row.subjects, ['Physics', 'Chemistry', 'Mathematics']);
   return {
-    id: row.id,
+    id: String(row.id),
     targetHoursPerWeek: row.target_hours_per_week,
     studyDaysPerWeek: row.study_days_per_week ?? 5,
     subjects,
@@ -120,8 +122,6 @@ export class SQLiteAdapter implements DatabaseInterface {
   private db: SqlJsDb | null = null;
   private ready: Promise<void>;
   private dbPath: string;
-  /** Current user ID for scoping queries. Set via setCurrentUser — do NOT rely on defaults. */
-  private userId: string = '';
 
   constructor(dbPath: string) {
     this.dbPath = dbPath;
@@ -222,21 +222,6 @@ export class SQLiteAdapter implements DatabaseInterface {
     this.save();
   }
 
-  /** Set the current user for subsequent queries in this request scope. */
-  setCurrentUser(userId: string): void {
-    this.userId = userId;
-  }
-
-  /** Reset to default user (for cleanup between requests). */
-  clearCurrentUser(): void {
-    this.userId = '';
-  }
-
-  /** Get the current user ID. */
-  getCurrentUser(): string {
-    return this.userId;
-  }
-
   private save(): void {
     if (!this.db) return;
     try {
@@ -255,17 +240,18 @@ export class SQLiteAdapter implements DatabaseInterface {
 
   // ── Entries ──
 
-  createEntry(data: CreateEntryData): Entry {
+  async createEntry(data: CreateEntryData): Promise<Entry> {
     const id = generateId();
     const db = this.getDb();
     db.run(
       `INSERT INTO entries (id, user_id, date, content, subjects, chapters, hours_studied, study_type, focus_rating, exam_type, tags, ai_raw, ai_status)
-       VALUES (?, ?, ?, ?, '[]', '[]', ?, ?, ?, ?, '[]', NULL, 'pending')`,
+       VALUES (?, ?, ?, ?, ?, '[]', ?, ?, ?, ?, '[]', NULL, 'pending')`,
       [
         id,
-        this.userId,
+        getCurrentUserId(),
         data.date,
         data.content,
+        JSON.stringify(data.subjects ?? []),
         data.hoursStudied ?? 0,
         data.studyType || 'other',
         data.focusRating ?? 0,
@@ -273,13 +259,13 @@ export class SQLiteAdapter implements DatabaseInterface {
       ]
     );
     this.save();
-    return this.getEntry(id)!;
+    return (await this.getEntry(id))!;
   }
 
-  getEntry(id: string): Entry | null {
+  async getEntry(id: string): Promise<Entry | null> {
     const db = this.getDb();
     const stmt = db.prepare(`SELECT * FROM entries WHERE id = ? AND user_id = ?`);
-    stmt.bind([id, this.userId]);
+    stmt.bind([id, getCurrentUserId()]);
     if (stmt.step()) {
       const row = stmt.getAsObject();
       stmt.free();
@@ -289,10 +275,10 @@ export class SQLiteAdapter implements DatabaseInterface {
     return null;
   }
 
-  getEntryByDate(date: string): Entry | null {
+  async getEntryByDate(date: string): Promise<Entry | null> {
     const db = this.getDb();
     const stmt = db.prepare(`SELECT * FROM entries WHERE date = ? AND user_id = ?`);
-    stmt.bind([date, this.userId]);
+    stmt.bind([date, getCurrentUserId()]);
     if (stmt.step()) {
       const row = stmt.getAsObject();
       stmt.free();
@@ -302,12 +288,12 @@ export class SQLiteAdapter implements DatabaseInterface {
     return null;
   }
 
-  listEntries(filters?: EntryFilters): Entry[] {
+  async listEntries(filters?: EntryFilters): Promise<Entry[]> {
     const db = this.getDb();
     let sql = `SELECT * FROM entries`;
     const params: any[] = [];
     const conditions = [`user_id = ?`];
-    params.push(this.userId);
+    params.push(getCurrentUserId());
 
     if (filters?.from && filters?.to) {
       conditions.push(`date >= ? AND date <= ?`);
@@ -333,8 +319,8 @@ export class SQLiteAdapter implements DatabaseInterface {
     return entries;
   }
 
-  updateEntry(id: string, data: Partial<Entry>): Entry | null {
-    const existing = this.getEntry(id);
+  async updateEntry(id: string, data: Partial<Entry>): Promise<Entry | null> {
+    const existing = await this.getEntry(id);
     if (!existing) return null;
 
     const db = this.getDb();
@@ -353,24 +339,24 @@ export class SQLiteAdapter implements DatabaseInterface {
         data.aiRaw ?? existing.aiRaw,
         data.aiStatus ?? existing.aiStatus,
         id,
-        this.userId,
+        getCurrentUserId(),
       ]
     );
     this.save();
-    return this.getEntry(id);
+    return await this.getEntry(id);
   }
 
-  deleteEntry(id: string): boolean {
+  async deleteEntry(id: string): Promise<boolean> {
     const db = this.getDb();
-    db.run(`DELETE FROM entries WHERE id = ? AND user_id = ?`, [id, this.userId]);
+    db.run(`DELETE FROM entries WHERE id = ? AND user_id = ?`, [id, getCurrentUserId()]);
     this.save();
-    const check = this.getEntry(id);
+    const check = await this.getEntry(id);
     return check === null;
   }
 
   // ── Weekly Reviews ──
 
-  createReview(data: CreateReviewData): WeeklyReview {
+  async createReview(data: CreateReviewData): Promise<WeeklyReview> {
     const id = generateId();
     const db = this.getDb();
     db.run(
@@ -378,7 +364,7 @@ export class SQLiteAdapter implements DatabaseInterface {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
-        this.userId,
+        getCurrentUserId(),
         data.weekStart,
         data.weekEnd,
         data.content,
@@ -391,13 +377,13 @@ export class SQLiteAdapter implements DatabaseInterface {
       ]
     );
     this.save();
-    return this.getReview(id)!;
+    return (await this.getReview(id))!;
   }
 
-  getReview(id: string): WeeklyReview | null {
+  async getReview(id: string): Promise<WeeklyReview | null> {
     const db = this.getDb();
     const stmt = db.prepare(`SELECT * FROM weekly_reviews WHERE id = ? AND user_id = ?`);
-    stmt.bind([id, this.userId]);
+    stmt.bind([id, getCurrentUserId()]);
     if (stmt.step()) {
       const row = stmt.getAsObject();
       stmt.free();
@@ -407,10 +393,10 @@ export class SQLiteAdapter implements DatabaseInterface {
     return null;
   }
 
-  getReviewByWeek(weekStart: string): WeeklyReview | null {
+  async getReviewByWeek(weekStart: string): Promise<WeeklyReview | null> {
     const db = this.getDb();
     const stmt = db.prepare(`SELECT * FROM weekly_reviews WHERE week_start = ? AND user_id = ?`);
-    stmt.bind([weekStart, this.userId]);
+    stmt.bind([weekStart, getCurrentUserId()]);
     if (stmt.step()) {
       const row = stmt.getAsObject();
       stmt.free();
@@ -420,10 +406,10 @@ export class SQLiteAdapter implements DatabaseInterface {
     return null;
   }
 
-  listReviews(): WeeklyReview[] {
+  async listReviews(): Promise<WeeklyReview[]> {
     const db = this.getDb();
     const stmt = db.prepare(`SELECT * FROM weekly_reviews WHERE user_id = ? ORDER BY week_start DESC`);
-    stmt.bind([this.userId]);
+    stmt.bind([getCurrentUserId()]);
     const reviews: WeeklyReview[] = [];
     while (stmt.step()) {
       reviews.push(toReview(stmt.getAsObject()));
@@ -432,8 +418,8 @@ export class SQLiteAdapter implements DatabaseInterface {
     return reviews;
   }
 
-  upsertReview(data: CreateReviewData): WeeklyReview {
-    const existing = this.getReviewByWeek(data.weekStart);
+  async upsertReview(data: CreateReviewData): Promise<WeeklyReview> {
+    const existing = await this.getReviewByWeek(data.weekStart);
     const id = existing?.id ?? generateId();
     const db = this.getDb();
 
@@ -448,7 +434,7 @@ export class SQLiteAdapter implements DatabaseInterface {
           JSON.stringify(data.weaknesses),
           JSON.stringify(data.recommendations),
           JSON.stringify(data.entryIds),
-          id, this.userId,
+          id, getCurrentUserId(),
         ]
       );
     } else {
@@ -456,7 +442,7 @@ export class SQLiteAdapter implements DatabaseInterface {
         `INSERT INTO weekly_reviews (id, user_id, week_start, week_end, content, insights, topic_coverage, strengths, weaknesses, recommendations, entry_ids)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          id, this.userId, data.weekStart, data.weekEnd, data.content,
+          id, getCurrentUserId(), data.weekStart, data.weekEnd, data.content,
           JSON.stringify(data.insights),
           JSON.stringify(data.topicCoverage),
           JSON.stringify(data.strengths),
@@ -468,19 +454,26 @@ export class SQLiteAdapter implements DatabaseInterface {
     }
 
     this.save();
-    return this.getReview(id)!;
+    return (await this.getReview(id))!;
   }
 
-  updateReviewNotes(id: string, notes: string): WeeklyReview | null {
+  async updateReviewNotes(id: string, notes: string): Promise<WeeklyReview | null> {
     const db = this.getDb();
-    db.run(`UPDATE weekly_reviews SET notes = ? WHERE id = ? AND user_id = ?`, [notes || '', id, this.userId]);
+    db.run(`UPDATE weekly_reviews SET notes = ? WHERE id = ? AND user_id = ?`, [notes || '', id, getCurrentUserId()]);
     this.save();
-    return this.getReview(id);
+    return await this.getReview(id);
+  }
+
+  async deleteReviewByWeek(weekStart: string): Promise<boolean> {
+    const db = this.getDb();
+    db.run(`DELETE FROM weekly_reviews WHERE week_start = ? AND user_id = ?`, [weekStart, getCurrentUserId()]);
+    this.save();
+    return (await this.getReviewByWeek(weekStart)) === null;
   }
 
   // ── Daily Reviews ──
 
-  createDailyReview(data: CreateDailyReviewData): DailyReview {
+  async createDailyReview(data: CreateDailyReviewData): Promise<DailyReview> {
     const id = generateId();
     const db = this.getDb();
     db.run(
@@ -488,7 +481,7 @@ export class SQLiteAdapter implements DatabaseInterface {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
-        this.userId,
+        getCurrentUserId(),
         data.date,
         data.content,
         JSON.stringify(data.insights),
@@ -501,13 +494,13 @@ export class SQLiteAdapter implements DatabaseInterface {
       ]
     );
     this.save();
-    return this.getDailyReviewByDate(data.date)!;
+    return (await this.getDailyReviewByDate(data.date))!;
   }
 
-  getDailyReviewByDate(date: string): DailyReview | null {
+  async getDailyReviewByDate(date: string): Promise<DailyReview | null> {
     const db = this.getDb();
     const stmt = db.prepare(`SELECT * FROM daily_reviews WHERE date = ? AND user_id = ?`);
-    stmt.bind([date, this.userId]);
+    stmt.bind([date, getCurrentUserId()]);
     if (stmt.step()) {
       const row = stmt.getAsObject();
       stmt.free();
@@ -517,8 +510,8 @@ export class SQLiteAdapter implements DatabaseInterface {
     return null;
   }
 
-  upsertDailyReview(data: CreateDailyReviewData): DailyReview {
-    const existing = this.getDailyReviewByDate(data.date);
+  async upsertDailyReview(data: CreateDailyReviewData): Promise<DailyReview> {
+    const existing = await this.getDailyReviewByDate(data.date);
     const id = existing?.id ?? generateId();
     const db = this.getDb();
 
@@ -534,7 +527,7 @@ export class SQLiteAdapter implements DatabaseInterface {
           JSON.stringify(data.weaknesses),
           JSON.stringify(data.recommendations),
           JSON.stringify(data.entryIds),
-          id, this.userId,
+          id, getCurrentUserId(),
         ]
       );
     } else {
@@ -542,7 +535,7 @@ export class SQLiteAdapter implements DatabaseInterface {
         `INSERT INTO daily_reviews (id, user_id, date, content, insights, total_hours, subjects, strengths, weaknesses, recommendations, entry_ids)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          id, this.userId, data.date, data.content,
+          id, getCurrentUserId(), data.date, data.content,
           JSON.stringify(data.insights),
           data.totalHours,
           JSON.stringify(data.subjects),
@@ -555,19 +548,31 @@ export class SQLiteAdapter implements DatabaseInterface {
     }
 
     this.save();
-    return this.getDailyReviewByDate(data.date)!;
+    return (await this.getDailyReviewByDate(data.date))!;
+  }
+
+  async listDailyReviews(): Promise<DailyReview[]> {
+    const db = this.getDb();
+    const stmt = db.prepare(`SELECT * FROM daily_reviews WHERE user_id = ? ORDER BY date DESC`);
+    stmt.bind([getCurrentUserId()]);
+    const reviews: DailyReview[] = [];
+    while (stmt.step()) {
+      reviews.push(toDailyReview(stmt.getAsObject()));
+    }
+    stmt.free();
+    return reviews;
   }
 
   // ── Syllabus ──
 
-  seedSyllabusData(examType?: string, subjects?: string[]): void {
+  async seedSyllabusData(examType?: string, subjects?: string[]): Promise<void> {
     const db = this.getDb();
 
     // Auto-detect subjects from user's settings if not explicitly provided
     if (!subjects || subjects.length === 0) {
       try {
         const stmt = db.prepare(`SELECT selected_exams FROM settings WHERE user_id = ?`);
-        stmt.bind([this.userId]);
+        stmt.bind([getCurrentUserId()]);
         if (stmt.step()) {
           const row = stmt.getAsObject() as { selected_exams: string };
           const selectedExams = parseJSON<string[]>(row.selected_exams, []);
@@ -593,7 +598,7 @@ export class SQLiteAdapter implements DatabaseInterface {
     const existing = new Set<string>();
     try {
       const stmt = db.prepare(`SELECT exam_type, subject, chapter FROM syllabus WHERE user_id = ?`);
-      stmt.bind([this.userId]);
+      stmt.bind([getCurrentUserId()]);
       while (stmt.step()) {
         const row = stmt.getAsObject() as { exam_type: string; subject: string; chapter: string };
         existing.add(`${row.exam_type}::${row.subject}::${row.chapter}`);
@@ -610,7 +615,7 @@ export class SQLiteAdapter implements DatabaseInterface {
         db.run(
           `INSERT INTO syllabus (id, user_id, exam_type, subject, chapter, class_level, sort_order)
            VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [id, this.userId, item.examType, item.subject, item.chapter, item.classLevel || null, item.sortOrder]
+          [id, getCurrentUserId(), item.examType, item.subject, item.chapter, item.classLevel || null, item.sortOrder]
         );
         inserted = true;
       } catch { /* skip duplicates */ }
@@ -618,10 +623,10 @@ export class SQLiteAdapter implements DatabaseInterface {
     if (inserted) this.save();
   }
 
-  getSyllabus(examType?: string, subject?: string): SyllabusChapter[] {
+  async getSyllabus(examType?: string, subject?: string): Promise<SyllabusChapter[]> {
     const db = this.getDb();
     let sql = `SELECT * FROM syllabus WHERE user_id = ?`;
-    const params: any[] = [this.userId];
+    const params: any[] = [getCurrentUserId()];
 
     if (examType && subject) {
       sql += ` AND exam_type = ? AND subject = ?`;
@@ -643,12 +648,12 @@ export class SQLiteAdapter implements DatabaseInterface {
     return items;
   }
 
-  getSyllabusByIds(ids: string[]): SyllabusChapter[] {
+  async getSyllabusByIds(ids: string[]): Promise<SyllabusChapter[]> {
     if (ids.length === 0) return [];
     const db = this.getDb();
     const placeholders = ids.map(() => '?').join(',');
     const stmt = db.prepare(`SELECT * FROM syllabus WHERE id IN (${placeholders}) AND user_id = ?`);
-    stmt.bind([...ids, this.userId]);
+    stmt.bind([...ids, getCurrentUserId()]);
     const items: SyllabusChapter[] = [];
     while (stmt.step()) {
       items.push(toSyllabusChapter(stmt.getAsObject()));
@@ -657,10 +662,10 @@ export class SQLiteAdapter implements DatabaseInterface {
     return items;
   }
 
-  updateSyllabusStatus(id: string, status: string): SyllabusChapter {
+  async updateSyllabusStatus(id: string, status: string): Promise<SyllabusChapter> {
     const db = this.getDb();
 
-    const current = this.getSyllabusByIds([id])[0];
+    const current = (await this.getSyllabusByIds([id]))[0];
     const oldWeight = current ? statusWeight(current.status) : 0;
     const newWeight = statusWeight(status);
     const isForward = newWeight > oldWeight;
@@ -676,12 +681,12 @@ export class SQLiteAdapter implements DatabaseInterface {
 
     db.run(
       `UPDATE syllabus SET status = ?, completed_at = ?, last_revised_at = ?, revision_count = ? WHERE id = ? AND user_id = ?`,
-      [status, completedAt, lastRevisedAt, revisionCount, id, this.userId]
+      [status, completedAt, lastRevisedAt, revisionCount, id, getCurrentUserId()]
     );
     this.save();
 
     const stmt = db.prepare(`SELECT * FROM syllabus WHERE id = ? AND user_id = ?`);
-    stmt.bind([id, this.userId]);
+    stmt.bind([id, getCurrentUserId()]);
     if (stmt.step()) {
       const row = stmt.getAsObject();
       stmt.free();
@@ -691,7 +696,7 @@ export class SQLiteAdapter implements DatabaseInterface {
     throw new Error(`Syllabus entry ${id} not found`);
   }
 
-  batchUpdateSyllabusStatus(updates: { id: string; status: string }[]): number {
+  async batchUpdateSyllabusStatus(updates: { id: string; status: string }[]): Promise<number> {
     if (updates.length === 0) return 0;
     const db = this.getDb();
     let count = 0;
@@ -705,7 +710,7 @@ export class SQLiteAdapter implements DatabaseInterface {
       for (const { id, status } of updates) {
         const completedAt = status === 'mastered' ? now : null;
         const lastRevisedAt = (status === 'revision_1' || status === 'revision_2' || status === 'revision_3') ? now : null;
-        stmt.bind([status, completedAt, lastRevisedAt, status, id, this.userId]);
+        stmt.bind([status, completedAt, lastRevisedAt, status, id, getCurrentUserId()]);
         if (stmt.step()) count++;
         stmt.reset();
       }
@@ -721,9 +726,9 @@ export class SQLiteAdapter implements DatabaseInterface {
     return count;
   }
 
-  getSyllabusProgress(examType: string, subjects?: string[]): SyllabusProgress[] {
+  async getSyllabusProgress(examType: string, subjects?: string[]): Promise<SyllabusProgress[]> {
     const db = this.getDb();
-    const params: any[] = [examType, this.userId];
+    const params: any[] = [examType, getCurrentUserId()];
     let subjectFilter = '';
     if (subjects && subjects.length > 0) {
       subjectFilter = ` AND subject IN (${subjects.map(() => '?').join(',')})`;
@@ -768,9 +773,9 @@ export class SQLiteAdapter implements DatabaseInterface {
     return results;
   }
 
-  getWeakChapters(examType: string, threshold = 50, subjects?: string[]): (SyllabusChapter & { health: number })[] {
+  async getWeakChapters(examType: string, threshold = 50, subjects?: string[]): Promise<(SyllabusChapter & { health: number })[]> {
     const db = this.getDb();
-    const params: any[] = [examType, this.userId];
+    const params: any[] = [examType, getCurrentUserId()];
     let subjectFilter = '';
     if (subjects && subjects.length > 0) {
       subjectFilter = ` AND subject IN (${subjects.map(() => '?').join(',')})`;
@@ -818,10 +823,10 @@ export class SQLiteAdapter implements DatabaseInterface {
 
   // ── Settings ──
 
-  getSettings(): Settings {
+  async getSettings(): Promise<Settings> {
     const db = this.getDb();
     const stmt = db.prepare(`SELECT * FROM settings WHERE user_id = ?`);
-    stmt.bind([this.userId]);
+    stmt.bind([getCurrentUserId()]);
     if (stmt.step()) {
       const row = stmt.getAsObject();
       stmt.free();
@@ -836,19 +841,19 @@ export class SQLiteAdapter implements DatabaseInterface {
     db.run(
       `INSERT INTO settings (id, user_id, target_hours_per_week, study_days_per_week, subjects, selected_exams, exam_type, theme, accent_color, created_at, updated_at)
        VALUES (?, ?, 35, 5, '["Physics","Chemistry","Mathematics"]', ?, 'JEE', 'dark', 'indigo', datetime('now'), datetime('now'))`,
-      [id, this.userId, JSON.stringify(defaultExams)]
+      [id, getCurrentUserId(), JSON.stringify(defaultExams)]
     );
     this.save();
-    return this.getSettings();
+    return await this.getSettings();
   }
 
-  updateSettings(data: UpdateSettingsData): Settings {
-    const current = this.getSettings();
+  async updateSettings(data: UpdateSettingsData): Promise<Settings> {
+    const current = await this.getSettings();
     const db = this.getDb();
 
     // Find the settings row for this user
     const existing = db.prepare(`SELECT id FROM settings WHERE user_id = ?`);
-    existing.bind([this.userId]);
+    existing.bind([getCurrentUserId()]);
     const hasRow = existing.step();
     existing.free();
 
@@ -862,7 +867,7 @@ export class SQLiteAdapter implements DatabaseInterface {
         `INSERT INTO settings (id, user_id, target_hours_per_week, study_days_per_week, subjects, selected_exams, exam_type, exam_date, theme, accent_color, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
         [
-          newId, this.userId,
+          newId, getCurrentUserId(),
           data.targetHoursPerWeek ?? 35,
           data.studyDaysPerWeek ?? 5,
           JSON.stringify(subjects),
@@ -874,7 +879,7 @@ export class SQLiteAdapter implements DatabaseInterface {
         ]
       );
       this.save();
-      return this.getSettings();
+      return await this.getSettings();
     }
 
     db.run(
@@ -888,19 +893,14 @@ export class SQLiteAdapter implements DatabaseInterface {
         data.examDate !== undefined ? data.examDate : current.examDate,
         data.theme ?? current.theme,
         data.accentColor ?? current.accentColor,
-        this.userId,
+        getCurrentUserId(),
       ]
     );
     this.save();
-    return this.getSettings();
+    return await this.getSettings();
   }
 
   // ── Export / Import ──
-
-  /** Force-flush the in-memory DB to disk. */
-  flush(): void {
-    this.save();
-  }
 
   rawQuery(sql: string, params?: any[]): Record<string, any>[] {
     const db = this.getDb();
@@ -921,7 +921,7 @@ export class SQLiteAdapter implements DatabaseInterface {
     return [];
   }
 
-  deleteAllUserData(userId: string): void {
+  async deleteAllUserData(userId: string): Promise<void> {
     const db = this.getDb();
     db.run('BEGIN TRANSACTION');
     try {
@@ -940,33 +940,154 @@ export class SQLiteAdapter implements DatabaseInterface {
     this.save();
   }
 
+  async exportUserData(): Promise<UserDataExport> {
+    const [entries, weeklyReviews, dailyReviews, syllabus, mockTests, todos] = await Promise.all([
+      this.listEntries(),
+      this.listReviews(),
+      this.listDailyReviews(),
+      this.getSyllabus(),
+      this.listMockTests(),
+      this.listTodos(),
+    ]);
+
+    // Read settings without auto-creating (export must not mutate).
+    let settings: Settings | null = null;
+    const db = this.getDb();
+    const stmt = db.prepare(`SELECT * FROM settings WHERE user_id = ?`);
+    stmt.bind([getCurrentUserId()]);
+    if (stmt.step()) {
+      settings = toSettings(stmt.getAsObject());
+    }
+    stmt.free();
+
+    return {
+      version: 2,
+      exportedAt: new Date().toISOString(),
+      userId: getCurrentUserId(),
+      data: { entries, weeklyReviews, dailyReviews, syllabus, mockTests, todos, settings },
+    };
+  }
+
+  async importUserData(payload: UserDataExport, opts?: { replace?: boolean }): Promise<ImportResult> {
+    const uid = getCurrentUserId();
+    const db = this.getDb();
+
+    if (opts?.replace) {
+      await this.deleteAllUserData(uid);
+    }
+
+    const counts = { entries: 0, weeklyReviews: 0, dailyReviews: 0, syllabus: 0, mockTests: 0, todos: 0, settings: 0 };
+
+    db.run('BEGIN TRANSACTION');
+    try {
+      const insertEntry = db.prepare(
+        `INSERT OR REPLACE INTO entries (id, user_id, date, content, subjects, chapters, hours_studied, study_type, focus_rating, exam_type, tags, ai_raw, ai_status, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      );
+      for (const e of payload.data.entries) {
+        insertEntry.run([e.id, uid, e.date, e.content, JSON.stringify(e.subjects), JSON.stringify(e.chapters), e.hoursStudied, e.studyType || 'other', e.focusRating ?? 0, e.examType || '', JSON.stringify(e.tags), e.aiRaw ?? null, e.aiStatus ?? 'pending', e.createdAt]);
+        counts.entries++;
+      }
+      insertEntry.free();
+
+      const insertReview = db.prepare(
+        `INSERT OR REPLACE INTO weekly_reviews (id, user_id, week_start, week_end, content, insights, topic_coverage, strengths, weaknesses, recommendations, entry_ids, notes, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      );
+      for (const r of payload.data.weeklyReviews) {
+        insertReview.run([r.id, uid, r.weekStart, r.weekEnd, r.content, JSON.stringify(r.insights), JSON.stringify(r.topicCoverage), JSON.stringify(r.strengths), JSON.stringify(r.weaknesses), JSON.stringify(r.recommendations), JSON.stringify(r.entryIds), r.notes || '', r.createdAt]);
+        counts.weeklyReviews++;
+      }
+      insertReview.free();
+
+      const insertDaily = db.prepare(
+        `INSERT OR REPLACE INTO daily_reviews (id, user_id, date, content, insights, total_hours, subjects, strengths, weaknesses, recommendations, entry_ids, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      );
+      for (const d of payload.data.dailyReviews) {
+        insertDaily.run([d.id, uid, d.date, d.content, JSON.stringify(d.insights), d.totalHours, JSON.stringify(d.subjects), JSON.stringify(d.strengths), JSON.stringify(d.weaknesses), JSON.stringify(d.recommendations), JSON.stringify(d.entryIds), d.createdAt]);
+        counts.dailyReviews++;
+      }
+      insertDaily.free();
+
+      const insertSyllabus = db.prepare(
+        `INSERT OR REPLACE INTO syllabus (id, user_id, exam_type, subject, chapter, class_level, sort_order, status, completed_at, last_revised_at, revision_count)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      );
+      for (const s of payload.data.syllabus) {
+        insertSyllabus.run([s.id, uid, s.examType, s.subject, s.chapter, s.classLevel || null, s.sortOrder, s.status || 'not_started', s.completedAt || null, s.lastRevisedAt || null, s.revisionCount ?? 0]);
+        counts.syllabus++;
+      }
+      insertSyllabus.free();
+
+      const insertMock = db.prepare(
+        `INSERT OR REPLACE INTO mock_tests (id, user_id, exam_type, subject, test_name, score, max_marks, percentage, date, notes, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      );
+      for (const m of payload.data.mockTests) {
+        insertMock.run([m.id, uid, m.examType || '', m.subject, m.testName, m.score, m.maxMarks, m.percentage, m.date, m.notes || '', m.createdAt]);
+        counts.mockTests++;
+      }
+      insertMock.free();
+
+      const insertTodo = db.prepare(
+        `INSERT OR REPLACE INTO todos (id, user_id, title, description, category, priority, due_date, status, sort_order, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      );
+      for (const t of payload.data.todos) {
+        insertTodo.run([t.id, uid, t.title, t.description || '', t.category || 'general', t.priority || 'medium', t.dueDate || null, t.status || 'pending', t.sortOrder ?? 0, t.createdAt, t.updatedAt || t.createdAt]);
+        counts.todos++;
+      }
+      insertTodo.free();
+
+      if (payload.data.settings) {
+        db.run(`DELETE FROM settings WHERE user_id = ?`, [uid]);
+        const s = payload.data.settings;
+        db.run(
+          `INSERT INTO settings (id, user_id, target_hours_per_week, study_days_per_week, subjects, selected_exams, exam_type, exam_date, theme, accent_color, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [uid, uid, s.targetHoursPerWeek, s.studyDaysPerWeek, JSON.stringify(s.subjects), JSON.stringify(s.selectedExams), s.examType || 'JEE', s.examDate || null, s.theme || 'dark', s.accentColor || 'indigo', s.createdAt, s.updatedAt]
+        );
+        counts.settings++;
+      }
+
+      db.run('COMMIT');
+    } catch (e) {
+      try { db.run('ROLLBACK'); } catch { /* ignore */ }
+      throw e;
+    }
+    this.save();
+
+    return { success: true, counts };
+  }
+
   // ── Stats ──
 
-  getEntryCount(): number {
+  async getEntryCount(): Promise<number> {
     const db = this.getDb();
     const stmt = db.prepare(`SELECT COUNT(*) as count FROM entries WHERE user_id = ?`);
-    stmt.bind([this.userId]);
+    stmt.bind([getCurrentUserId()]);
     stmt.step();
     const row = stmt.getAsObject() as { count: number };
     stmt.free();
     return row.count;
   }
 
-  getEntryCountForMonth(year: number, month: number): number {
+  async getEntryCountForMonth(year: number, month: number): Promise<number> {
     const prefix = `${year}-${String(month).padStart(2, '0')}`;
     const db = this.getDb();
     const stmt = db.prepare(`SELECT COUNT(*) as count FROM entries WHERE date LIKE ? || '%' AND user_id = ?`);
-    stmt.bind([prefix, this.userId]);
+    stmt.bind([prefix, getCurrentUserId()]);
     stmt.step();
     const row = stmt.getAsObject() as { count: number };
     stmt.free();
     return row.count;
   }
 
-  getStreak(): number {
+  async getStreak(): Promise<number> {
     const db = this.getDb();
     const stmt = db.prepare(`SELECT DISTINCT date FROM entries WHERE user_id = ? ORDER BY date DESC`);
-    stmt.bind([this.userId]);
+    stmt.bind([getCurrentUserId()]);
     const dates: string[] = [];
     while (stmt.step()) {
       dates.push((stmt.getAsObject() as { date: string }).date);
@@ -1000,13 +1121,13 @@ export class SQLiteAdapter implements DatabaseInterface {
     return streak;
   }
 
-  getTotalHoursForWeek(weekStart: string): number {
+  async getTotalHoursForWeek(weekStart: string): Promise<number> {
     const weekEnd = getSunday(new Date(weekStart));
     const db = this.getDb();
     const stmt = db.prepare(
       `SELECT COALESCE(SUM(hours_studied), 0) as total FROM entries WHERE date >= ? AND date <= ? AND user_id = ?`
     );
-    stmt.bind([weekStart, weekEnd, this.userId]);
+    stmt.bind([weekStart, weekEnd, getCurrentUserId()]);
     stmt.step();
     const row = stmt.getAsObject() as { total: number };
     stmt.free();
@@ -1015,7 +1136,7 @@ export class SQLiteAdapter implements DatabaseInterface {
 
   // ── Mock Tests ──
 
-  createMockTest(data: CreateMockTestData): MockTest {
+  async createMockTest(data: CreateMockTestData): Promise<MockTest> {
     const db = this.getDb();
     const id = generateId();
     const percentage = data.maxMarks > 0 ? Math.round((data.score / data.maxMarks) * 10000) / 100 : 0;
@@ -1023,7 +1144,7 @@ export class SQLiteAdapter implements DatabaseInterface {
       `INSERT INTO mock_tests (id, user_id, exam_type, subject, test_name, score, max_marks, percentage, date, notes)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        id, this.userId, data.examType || '', data.subject, data.testName,
+        id, getCurrentUserId(), data.examType || '', data.subject, data.testName,
         data.score, data.maxMarks, percentage, data.date,
         data.notes || '',
       ]
@@ -1034,13 +1155,13 @@ export class SQLiteAdapter implements DatabaseInterface {
     stmt.bind([id]);
     const row = stmt.step() ? stmt.getAsObject() : null;
     stmt.free();
-    return this.toMockTest(row || { id, user_id: this.userId, exam_type: data.examType || '', subject: data.subject, test_name: data.testName, score: data.score, max_marks: data.maxMarks, percentage, date: data.date, notes: data.notes || '' });
+    return this.toMockTest(row || { id, user_id: getCurrentUserId(), exam_type: data.examType || '', subject: data.subject, test_name: data.testName, score: data.score, max_marks: data.maxMarks, percentage, date: data.date, notes: data.notes || '' });
   }
 
-  getMockTests(filters?: { subject?: string; limit?: number }): MockTest[] {
+  async getMockTests(filters?: { subject?: string; limit?: number }): Promise<MockTest[]> {
     const db = this.getDb();
     let sql = `SELECT * FROM mock_tests WHERE user_id = ?`;
-    const params: any[] = [this.userId];
+    const params: any[] = [getCurrentUserId()];
 
     if (filters?.subject) {
       sql += ` AND subject = ?`;
@@ -1064,8 +1185,20 @@ export class SQLiteAdapter implements DatabaseInterface {
     return results;
   }
 
-  getMockTestAnalytics(): MockTestAnalytics {
-    const all = this.getMockTests({ limit: 100 });
+  async listMockTests(): Promise<MockTest[]> {
+    const db = this.getDb();
+    const stmt = db.prepare(`SELECT * FROM mock_tests WHERE user_id = ? ORDER BY date DESC`);
+    stmt.bind([getCurrentUserId()]);
+    const results: MockTest[] = [];
+    while (stmt.step()) {
+      results.push(this.toMockTest(stmt.getAsObject()));
+    }
+    stmt.free();
+    return results;
+  }
+
+  async getMockTestAnalytics(): Promise<MockTestAnalytics> {
+    const all = await this.getMockTests({ limit: 100 });
 
     if (all.length === 0) {
       return {
@@ -1136,26 +1269,26 @@ export class SQLiteAdapter implements DatabaseInterface {
 
   // ── Todos ──
 
-  createTodo(data: CreateTodoData): Todo {
+  async createTodo(data: CreateTodoData): Promise<Todo> {
     const id = generateId();
     const db = this.getDb();
     db.run(
       `INSERT INTO todos (id, user_id, title, description, category, priority, due_date, status, sort_order)
        VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', 0)`,
       [
-        id, this.userId, data.title, data.description || '',
+        id, getCurrentUserId(), data.title, data.description || '',
         data.category || 'general', data.priority || 'medium',
         data.dueDate || null,
       ]
     );
     this.save();
-    return this.getTodo(id)!;
+    return (await this.getTodo(id))!;
   }
 
-  getTodo(id: string): Todo | null {
+  async getTodo(id: string): Promise<Todo | null> {
     const db = this.getDb();
     const stmt = db.prepare(`SELECT * FROM todos WHERE id = ? AND user_id = ?`);
-    stmt.bind([id, this.userId]);
+    stmt.bind([id, getCurrentUserId()]);
     if (stmt.step()) {
       const row = stmt.getAsObject();
       stmt.free();
@@ -1165,10 +1298,10 @@ export class SQLiteAdapter implements DatabaseInterface {
     return null;
   }
 
-  listTodos(filters?: TodoFilters): Todo[] {
+  async listTodos(filters?: TodoFilters): Promise<Todo[]> {
     const db = this.getDb();
     let sql = `SELECT * FROM todos WHERE user_id = ?`;
-    const params: any[] = [this.userId];
+    const params: any[] = [getCurrentUserId()];
 
     if (filters?.status) {
       sql += ` AND status = ?`;
@@ -1195,8 +1328,8 @@ export class SQLiteAdapter implements DatabaseInterface {
     return todos;
   }
 
-  updateTodo(id: string, data: UpdateTodoData): Todo | null {
-    const existing = this.getTodo(id);
+  async updateTodo(id: string, data: UpdateTodoData): Promise<Todo | null> {
+    const existing = await this.getTodo(id);
     if (!existing) return null;
 
     const db = this.getDb();
@@ -1211,18 +1344,18 @@ export class SQLiteAdapter implements DatabaseInterface {
         data.dueDate !== undefined ? data.dueDate : existing.dueDate,
         data.status ?? existing.status,
         data.sortOrder ?? existing.sortOrder,
-        id, this.userId,
+        id, getCurrentUserId(),
       ]
     );
     this.save();
-    return this.getTodo(id);
+    return await this.getTodo(id);
   }
 
-  deleteTodo(id: string): boolean {
+  async deleteTodo(id: string): Promise<boolean> {
     const db = this.getDb();
-    db.run(`DELETE FROM todos WHERE id = ? AND user_id = ?`, [id, this.userId]);
+    db.run(`DELETE FROM todos WHERE id = ? AND user_id = ?`, [id, getCurrentUserId()]);
     this.save();
-    return this.getTodo(id) === null;
+    return (await this.getTodo(id)) === null;
   }
 
   private toTodo(row: Record<string, any>): Todo {
@@ -1242,17 +1375,17 @@ export class SQLiteAdapter implements DatabaseInterface {
 
   // ── Auth ──
 
-  createUser(data: CreateUserData): User {
+  async createUser(data: CreateUserData): Promise<User> {
     const db = this.getDb();
-    const id = generateId();
+    const id = data.id ?? generateId();
     const createdAt = new Date().toISOString();
     db.run(
       `INSERT INTO users (id, name, email, password_hash, user_type, stream, class_level, goal, weak_subjects, coaching, target_rank, weekly_study_goal, study_days_per_week, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, data.name, data.email, data.passwordHash, data.userType ?? 'authenticated', data.stream || null, data.classLevel || null, data.goal || null, JSON.stringify(data.weakSubjects ?? []), data.coaching || null, data.targetRank || null, data.weeklyStudyGoal ?? 35, data.studyDaysPerWeek ?? 5, createdAt]
+      [id, data.name, data.email, '', data.userType ?? 'authenticated', data.stream || null, data.classLevel || null, data.goal || null, JSON.stringify(data.weakSubjects ?? []), data.coaching || null, data.targetRank || null, data.weeklyStudyGoal ?? 35, data.studyDaysPerWeek ?? 5, createdAt]
     );
     this.save();
     return {
-      id, name: data.name, email: data.email, passwordHash: data.passwordHash,
+      id, name: data.name, email: data.email,
       userType: data.userType ?? 'authenticated', stream: data.stream,
       classLevel: data.classLevel, goal: data.goal,
       weakSubjects: data.weakSubjects ?? [],
@@ -1264,20 +1397,7 @@ export class SQLiteAdapter implements DatabaseInterface {
     };
   }
 
-  getUserByEmail(email: string): User | null {
-    const db = this.getDb();
-    const stmt = db.prepare(`SELECT * FROM users WHERE email = ?`);
-    stmt.bind([email]);
-    if (stmt.step()) {
-      const row = stmt.getAsObject() as Record<string, any>;
-      stmt.free();
-      return this.toUser(row);
-    }
-    stmt.free();
-    return null;
-  }
-
-  getUserById(id: string): User | null {
+  async getUserById(id: string): Promise<User | null> {
     const db = this.getDb();
     const stmt = db.prepare(`SELECT * FROM users WHERE id = ?`);
     stmt.bind([id]);
@@ -1290,36 +1410,12 @@ export class SQLiteAdapter implements DatabaseInterface {
     return null;
   }
 
-  createSession(userId: string, token: string, expiresAt: string): Session {
-    const db = this.getDb();
-    const id = generateId();
-    const createdAt = new Date().toISOString();
-    db.run(
-      `INSERT INTO sessions (id, user_id, token, expires_at, created_at) VALUES (?, ?, ?, ?, ?)`,
-      [id, userId, token, expiresAt, createdAt]
-    );
-    this.save();
-    return { id, userId, token, expiresAt, createdAt };
-  }
-
-  getSessionByToken(token: string): Session | null {
-    const db = this.getDb();
-    const stmt = db.prepare(`SELECT * FROM sessions WHERE token = ? AND expires_at > datetime('now')`);
-    stmt.bind([token]);
-    if (stmt.step()) {
-      const row = stmt.getAsObject() as Record<string, any>;
-      stmt.free();
-      return this.toSession(row);
-    }
-    stmt.free();
-    return null;
-  }
-
-  updateUser(id: string, data: Partial<Pick<User, 'name' | 'stream' | 'goal' | 'userType' | 'classLevel' | 'weakSubjects' | 'coaching' | 'targetRank' | 'weeklyStudyGoal' | 'studyDaysPerWeek'>>): User | null {
+  async updateUser(id: string, data: Partial<Pick<User, 'name' | 'email' | 'stream' | 'goal' | 'userType' | 'classLevel' | 'weakSubjects' | 'coaching' | 'targetRank' | 'weeklyStudyGoal' | 'studyDaysPerWeek'>>): Promise<User | null> {
     const db = this.getDb();
     const sets: string[] = [];
     const params: any[] = [];
     if (data.name !== undefined) { sets.push('name = ?'); params.push(data.name); }
+    if (data.email !== undefined) { sets.push('email = ?'); params.push(data.email); }
     if (data.stream !== undefined) { sets.push('stream = ?'); params.push(data.stream); }
     if (data.goal !== undefined) { sets.push('goal = ?'); params.push(data.goal); }
     if (data.userType !== undefined) { sets.push('user_type = ?'); params.push(data.userType); }
@@ -1329,37 +1425,16 @@ export class SQLiteAdapter implements DatabaseInterface {
     if (data.weakSubjects !== undefined) { sets.push('weak_subjects = ?'); params.push(JSON.stringify(data.weakSubjects)); }
     if (data.coaching !== undefined) { sets.push('coaching = ?'); params.push(data.coaching); }
     if (data.targetRank !== undefined) { sets.push('target_rank = ?'); params.push(data.targetRank); }
-    if (sets.length === 0) return this.getUserById(id);
+    if (sets.length === 0) return await this.getUserById(id);
     params.push(id);
     db.run(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`, params);
     this.save();
-    return this.getUserById(id);
-  }
-
-  updateUserCredentials(id: string, email: string, passwordHash: string): boolean {
-    const db = this.getDb();
-    db.run(`UPDATE users SET email = ?, password_hash = ? WHERE id = ?`, [email, passwordHash, id]);
-    this.save();
-    return true;
-  }
-
-  deleteSession(token: string): boolean {
-    const db = this.getDb();
-    db.run(`DELETE FROM sessions WHERE token = ?`, [token]);
-    this.save();
-    return true;
-  }
-
-  deleteExpiredSessions(): number {
-    const db = this.getDb();
-    db.run(`DELETE FROM sessions WHERE expires_at <= datetime('now')`);
-    this.save();
-    return db.getRowsModified();
+    return await this.getUserById(id);
   }
 
   private toUser(row: Record<string, any>): User {
     return {
-      id: row.id, name: row.name, email: row.email, passwordHash: row.password_hash,
+      id: row.id, name: row.name, email: row.email,
       userType: row.user_type ?? 'authenticated',
       stream: row.stream,
       classLevel: row.class_level,
@@ -1371,10 +1446,6 @@ export class SQLiteAdapter implements DatabaseInterface {
       studyDaysPerWeek: row.study_days_per_week ?? 5,
       createdAt: row.created_at,
     };
-  }
-
-  private toSession(row: Record<string, any>): Session {
-    return { id: row.id, userId: row.user_id, token: row.token, expiresAt: row.expires_at, createdAt: row.created_at };
   }
 
   // Wait for initialization

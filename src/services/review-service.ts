@@ -13,7 +13,7 @@ function getAI(): AIService {
 export async function generateReview(weekStart?: string): Promise<WeeklyReview> {
   const db = getDb();
   const range = getWeekRange(weekStart);
-  const entries = db.listEntries({ from: range.weekStart, to: range.weekEnd });
+  const entries = await db.listEntries({ from: range.weekStart, to: range.weekEnd });
 
   if (entries.length === 0) {
     throw new Error(`No entries found for week ${range.weekStart} to ${range.weekEnd}. Add some study logs first!`);
@@ -43,18 +43,18 @@ export async function generateReview(weekStart?: string): Promise<WeeklyReview> 
   });
 }
 
-export function getReview(id: string): WeeklyReview | null {
+export async function getReview(id: string): Promise<WeeklyReview | null> {
   return getDb().getReview(id);
 }
 
-export function getReviewByWeek(weekStart: string): WeeklyReview | null {
+export async function getReviewByWeek(weekStart: string): Promise<WeeklyReview | null> {
   return getDb().getReviewByWeek(weekStart);
 }
 
-export function listReviews(): WeeklyReview[] {
+export async function listReviews(): Promise<WeeklyReview[]> {
   return getDb().listReviews();
 }
 
-export function updateReviewNotes(id: string, notes: string): WeeklyReview | null {
+export async function updateReviewNotes(id: string, notes: string): Promise<WeeklyReview | null> {
   return getDb().updateReviewNotes(id, notes);
 }

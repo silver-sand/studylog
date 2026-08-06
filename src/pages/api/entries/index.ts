@@ -2,14 +2,12 @@ import type { APIRoute } from 'astro';
 import { createEntry, listEntries } from '../../../services/entry-service';
 import { getDb } from '../../../db';
 import { formatDate } from '../../../utils/date';
-import { scopeDbToUser } from '../../../services/user-scope';
 import { validateOrigin } from '../_csrf';
 
 export const POST: APIRoute = async ({ request }) => {
   if (!validateOrigin(request)) {
     return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
   }
-  scopeDbToUser(request);
   try {
     const body = await request.json();
     const { content, hoursStudied, studyType, focusRating, examType, subjects } = body;
@@ -54,6 +52,9 @@ export const POST: APIRoute = async ({ request }) => {
       studyType: studyType || undefined,
       focusRating: focusRating !== undefined ? Number(focusRating) : undefined,
       examType: examType || undefined,
+      subjects: Array.isArray(subjects)
+        ? subjects.filter((s: unknown): s is string => typeof s === 'string' && s.trim().length > 0)
+        : undefined,
     });
 
     return new Response(JSON.stringify(entry), { status: 201 });
@@ -63,8 +64,7 @@ export const POST: APIRoute = async ({ request }) => {
   }
 };
 
-export const GET: APIRoute = async ({ request, url }) => {
-  scopeDbToUser(request);
+export const GET: APIRoute = async ({ url }) => {
   try {
     const from = url.searchParams.get('from') || undefined;
     const to = url.searchParams.get('to') || undefined;
@@ -76,7 +76,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     const validLimit = limit !== undefined && !isNaN(limit) ? limit : undefined;
     const validOffset = offset !== undefined && !isNaN(offset) ? offset : undefined;
 
-    const entries = listEntries({ from, to, limit: validLimit, offset: validOffset });
+    const entries = await listEntries({ from, to, limit: validLimit, offset: validOffset });
     return new Response(JSON.stringify(entries));
   } catch (e) {
     return new Response(JSON.stringify({ error: 'Failed to list entries' }), { status: 500 });

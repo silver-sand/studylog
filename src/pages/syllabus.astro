@@ -4,9 +4,7 @@ import SyllabusCard from '../components/SyllabusCard.astro';
 import ChapterList from '../components/ChapterList.astro';
 import { getDb } from '../db';
 import { EXAM_DEFINITIONS } from '../utils/exam-map';
-import { scopeDbToUser } from '../services/user-scope';
 
-scopeDbToUser(Astro.request);
 const db = getDb();
 
 interface ExamData {
@@ -20,7 +18,7 @@ interface ExamData {
 }
 
 // Build exam data from user's selected exams
-const settings = db.getSettings();
+const settings = await db.getSettings();
 const selectedExamKeys: string[] = settings.selectedExams?.length ? settings.selectedExams : ['JEE'];
 
 const userExamDefs = selectedExamKeys
@@ -42,12 +40,12 @@ for (const exam of userExamDefs) {
   }
 }
 
-const exams: ExamData[] = [...syllabusGroups.entries()].map(([syllabusKey, group]) => {
+const exams: ExamData[] = await Promise.all([...syllabusGroups.entries()].map(async ([syllabusKey, group]) => {
   const allSubjects = [...group.subjects];
   const activeSubjects = settings.subjects?.length ? settings.subjects : allSubjects;
-  db.seedSyllabusData(syllabusKey, allSubjects);
-  const progress = db.getSyllabusProgress(syllabusKey, activeSubjects);
-  const chapters = db.getSyllabus(syllabusKey).filter(ch => activeSubjects.includes(ch.subject));
+  await db.seedSyllabusData(syllabusKey, allSubjects);
+  const progress = await db.getSyllabusProgress(syllabusKey, activeSubjects);
+  const chapters = (await db.getSyllabus(syllabusKey)).filter(ch => activeSubjects.includes(ch.subject));
   const totalChapters = progress.reduce((s, p) => s + p.total, 0);
   const weightedSum = progress.reduce((s, p) => s + p.weightedPercent * p.total, 0);
   const overallPercent = totalChapters > 0 ? Math.round(weightedSum / totalChapters) : 0;
@@ -61,7 +59,7 @@ const exams: ExamData[] = [...syllabusGroups.entries()].map(([syllabusKey, group
     completedChapters,
     overallPercent,
   };
-});
+}));
 
 const defaultExam = exams[0];
 const defaultKey = defaultExam?.key;

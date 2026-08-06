@@ -3,31 +3,25 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import EntryForm from '../components/EntryForm.astro';
 import EntryList from '../components/EntryList.astro';
 import DailyReviewCard from '../components/DailyReviewCard.astro';
-import { createAIServiceFromEnv } from '../ai';
 import { getDb } from '../db';
 import { formatDate } from '../utils/date';
 import { getDailyReviewByDate } from '../services/daily-review-service';
-import { scopeDbToUser } from '../services/user-scope';
 import { EXAM_DEFINITIONS } from '../utils/exam-map';
 
-scopeDbToUser(Astro.request);
 const db = getDb();
 const today = formatDate(new Date());
-const todayEntry = db.getEntryByDate(today);
-const recentEntries = db.listEntries({ limit: 50 });
-const settings = db.getSettings();
-const ai = createAIServiceFromEnv();
-const aiProvider = ai.constructor.name;
-
+const todayEntry = await db.getEntryByDate(today);
+const recentEntries = await db.listEntries({ limit: 50 });
+const settings = await db.getSettings();
 // Try to load today's daily review
-const todayReview = getDailyReviewByDate(today);
+const todayReview = await getDailyReviewByDate(today);
 const hasEntriesToday = recentEntries.some(e => e.date === today);
 
 // Stats for right column
 const todayHours = todayEntry?.hoursStudied || 0;
 const targetHours = 8;
 const todayFocus = todayEntry?.focusRating || 0;
-const streak = db.getStreak();
+const streak = await db.getStreak();
 
 // Today's summary
 function getFocusLabel(rating: number): string {

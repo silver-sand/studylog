@@ -4,7 +4,7 @@ import type { Entry, StudyType } from '../types/entry';
 import { statusWeight, STATUS_WEIGHTS } from '../types/review';
 import { getSyllabusKeyForExam } from '../utils/exam-map';
 
-export function getDashboardStats() {
+export async function getDashboardStats() {
   const db = getDb();
   const now = new Date();
   const today = formatDate(now);
@@ -13,21 +13,21 @@ export function getDashboardStats() {
   const weekStart = getMonday(now);
 
   // Recent entries for display (limited)
-  const entries = db.listEntries({ limit: 50 });
+  const entries = await db.listEntries({ limit: 50 });
   // Full dataset for aggregations (unlimited)
-  const allEntries = db.listEntries();
+  const allEntries = await db.listEntries();
 
   // Today's entry
-  const todayEntry = db.getEntryByDate(today);
+  const todayEntry = await db.getEntryByDate(today);
 
   // Current week entries
-  const weekEntries = db.listEntries({
+  const weekEntries = await db.listEntries({
     from: weekStart,
     to: getSunday(now),
   });
 
-  const totalHoursThisWeek = db.getTotalHoursForWeek(weekStart);
-  const settings = db.getSettings();
+  const totalHoursThisWeek = await db.getTotalHoursForWeek(weekStart);
+  const settings = await db.getSettings();
 
   // Compute exam key for syllabus lookups
   const selectedExams = settings.selectedExams?.length ? settings.selectedExams : ['JEE'];
@@ -35,16 +35,16 @@ export function getDashboardStats() {
 
   // Compute aggregations
   const subjectBreakdown = getSubjectBreakdown(allEntries);
-  const dailyTrend = getDailyTrend(14);
+  const dailyTrend = await getDailyTrend(14);
   const typeDistribution = getStudyTypeDistribution(allEntries);
-  const focusTrend = getFocusTrend(7);
-  const weekComparison = getWeekComparison();
+  const focusTrend = await getFocusTrend(7);
+  const weekComparison = await getWeekComparison();
 
   // Study Rings data
-  const coveragePercent = getCoveragePercent(examKey);
-  const streak = db.getStreak();
+  const coveragePercent = await getCoveragePercent(examKey);
+  const streak = await db.getStreak();
   const consistencyPercent = Math.min(100, Math.round((streak / 365) * 100));
-  const masteryPercent = getMasteryPercent(examKey);
+  const masteryPercent = await getMasteryPercent(examKey);
   const testingPlaceholderPercent = 0; // actual testing readiness TBD
   const readinessScore = Math.round(
     coveragePercent * 0.35 +
@@ -66,8 +66,8 @@ export function getDashboardStats() {
       ? Math.min(100, Math.round((totalHoursThisWeek / settings.targetHoursPerWeek) * 100))
       : 0,
     entriesThisWeek: weekEntries.length,
-    totalEntries: db.getEntryCount(),
-    entriesThisMonth: db.getEntryCountForMonth(year, month),
+    totalEntries: await db.getEntryCount(),
+    entriesThisMonth: await db.getEntryCountForMonth(year, month),
     weekStart,
     recentEntries: entries,
     subjects: settings.subjects,
@@ -88,11 +88,11 @@ export function getDashboardStats() {
   };
 }
 
-export function getStreak(): number {
+export async function getStreak(): Promise<number> {
   return getDb().getStreak();
 }
 
-export function getEntryCount(): number {
+export async function getEntryCount(): Promise<number> {
   return getDb().getEntryCount();
 }
 
@@ -129,7 +129,7 @@ export interface DailyTrendItem {
   label: string;
 }
 
-export function getDailyTrend(days: number = 14): DailyTrendItem[] {
+export async function getDailyTrend(days: number = 14): Promise<DailyTrendItem[]> {
   const db = getDb();
   const now = new Date();
   const results: DailyTrendItem[] = [];
@@ -138,7 +138,7 @@ export function getDailyTrend(days: number = 14): DailyTrendItem[] {
   const startDate = new Date(now);
   startDate.setDate(startDate.getDate() - (days - 1));
   const endDate = new Date(now);
-  const entriesInRange = db.listEntries({ from: formatDate(startDate), to: formatDate(endDate) });
+  const entriesInRange = await db.listEntries({ from: formatDate(startDate), to: formatDate(endDate) });
   const hoursByDate = new Map<string, number>();
   for (const e of entriesInRange) {
     hoursByDate.set(e.date, (hoursByDate.get(e.date) || 0) + e.hoursStudied);
@@ -205,7 +205,7 @@ export interface FocusTrendItem {
   label: string;
 }
 
-export function getFocusTrend(days: number = 7): FocusTrendItem[] {
+export async function getFocusTrend(days: number = 7): Promise<FocusTrendItem[]> {
   const db = getDb();
   const now = new Date();
   const results: FocusTrendItem[] = [];
@@ -214,7 +214,7 @@ export function getFocusTrend(days: number = 7): FocusTrendItem[] {
   const startDate = new Date(now);
   startDate.setDate(startDate.getDate() - (days - 1));
   const endDate = new Date(now);
-  const entriesInRange = db.listEntries({ from: formatDate(startDate), to: formatDate(endDate) });
+  const entriesInRange = await db.listEntries({ from: formatDate(startDate), to: formatDate(endDate) });
   const ratingsByDate = new Map<string, number[]>();
   for (const e of entriesInRange) {
     if (!ratingsByDate.has(e.date)) ratingsByDate.set(e.date, []);
@@ -250,7 +250,7 @@ export interface WeekComparisonData {
   changePercent: number;
 }
 
-export function getWeekComparison(): WeekComparisonData {
+export async function getWeekComparison(): Promise<WeekComparisonData> {
   const db = getDb();
   const now = new Date();
   const currentStart = getMonday(now);
@@ -264,8 +264,8 @@ export function getWeekComparison(): WeekComparisonData {
   prevSunday.setDate(prevSunday.getDate() + 6);
   const prevEnd = formatDate(prevSunday);
 
-  const currentEntries = db.listEntries({ from: currentStart, to: currentEnd });
-  const prevEntries = db.listEntries({ from: prevStart, to: prevEnd });
+  const currentEntries = await db.listEntries({ from: currentStart, to: currentEnd });
+  const prevEntries = await db.listEntries({ from: prevStart, to: prevEnd });
 
   const currentHours = currentEntries.reduce((s, e) => s + e.hoursStudied, 0);
   const prevHours = prevEntries.reduce((s, e) => s + e.hoursStudied, 0);
@@ -311,17 +311,17 @@ export function getWeekDays(weekEntries: Entry[]): { day: string; completed: boo
   return results;
 }
 
-export function getCoveragePercent(examKey: string): number {
+export async function getCoveragePercent(examKey: string): Promise<number> {
   const db = getDb();
-  const progress = db.getSyllabusProgress(examKey);
+  const progress = await db.getSyllabusProgress(examKey);
   if (!progress.length) return 0;
   const total = progress.reduce((s, p) => s + p.weightedPercent, 0);
   return Math.round(total / progress.length);
 }
 
-export function getMasteryPercent(examKey: string): number {
+export async function getMasteryPercent(examKey: string): Promise<number> {
   const db = getDb();
-  const chapters = db.getSyllabus(examKey);
+  const chapters = await db.getSyllabus(examKey);
   if (!chapters.length) return 0;
   const totalWeight = chapters.reduce((s, c) => s + statusWeight(c.status), 0);
   return Math.round((totalWeight / chapters.length) * 100);
@@ -336,11 +336,11 @@ export function getUpcomingExams(settings: { examDate?: string | null; selectedE
   return exams;
 }
 
-export function getMonthlyEntryDates(year: number, month: number): Set<string> {
+export async function getMonthlyEntryDates(year: number, month: number): Promise<Set<string>> {
   const db = getDb();
   const pad = (n: number) => n.toString().padStart(2, '0');
   const prefix = `${year}-${pad(month)}`;
-  const entries = db.listEntries({ from: `${prefix}-01`, to: `${prefix}-31` });
+  const entries = await db.listEntries({ from: `${prefix}-01`, to: `${prefix}-31` });
   const dates = new Set<string>();
   for (const entry of entries) {
     dates.add(entry.date);

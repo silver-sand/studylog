@@ -7,7 +7,6 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  passwordHash: string;
   userType: UserType;
   stream?: string;
   classLevel?: string;
@@ -20,18 +19,14 @@ export interface User {
   createdAt: string;
 }
 
-export interface Session {
-  id: string;
-  userId: string;
-  token: string;
-  expiresAt: string;
-  createdAt: string;
-}
-
+/**
+ * Create a user profile row. `id` is the provider uid (Firebase Auth uid for
+ * the Firestore adapter; the database auto-assigns it for the sqlite adapter).
+ */
 export interface CreateUserData {
+  id?: string;
   name: string;
   email: string;
-  passwordHash: string;
   userType?: UserType;
   stream?: string;
   classLevel?: string;
@@ -44,6 +39,9 @@ export interface CreateUserData {
 }
 
 export interface AuthResult {
-  user: Omit<User, 'passwordHash'>;
-  token: string;
+  user: User;
+  /** Admin SDK session cookie value; the caller sets it HttpOnly on the client. */
+  sessionCookie: string;
+  /** Firebase refresh token — set as `sl_refresh_token` so guest accounts can later be upgraded. */
+  refreshToken?: string;
 }

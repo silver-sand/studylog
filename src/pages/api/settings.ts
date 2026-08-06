@@ -1,14 +1,13 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../db';
-import { scopeDbToUser } from '../../services/user-scope';
+import { getCurrentUserId } from '../../db/user-context';
 import { getSyllabusKeyForExam, getSubjectsForExamKeys } from '../../utils/exam-map';
 import { STREAMS } from '../../utils/stream-map';
 import { validateOrigin } from './_csrf';
 
-export const GET: APIRoute = async ({ request }) => {
-  scopeDbToUser(request);
+export const GET: APIRoute = async () => {
   try {
-    const settings = getDb().getSettings();
+    const settings = await getDb().getSettings();
     return new Response(JSON.stringify(settings));
   } catch (e) {
     return new Response(JSON.stringify({ error: 'Failed to load settings' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
@@ -19,7 +18,6 @@ export const PUT: APIRoute = async ({ request }) => {
   if (!validateOrigin(request)) {
     return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
   }
-  scopeDbToUser(request);
   try {
     const body = await request.json();
     const { targetHoursPerWeek, studyDaysPerWeek, selectedExams, subjects, examDate, theme, accentColor, stream, name } = body;
@@ -63,7 +61,7 @@ export const PUT: APIRoute = async ({ request }) => {
       computedSubjects = getSubjectsForExamKeys(selectedExams);
     }
 
-    const settings = getDb().updateSettings({
+    const settings = await getDb().updateSettings({
       targetHoursPerWeek: targetHoursPerWeek !== undefined ? Number(targetHoursPerWeek) : undefined,
       studyDaysPerWeek: studyDaysPerWeek !== undefined ? Number(studyDaysPerWeek) : undefined,
       selectedExams: selectedExams !== undefined ? selectedExams : undefined,
@@ -81,26 +79,24 @@ export const PUT: APIRoute = async ({ request }) => {
         const syllabusKey = getSyllabusKeyForExam(examKey);
         if (!seededKeys.has(syllabusKey)) {
           seededKeys.add(syllabusKey);
-          getDb().seedSyllabusData(syllabusKey, subjectsToSeed);
+          await getDb().seedSyllabusData(syllabusKey, subjectsToSeed);
         }
       }
     }
 
     // Persist stream change to user profile
     if (stream !== undefined && typeof stream === 'string') {
-      const db = getDb();
-      const currentUserId = db.getCurrentUser();
+      const currentUserId = getCurrentUserId();
       if (currentUserId) {
-        db.updateUser(currentUserId, { stream });
+        await getDb().updateUser(currentUserId, { stream });
       }
     }
 
     // Persist name change to user profile
     if (name !== undefined && typeof name === 'string' && name.trim()) {
-      const db = getDb();
-      const currentUserId = db.getCurrentUser();
+      const currentUserId = getCurrentUserId();
       if (currentUserId) {
-        db.updateUser(currentUserId, { name: name.trim() });
+        await getDb().updateUser(currentUserId, { name: name.trim() });
       }
     }
 

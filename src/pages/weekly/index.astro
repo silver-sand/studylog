@@ -3,20 +3,18 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import ReviewList from '../../components/ReviewList.astro';
 import { getDb } from '../../db';
 import { getMonday, getSunday, formatDisplayDate } from '../../utils/date';
-import { scopeDbToUser } from '../../services/user-scope';
 
-scopeDbToUser(Astro.request);
 const db = getDb();
-const reviews = db.listReviews();
+const reviews = await db.listReviews();
 const weekParam = Astro.url.searchParams.get('week');
 const range = {
   weekStart: weekParam ? getMonday(new Date(weekParam)) : getMonday(),
   weekEnd: weekParam ? getSunday(new Date(weekParam)) : getSunday(),
 };
-const currentReview = db.getReviewByWeek(range.weekStart);
+const currentReview = await db.getReviewByWeek(range.weekStart);
 
 // Stats for the premium stat row — Stitch style
-const entries = db.listEntries({ limit: 200 });
+const entries = await db.listEntries({ limit: 200 });
 const thisWeekEntries = entries.filter(e => e.date >= range.weekStart && e.date <= range.weekEnd);
 const totalHoursThisWeek = thisWeekEntries.reduce((s, e) => s + (e.hoursStudied || 0), 0);
 const subjectsThisWeek = new Set(thisWeekEntries.map(e => e.studyType).filter(Boolean));
@@ -59,7 +57,7 @@ const prevTotal = prevWeekEntries.reduce((s, e) => s + (e.hoursStudied || 0), 0)
 const hourChange = prevTotal > 0 ? Math.round(((weekTotal - prevTotal) / prevTotal) * 100) : 0;
 
 // Week-over-week consistency — days with ≥1 session vs study days
-const settings = db.getSettings();
+const settings = await db.getSettings();
 const studyDaysGoal = settings.studyDaysPerWeek || 5;
 const prevDays = new Set(prevWeekEntries.map(e => e.date)).size;
 const currDays = new Set(thisWeekEntries.map(e => e.date)).size;

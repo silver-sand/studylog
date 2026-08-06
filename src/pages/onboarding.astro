@@ -4,18 +4,16 @@ import { getSessionUser, getTokenFromCookie } from '../services/auth-service';
 import { getDb } from '../db';
 import { STREAMS } from '../utils/stream-map';
 import { EXAM_DEFINITIONS } from '../utils/exam-map';
-import { scopeDbToUser } from '../services/user-scope';
 import { computeDailyAverage } from '../types/profile';
 
-scopeDbToUser(Astro.request);
 const db = getDb();
-const user = getSessionUser(getTokenFromCookie(Astro.request));
+const user = await getSessionUser(getTokenFromCookie(Astro.request));
 if (!user) {
   return Astro.redirect('/');
 }
 
 const isUpdate = Astro.url.searchParams.has('update');
-const settings = db.getSettings();
+const settings = await db.getSettings();
 
 const existingProfile = user?.classLevel ? {
   name: user.name,

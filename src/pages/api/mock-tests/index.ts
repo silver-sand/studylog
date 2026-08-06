@@ -1,17 +1,15 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../../db';
-import { scopeDbToUser } from '../../../services/user-scope';
 import { validateOrigin } from '../_csrf';
 
-export const GET: APIRoute = async ({ url, request }) => {
-  scopeDbToUser(request);
+export const GET: APIRoute = async ({ url }) => {
   try {
     const db = getDb();
     const subject = url.searchParams.get('subject') || undefined;
     const limit = url.searchParams.get('limit') ? parseInt(url.searchParams.get('limit')!) : undefined;
 
-    const tests = db.getMockTests({ subject, limit });
-    const analytics = db.getMockTestAnalytics();
+    const tests = await db.getMockTests({ subject, limit });
+    const analytics = await db.getMockTestAnalytics();
 
     return new Response(JSON.stringify({ tests, analytics }));
   } catch (e) {
@@ -24,7 +22,6 @@ export const POST: APIRoute = async ({ request }) => {
   if (!validateOrigin(request)) {
     return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
   }
-  scopeDbToUser(request);
   try {
     const body = await request.json();
     const { subject, testName, score, maxMarks, date, examType, notes } = body;
@@ -38,7 +35,7 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     const db = getDb();
-    const test = db.createMockTest({
+    const test = await db.createMockTest({
       subject,
       testName,
       score,

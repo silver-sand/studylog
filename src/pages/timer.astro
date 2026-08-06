@@ -2,13 +2,11 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import StudyTimer from '../components/StudyTimer.astro';
 import { getDb } from '../db';
-import { scopeDbToUser } from '../services/user-scope';
 
-scopeDbToUser(Astro.request);
 const db = getDb();
-const settings = db.getSettings();
+const settings = await db.getSettings();
 const subjects = settings.subjects || [];
-const streak = db.getStreak();
+const streak = await db.getStreak();
 
 // Compute dynamic subject colors
 const TIMER_COLOR_PALETTE = ['var(--ds-accent-500)', '#22c55e', '#f59e0b', '#ec4899', 'var(--ds-accent-300)', '#06b6d4', '#f472b6', '#84cc16', '#fb923c', '#14b8a6'];

@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 import { getDb } from '../../../db';
 import { createAIServiceFromEnv } from '../../../ai';
 import type { MentorContext, ChatMessage } from '../../../types/ai';
-import { scopeDbToUser } from '../../../services/user-scope';
+import { getCurrentUserId } from '../../../db/user-context';
 import { getSyllabusKeyForExam } from '../../../utils/exam-map';
 import { validateOrigin } from '../_csrf';
 
@@ -10,7 +10,6 @@ export const POST: APIRoute = async ({ request }) => {
   if (!validateOrigin(request)) {
     return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
   }
-  scopeDbToUser(request);
   try {
     const { query, history } = await request.json();
 
@@ -19,15 +18,15 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     const db = getDb();
-    const settings = db.getSettings();
-    const currentUser = db.getUserById(db.getCurrentUser());
+    const settings = await db.getSettings();
+    const currentUser = await db.getUserById(getCurrentUserId());
 
     // Use first selected exam for mentor context
     const selectedExams = settings.selectedExams?.length ? settings.selectedExams : ['JEE'];
     const primaryExam = selectedExams[0];
     const examKey = getSyllabusKeyForExam(primaryExam);
 
-    db.seedSyllabusData();
+    await db.seedSyllabusData();
 
     // Build profile context string
     const profileParts: string[] = [];
@@ -55,9 +54,9 @@ export const POST: APIRoute = async ({ request }) => {
       : 'Student profile: Not yet configured.';
 
     // Build syllabus/entry context
-    const progress = db.getSyllabusProgress(examKey);
-    const weakChapters = db.getWeakChapters(examKey, 60);
-    const recentEntries = db.listEntries({ limit: 10 });
+    const progress = await db.getSyllabusProgress(examKey);
+    const weakChapters = await db.getWeakChapters(examKey, 60);
+    const recentEntries = await db.listEntries({ limit: 10 });
     const totalChapters = progress.reduce((s, p) => s + p.total, 0);
     const weightedSum = progress.reduce((s, p) => s + p.weightedPercent * p.total, 0);
     const overallPercent = totalChapters > 0 ? Math.round(weightedSum / totalChapters) : 0;
@@ -77,7 +76,7 @@ export const POST: APIRoute = async ({ request }) => {
     const settingsStr = `Target: ${settings.targetHoursPerWeek}h/week, Subjects: ${settings.subjects?.join(', ') || 'none'}`;
 
     // Build todo context
-    const allTodos = db.listTodos();
+    const allTodos = await db.listTodos();
     const pendingTodos = allTodos.filter(t => t.status === 'pending');
     const completedToday = allTodos.filter(t =>
       t.status === 'completed' && t.updatedAt?.startsWith(new Date().toISOString().slice(0, 10))

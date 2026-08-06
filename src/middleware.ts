@@ -1,10 +1,10 @@
 import { defineMiddleware } from 'astro/middleware';
-import { getDb } from './db';
+import { runWithUser } from './db/user-context';
 import { getTokenFromCookie, getSessionUser } from './services/auth-service';
 
 // Paths accessible without authentication
 const PUBLIC_PATHS = new Set([
-  '/', '/api/auth/login', '/api/auth/signup', '/api/auth/guest',
+  '/', '/api/auth/login', '/api/auth/signup', '/api/auth/guest', '/api/auth/session',
 ]);
 
 function isPublicPath(pathname: string): boolean {
@@ -15,26 +15,30 @@ function isPublicPath(pathname: string): boolean {
 }
 
 export const onRequest = defineMiddleware(async (context, next) => {
-  const { request, cookies, redirect } = context;
+  const { request, redirect } = context;
   const url = new URL(request.url);
 
-  // Check for existing valid session
+  // Check for existing valid session (session cookie verified via Firebase).
   const token = getTokenFromCookie(request);
-  const user = getSessionUser(token);
+  const user = await getSessionUser(token);
 
   if (user) {
-    // Existing valid session — scope DB to this user
-    getDb().setCurrentUser(user.id);
-    return next();
+    // Existing valid session — scope all downstream DB access to this user
+    // for the entire request (AsyncLocalStorage; immune to interleaving).
+    return runWithUser(user.id, () => next());
   }
 
-  // No session — clear any stale user context from previous request
-  getDb().clearCurrentUser();
-
+  // No session.
   if (!isPublicPath(url.pathname)) {
+    // API routes get a JSON 401 (the client reads it); pages redirect home.
+    if (url.pathname.startsWith('/api/')) {
+      return new Response(JSON.stringify({ error: 'Not authenticated' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
     return redirect('/');
   }
 
-  const response = await next();
-  return response;
+  return runWithUser('', () => next());
 });

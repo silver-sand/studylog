@@ -13,7 +13,7 @@ function getAI(): AIService {
 export async function generateDailyReview(date?: string): Promise<DailyReview> {
   const db = getDb();
   const targetDate = date || formatDate(new Date());
-  const entries = db.listEntries({ from: targetDate, to: targetDate });
+  const entries = await db.listEntries({ from: targetDate, to: targetDate });
 
   if (entries.length === 0) {
     // Still generate a summary for empty days
@@ -57,6 +57,6 @@ export async function generateDailyReview(date?: string): Promise<DailyReview> {
   });
 }
 
-export function getDailyReviewByDate(date: string): DailyReview | null {
+export async function getDailyReviewByDate(date: string): Promise<DailyReview | null> {
   return getDb().getDailyReviewByDate(date);
 }

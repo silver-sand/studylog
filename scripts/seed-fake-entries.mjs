@@ -106,7 +106,7 @@ async function main() {
 
     const content = buildContent(subjects, chapters, totalHours, studyType);
 
-    const entry = db.createEntry({
+    const entry = await db.createEntry({
       date: dateStr,
       content,
       hoursStudied: totalHours,
@@ -116,7 +116,7 @@ async function main() {
     });
 
     // Now update with proper subjects/chapters (since AI analysis would normally set these)
-    db.updateEntry(entry.id, {
+    await db.updateEntry(entry.id, {
       subjects,
       chapters,
       tags: [...subjects.map(s => s.toLowerCase()), ...chapters.map(c => c.toLowerCase().replace(/\s+/g, '-'))],

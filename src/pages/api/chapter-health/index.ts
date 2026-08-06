@@ -1,9 +1,7 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../../db';
-import { scopeDbToUser } from '../../../services/user-scope';
 
-export const GET: APIRoute = async ({ url, request }) => {
-  scopeDbToUser(request);
+export const GET: APIRoute = async ({ url }) => {
   try {
     const db = getDb();
     const examType = url.searchParams.get('exam') || undefined;
@@ -12,16 +10,16 @@ export const GET: APIRoute = async ({ url, request }) => {
       return new Response(JSON.stringify({ error: 'exam parameter required' }), { status: 400 });
     }
 
-    db.seedSyllabusData();
-    const allProgress = db.getSyllabusProgress(examType);
+    await db.seedSyllabusData();
+    const allProgress = await db.getSyllabusProgress(examType);
     const hasProgress = allProgress.some(p => p.weightedPercent > 0);
 
-    const weakChapters = db.getWeakChapters(examType);
+    const weakChapters = await db.getWeakChapters(examType);
     const count = weakChapters.length;
 
     // Also compute subject-level health summaries
     const subjectHealth: Record<string, { total: number; weak: number; avgHealth: number }> = {};
-    const allChapters = db.getSyllabus(examType);
+    const allChapters = await db.getSyllabus(examType);
     for (const ch of allChapters) {
       if (!subjectHealth[ch.subject]) {
         subjectHealth[ch.subject] = { total: 0, weak: 0, avgHealth: 0 };

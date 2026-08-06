@@ -556,6 +556,7 @@ const labelClass = 'block text-xs font-label text-neutral-500 mb-2 tracking-wide
           studyType,
           focusRating: focusRating > 0 ? focusRating : undefined,
           examType: examTypeInput.value || undefined,
+          subjects: subjectInput.value.split(',').map(s => s.trim()).filter(Boolean),
         }),
       });
 
