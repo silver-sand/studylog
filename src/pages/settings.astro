@@ -246,7 +246,7 @@ const settingsBridgeData = {
               <div class="grid grid-cols-2 gap-4">
                 <!-- Dark Mode Card -->
                 <button
-                  class="theme-option relative flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all duration-200 text-center {settings.theme === 'dark' ? 'border-[var(--ds-accent-500)] bg-[var(--ds-bg-elevated)]' : 'border-[var(--ds-border-default)] bg-[var(--ds-bg-surface)] hover:border-[var(--ds-border-hover)]'}"
+                  class={`theme-option relative flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all duration-200 text-center ${settings.theme === 'dark' ? 'border-[var(--ds-accent-500)] bg-[var(--ds-bg-elevated)]' : 'border-[var(--ds-border-default)] bg-[var(--ds-bg-surface)] hover:border-[var(--ds-border-hover)]'}`}
                   data-theme-value="dark"
                   onclick="updateSetting('theme', 'dark')"
                 >
@@ -267,7 +267,7 @@ const settingsBridgeData = {
                 </button>
                 <!-- Light Mode Card -->
                 <button
-                  class="theme-option relative flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all duration-200 text-center {settings.theme === 'light' ? 'border-[var(--ds-accent-500)] bg-[var(--ds-bg-elevated)]' : 'border-[var(--ds-border-default)] bg-[var(--ds-bg-surface)] hover:border-[var(--ds-border-hover)]'}"
+                  class={`theme-option relative flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all duration-200 text-center ${settings.theme === 'light' ? 'border-[var(--ds-accent-500)] bg-[var(--ds-bg-elevated)]' : 'border-[var(--ds-border-default)] bg-[var(--ds-bg-surface)] hover:border-[var(--ds-border-hover)]'}`}
                   data-theme-value="light"
                   onclick="updateSetting('theme', 'light')"
                 >
@@ -306,11 +306,11 @@ const settingsBridgeData = {
                   const isActive = settings.accentColor === color;
                   return (
                     <button
-                      class="accent-option relative flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all duration-200 {isActive ? 'border-[var(--ds-accent-500)] bg-[var(--ds-bg-elevated)]' : 'border-[var(--ds-border-default)] bg-[var(--ds-bg-surface)] hover:border-[var(--ds-border-hover)]'}"
+                      class={`accent-option relative flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all duration-200 ${isActive ? 'border-[var(--ds-accent-500)] bg-[var(--ds-bg-elevated)]' : 'border-[var(--ds-border-default)] bg-[var(--ds-bg-surface)] hover:border-[var(--ds-border-hover)]'}`}
                       data-accent-value={color}
                       onclick={`updateSetting('accentColor', '${color}')`}
                     >
-                      <div class="w-10 h-10 rounded-full" style="background-color: {c.hex}; box-shadow: {isActive ? `0 0 0 3px rgba(var(--ds-accent-rgb), 0.3)` : 'none'}"></div>
+                      <div class="w-10 h-10 rounded-full" style={`background-color: ${c.hex}; box-shadow: ${isActive ? '0 0 0 3px rgba(var(--ds-accent-rgb), 0.3)' : 'none'}`}></div>
                       <span class="text-xs font-medium" style="color:var(--ds-text-secondary)">{c.label}</span>
                       {isActive && <span class="material-symbols-outlined text-sm absolute -top-1 -right-1 filled-icon rounded-full bg-[var(--ds-bg-surface)]" style="color:var(--ds-accent-500)">check_circle</span>}
                     </button>

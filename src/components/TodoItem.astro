@@ -39,14 +39,14 @@ const isToday = todo.dueDate && new Date(todo.dueDate).toDateString() === new Da
 ---
 
 <div
-  class="todo-item flex items-start gap-3 p-4 rounded-xl transition-all duration-200 border border-[var(--ds-border-default)] bg-[var(--ds-bg-surface)] hover:border-[var(--ds-border-hover)] {todo.status === 'completed' ? 'opacity-60' : ''}"
+  class={`todo-item flex items-start gap-3 p-4 rounded-xl transition-all duration-200 border border-[var(--ds-border-default)] bg-[var(--ds-bg-surface)] hover:border-[var(--ds-border-hover)] ${todo.status === 'completed' ? 'opacity-60' : ''}`}
   data-todo-id={todo.id}
   data-todo-status={todo.status}
 >
   <!-- Checkbox -->
   <button
-    class="todo-toggle mt-0.5 w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all duration-200 {todo.status === 'completed' ? 'bg-[var(--ds-accent-500)] border-[var(--ds-accent-500)]' : 'border-[var(--ds-border-strong)] hover:border-[var(--ds-accent-500)]'}"
-    onclick="toggleTodo('{todo.id}')"
+    class={`todo-toggle mt-0.5 w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all duration-200 ${todo.status === 'completed' ? 'bg-[var(--ds-accent-500)] border-[var(--ds-accent-500)]' : 'border-[var(--ds-border-strong)] hover:border-[var(--ds-accent-500)]'}`}
+    onclick={`toggleTodo('${todo.id}')`}
     aria-label={todo.status === 'completed' ? 'Mark as incomplete' : 'Mark as complete'}
   >
     {todo.status === 'completed' && (
@@ -57,7 +57,7 @@ const isToday = todo.dueDate && new Date(todo.dueDate).toDateString() === new Da
   <!-- Content -->
   <div class="flex-1 min-w-0">
     <div class="flex items-start justify-between gap-2">
-      <span class="text-sm font-medium {todo.status === 'completed' ? 'line-through text-[var(--ds-text-muted)]' : 'text-[var(--ds-text-primary)]'}">
+      <span class={`text-sm font-medium ${todo.status === 'completed' ? 'line-through text-[var(--ds-text-muted)]' : 'text-[var(--ds-text-primary)]'}`}>
         {todo.title}
       </span>
       <div class="flex items-center gap-2 flex-shrink-0">
@@ -66,12 +66,12 @@ const isToday = todo.dueDate && new Date(todo.dueDate).toDateString() === new Da
           {categoryLabels[todo.category] || todo.category}
         </span>
         <!-- Priority badge -->
-        <span class="text-[11px] px-2 py-0.5 rounded-full font-medium bg-[var(--ds-bg-elevated)] {priorityColors[todo.priority] || priorityColors.medium} border border-[var(--ds-border-subtle)]">
+        <span class={`text-[11px] px-2 py-0.5 rounded-full font-medium bg-[var(--ds-bg-elevated)] ${priorityColors[todo.priority] || priorityColors.medium} border border-[var(--ds-border-subtle)]`}>
           {priorityLabels[todo.priority] || todo.priority}
         </span>
         <!-- Due date -->
         {todo.dueDate && (
-          <span class="text-[11px] px-2 py-0.5 rounded-full font-medium {isOverdue ? 'bg-red-500/10 text-red-400 border border-red-500/20' : isToday ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-[var(--ds-bg-elevated)] text-[var(--ds-text-tertiary)] border border-[var(--ds-border-subtle)]'}">
+          <span class={`text-[11px] px-2 py-0.5 rounded-full font-medium ${isOverdue ? 'bg-red-500/10 text-red-400 border border-red-500/20' : isToday ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-[var(--ds-bg-elevated)] text-[var(--ds-text-tertiary)] border border-[var(--ds-border-subtle)]'}`}>
             {todo.dueDate}
           </span>
         )}
@@ -85,7 +85,7 @@ const isToday = todo.dueDate && new Date(todo.dueDate).toDateString() === new Da
   <!-- Delete -->
   <button
     class="todo-delete flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-[var(--ds-text-muted)] hover:text-red-400 hover:bg-red-500/10 transition-all duration-200 opacity-0 group-hover:opacity-100"
-    onclick="deleteTodo('{todo.id}')"
+    onclick={`deleteTodo('${todo.id}')`}
     aria-label="Delete task"
   >
     <span class="material-symbols-outlined text-lg">close</span>

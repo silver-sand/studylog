@@ -40,14 +40,14 @@ const c = colorMap[color] || colorMap.gray;
   class="syllabus-card ds-card-glass card-lift animate-slide-up"
   id={`card-${subject.replace(/\s+/g, '-')}`}
   data-subject={subject}
-  style="--subject-color: {c.accent};"
+  style={`--subject-color: ${c.accent};`}
 >
   <!-- Subject accent bar -->
-  <div class="subject-accent-bar" style="background: {c.accent};"></div>
+  <div class="subject-accent-bar" style={`background: ${c.accent};`}></div>
 
   <div class="card-header">
     <div class="subject-info">
-      <div class="subject-icon" style="border-color: color-mix(in srgb, {c.accent} 30%, transparent); color: {c.accent};">
+      <div class="subject-icon" style={`border-color: color-mix(in srgb, ${c.accent} 30%, transparent); color: ${c.accent};`}>
         {subject[0]}
       </div>
       <div>
@@ -56,15 +56,15 @@ const c = colorMap[color] || colorMap.gray;
       </div>
     </div>
     <div class="percent-wrap">
-      <span class="percent-text count-up" style="color: {c.accent};">{progress.weightedPercent}%</span>
+      <span class="percent-text count-up" style={`color: ${c.accent};`}>{progress.weightedPercent}%</span>
     </div>
   </div>
 
   <div class="syllabus-bar-bg">
     <div
       class="syllabus-bar-fill bar-fill"
-      style="width: {progress.weightedPercent}%; background: {c.bar};"
-      data-width="{progress.weightedPercent}"
+      style={`width: ${progress.weightedPercent}%; background: ${c.bar};`}
+      data-width={progress.weightedPercent}
     />
   </div>
 </div>

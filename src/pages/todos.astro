@@ -50,7 +50,7 @@ const completedTodos = allTodos.filter(t => t.status === 'completed');
             <div class="mt-3 h-2 rounded-full bg-[var(--ds-bg-elevated)] overflow-hidden">
               <div
                 class="h-full rounded-full transition-all duration-500"
-                style="width: {Math.round((completedTodos.length / allTodos.length) * 100)}%; background: var(--ds-accent-500);"
+                style={`width: ${Math.round((completedTodos.length / allTodos.length) * 100)}%; background: var(--ds-accent-500);`}
               ></div>
             </div>
           )}
@@ -157,7 +157,13 @@ const completedTodos = allTodos.filter(t => t.status === 'completed');
   window.deleteTodo = async function (id) {
     if (!confirm('Delete this task?')) return;
     try {
-      const res = await fetch(`/api/todos/${id}`, { method: 'DELETE' });
+      // Vercel's platform CSRF blocks the DELETE verb and bodyless POSTs, so send
+      // a JSON-body POST carrying an X-HTTP-Method-Override header.
+      const res = await fetch(`/api/todos/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-HTTP-Method-Override': 'DELETE' },
+        body: JSON.stringify({}),
+      });
       if (!res.ok) throw new Error('Failed to delete');
       window.location.reload();
     } catch (err) {

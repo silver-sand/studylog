@@ -22,7 +22,7 @@ const { reviews } = Astro.props;
         <a
           href={`/weekly/${review.weekStart}`}
           class="review-item ds-card-glass card-lift animate-stagger-item"
-          style="--stagger-index: {idx};"
+          style={`--stagger-index: ${idx};`}
         >
           <div class="review-top">
             <div class="review-date-group">

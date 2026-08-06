@@ -37,7 +37,7 @@ const ringClass = chapter.status === 'studied' ? 'ring-1 ring-[var(--ds-accent-5
 ---
 
 <div
-  class="chapter-item flex items-center gap-3 p-3 bg-[var(--ds-bg-base)] rounded-xl border transition-all group hover:border-[var(--ds-accent-500)]/30 {ringClass}"
+  class={`chapter-item flex items-center gap-3 p-3 bg-[var(--ds-bg-base)] rounded-xl border transition-all group hover:border-[var(--ds-accent-500)]/30 ${ringClass}`}
   data-chapter-id={chapter.id}
   data-status={chapter.status}
   data-class-level={chapter.classLevel || ''}
@@ -48,6 +48,6 @@ const ringClass = chapter.status === 'studied' ? 'ring-1 ring-[var(--ds-accent-5
   >{isCompleted ? 'check_circle' : 'radio_button_unchecked'}</span>
   <div class="flex-1 min-w-0 flex items-center gap-2.5">
     <p class="chapter-name text-sm font-medium truncate text-neutral-200 group-hover:text-white transition-colors">{chapter.chapter}</p>
-    <span class="chapter-badge text-[10px] px-2 py-0.5 rounded-md uppercase font-bold tracking-wider shrink-0 {badgeClass}">{statusLabel}</span>
+    <span class={`chapter-badge text-[10px] px-2 py-0.5 rounded-md uppercase font-bold tracking-wider shrink-0 ${badgeClass}`}>{statusLabel}</span>
   </div>
 </div>
