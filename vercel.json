@@ -1,7 +1,0 @@
-{
-  "functions": {
-    "src/pages/api/mentor/index.ts": {
-      "maxDuration": 60
-    }
-  }
-}
