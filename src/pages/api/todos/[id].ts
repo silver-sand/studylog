@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../../db';
 import { validateOrigin } from '../_csrf';
+import { isDeleteOverride } from '../_http-method-override';
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
 
@@ -56,23 +57,40 @@ export const PATCH: APIRoute = async ({ params, request }) => {
   }
 };
 
+async function handleDelete(id: string | undefined): Promise<Response> {
+  if (!id) {
+    return new Response(JSON.stringify({ error: 'Todo ID is required' }), { status: 400, headers: JSON_HEADERS });
+  }
+  const existing = await getDb().getTodo(id);
+  if (!existing) {
+    return new Response(JSON.stringify({ error: 'Todo not found' }), { status: 404, headers: JSON_HEADERS });
+  }
+  await getDb().deleteTodo(id);
+  return new Response(JSON.stringify({ success: true }), { headers: JSON_HEADERS });
+}
+
+// POST accepts an X-HTTP-Method-Override: DELETE header so deletions work through
+// Vercel's platform CSRF protection, which blocks the DELETE verb outright.
+export const POST: APIRoute = async ({ params, request }) => {
+  if (!validateOrigin(request)) {
+    return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: JSON_HEADERS });
+  }
+  if (!isDeleteOverride(request)) {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: JSON_HEADERS });
+  }
+  try {
+    return await handleDelete(params.id);
+  } catch (e) {
+    return new Response(JSON.stringify({ error: 'Failed to delete todo' }), { status: 500, headers: JSON_HEADERS });
+  }
+};
+
 export const DELETE: APIRoute = async ({ params, request }) => {
   if (!validateOrigin(request)) {
     return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: JSON_HEADERS });
   }
   try {
-    const { id } = params;
-    if (!id) {
-      return new Response(JSON.stringify({ error: 'Todo ID is required' }), { status: 400, headers: JSON_HEADERS });
-    }
-
-    const existing = await getDb().getTodo(id);
-    if (!existing) {
-      return new Response(JSON.stringify({ error: 'Todo not found' }), { status: 404, headers: JSON_HEADERS });
-    }
-
-    await getDb().deleteTodo(id);
-    return new Response(JSON.stringify({ success: true }), { headers: JSON_HEADERS });
+    return await handleDelete(params.id);
   } catch (e) {
     return new Response(JSON.stringify({ error: 'Failed to delete todo' }), { status: 500, headers: JSON_HEADERS });
   }

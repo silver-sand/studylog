@@ -259,7 +259,11 @@ const quickActions = [
         .then(function(todos) {
           var match = todos.find(function(t) { return t.title === title; });
           if (match) {
-            fetch('/api/todos/' + match.id, { method: 'DELETE' })
+            fetch('/api/todos/' + match.id, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'X-HTTP-Method-Override': 'DELETE' },
+              body: JSON.stringify({}),
+            })
               .catch(function(err) { console.error('TODO_DELETE failed:', err); });
           }
         })

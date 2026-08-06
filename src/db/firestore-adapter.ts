@@ -166,7 +166,9 @@ export class FirestoreAdapter implements Database {
       entryIds: data.entryIds,
       notes: data.notes || existing?.notes || '',
     };
-    await this.fs.collection('weeklyReviews').doc(id).set(doc, { merge: true });
+    // Include userId on every write: getReview/getReviewByWeek/listReviews all
+    // scope by userId, and a new review written without it is orphaned (invisible).
+    await this.fs.collection('weeklyReviews').doc(id).set({ ...doc, userId: this.uid() }, { merge: true });
     const fresh = await this.getReview(id);
     if (!fresh) throw new Error(`Weekly review ${id} not found`);
     return fresh;
@@ -216,7 +218,8 @@ export class FirestoreAdapter implements Database {
   async upsertDailyReview(data: CreateDailyReviewData): Promise<DailyReview> {
     const existing = await this.getDailyReviewByDate(data.date);
     const id = existing?.id ?? generateId();
-    await this.fs.collection('dailyReviews').doc(id).set({ ...data }, { merge: true });
+    // See upsertReview — daily reviews are scoped by userId too.
+    await this.fs.collection('dailyReviews').doc(id).set({ ...data, userId: this.uid() }, { merge: true });
     const fresh = await this.getDailyReviewByDate(data.date);
     if (!fresh) throw new Error(`Daily review for ${data.date} not found`);
     return fresh;
@@ -739,14 +742,11 @@ export class FirestoreAdapter implements Database {
   }
 
   async getEntryCountForMonth(year: number, month: number): Promise<number> {
+    // Reuse listEntries (existing userId+date DESC composite index) instead of a
+    // raw range+count query, which would require a missing userId+date ASC index.
     const prefix = `${year}-${String(month).padStart(2, '0')}`;
-    const snap = await this.fs.collection('entries')
-      .where('userId', '==', this.uid())
-      .where('date', '>=', `${prefix}-01`)
-      .where('date', '<=', `${prefix}-31`)
-      .count()
-      .get();
-    return snap.data().count;
+    const entries = await this.listEntries({ from: `${prefix}-01`, to: `${prefix}-31` });
+    return entries.length;
   }
 
   async getStreak(): Promise<number> {
@@ -781,15 +781,10 @@ export class FirestoreAdapter implements Database {
   }
 
   async getTotalHoursForWeek(weekStart: string): Promise<number> {
+    // See getEntryCountForMonth — avoid a raw range query that needs a missing index.
     const weekEnd = getSunday(new Date(weekStart));
-    const snap = await this.fs.collection('entries')
-      .where('userId', '==', this.uid())
-      .where('date', '>=', weekStart)
-      .where('date', '<=', weekEnd)
-      .get();
-    let total = 0;
-    for (const d of snap.docs) total += (d.get('hoursStudied') as number) ?? 0;
-    return total;
+    const entries = await this.listEntries({ from: weekStart, to: weekEnd });
+    return entries.reduce((sum, e) => sum + (e.hoursStudied ?? 0), 0);
   }
 
   // ── Mappers ──
