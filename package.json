@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "AI-Powered Daily Study Progress Tracker",
   "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
   "scripts": {
     "dev": "astro dev",
     "build": "tsc --noEmit && astro build",
