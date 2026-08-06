@@ -10,3 +10,6 @@ cloudflared.exe
 # Astro build cache
 .astro/
 .gstack/
+
+.vercel
+.env*

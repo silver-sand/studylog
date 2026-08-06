@@ -52,6 +52,16 @@ export function getAdminAuth(): Auth {
   return getAuth(getAdminApp());
 }
 
+let firestoreConfigured = false;
+
 export function getAdminFirestore(): Firestore {
-  return getFirestore(getAdminApp());
+  const fs = getFirestore(getAdminApp());
+  if (!firestoreConfigured) {
+    // Firestore rejects undefined field values by default; our optional profile
+    // fields (stream, goal, classLevel, ...) are undefined when unset, so omit
+    // them rather than throw (matches sqlite storing NULL).
+    fs.settings({ ignoreUndefinedProperties: true });
+    firestoreConfigured = true;
+  }
+  return fs;
 }
