@@ -6,8 +6,8 @@ StudyLog V5 is a student study tracker built with:
 - **Astro 5** (SSR with Node adapter)
 - **SQLite** (better-sqlite3) for local data storage
 - **TypeScript** throughout
-- **Vanilla CSS** with a custom design system (design-system.css)
-- No Tailwind, no React components
+- **Vanilla CSS** with a custom design system (design-system.css); Tailwind is enabled for layout utilities only
+- No React components
 - No external UI libraries — all components are hand-crafted Astro `.astro` files
 
 ## gstack Workflow
@@ -37,7 +37,7 @@ Think → Plan → Build → Review → Test → Ship
 ### Design Decisions
 
 - **No vibe-coding**: Every design change must go through `/spec` → `/design-shotgun` or `/design-review` → implementation
-- **No Tailwind**: Use design-system.css tokens instead
+- **Tailwind for layout only**: Tailwind is enabled (@astrojs/tailwind) for grid/spacing utilities; all tokens, colors, and component styles come from design-system.css
 - **Astro framework**: Components are `.astro` files, not React
 - **Build integration**: Always run `npm run build` before committing
 - **Stitch source of truth**: For design tokens and visual layouts, use Google Stitch MCP as the primary reference — not manual CSS decisions

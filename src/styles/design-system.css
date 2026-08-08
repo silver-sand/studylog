@@ -459,6 +459,11 @@ body {
   color: var(--ds-text-tertiary);
 }
 
+/* Display type for headlines — wired to --ds-font-display (was a no-op class) */
+.font-headline {
+  font-family: var(--ds-font-display);
+}
+
 /* Caption (smallest readable) */
 .ds-caption {
   font-size: var(--ds-text-xs);

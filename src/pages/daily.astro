@@ -19,7 +19,8 @@ const hasEntriesToday = recentEntries.some(e => e.date === today);
 
 // Stats for right column
 const todayHours = todayEntry?.hoursStudied || 0;
-const targetHours = 8;
+// Daily target derived from the user's weekly target — one goal model, not a hardcoded 8.
+const targetHours = Math.round(((settings.targetHoursPerWeek || 35) / (settings.studyDaysPerWeek || 5)) * 10) / 10;
 const todayFocus = todayEntry?.focusRating || 0;
 const streak = await db.getStreak();
 
@@ -156,7 +157,7 @@ const dateDisplay = todayDate.toLocaleDateString('en-US', {
                 <span class="text-sm text-neutral-400">Hours Studied</span>
                 <div class="text-right">
                   <span class="text-2xl font-bold text-[var(--ds-text-primary)] font-mono tabular-nums">{todayHours.toFixed(1)}</span>
-                  <span class="text-sm text-neutral-600">/{targetHours}.0</span>
+                  <span class="text-sm text-neutral-600">/{targetHours.toFixed(1)}h</span>
                 </div>
               </div>
               <div class="w-full bg-[var(--ds-bg-elevated)] h-2 rounded-full overflow-hidden">

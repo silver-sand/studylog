@@ -19,7 +19,7 @@ const { examType } = Astro.props;
   </div>
 </div>
 
-<script>
+<script define:vars={{ examType }}>
   function daysAgo(dateStr) {
     if (!dateStr) return null;
     const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
@@ -31,16 +31,15 @@ const { examType } = Astro.props;
     const dateEl = document.getElementById('action-date');
     if (!body || !dateEl) return;
 
-    // Get exam type from settings
-    const examInput = document.querySelector('[name="examType"], #exam-type, select[name="exam_type"]');
-    const examType = examInput?.value || 'JEE';
+    // Exam key comes from the parent (already a syllabus key like 'JEE', 'NEET',
+    // 'MHT_CET', 'CBSE_12'). Fall back to 'JEE' only if the prop is empty.
     const examMap = {
       'JEE': 'JEE', 'JEE Main': 'JEE', 'JEE Advanced': 'JEE',
       'NEET': 'NEET', 'CET': 'MHT_CET',
       'Boards (PCM)': 'CBSE_12', 'Boards (PCB)': 'CBSE_12', 'Boards (Commerce)': 'CBSE_12',
       'CUET': 'CUET', 'GATE': 'GATE', 'CAT': 'CAT', 'UPSC': 'UPSC',
     };
-    const examKey = examMap[examType] || examType;
+    const examKey = (examMap[examType] || examType) || 'JEE';
 
     dateEl.textContent = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 

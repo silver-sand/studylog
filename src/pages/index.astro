@@ -18,7 +18,7 @@ const isAuthenticated = !!user;
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Public+Sans:wght@600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 </head>
 <body style="background:var(--ds-bg-base);color:var(--ds-text-secondary);font-family:var(--ds-font-sans);-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden;">
   <!-- ── Navigation ── -->
@@ -47,20 +47,18 @@ const isAuthenticated = !!user;
 
   <section class="lp-hero">
     <div class="lp-hero-bg"></div>
-    <div class="lp-hero-gradient-orb lp-hero-orb-1"></div>
-    <div class="lp-hero-gradient-orb lp-hero-orb-2"></div>
     <div class="lp-hero-inner">
       <div class="lp-badge animate-fade-in">
         <span class="lp-badge-dot"></span>
         AI-Powered Study OS
       </div>
-      <h1 class="lp-hero-title animate-slide-up delay-1">
+      <h1 class="lp-hero-title font-headline animate-slide-up delay-1">
         Know exactly<br />
         <span class="lp-gradient">what to study next</span>
       </h1>
       <p class="lp-hero-sub animate-slide-up delay-2">
-        Micro-log your daily sessions in seconds. Track syllabus progress across exams.
-        Get AI reviews and a mentor that knows your weak spots — all in one place.
+        Log every session in 30 seconds. Track chapters across 8 exam syllabi through
+        6 revision states — with an AI mentor that knows your weak spots.
       </p>
       <div class="lp-hero-actions animate-slide-up delay-3">
         {isAuthenticated ? (
@@ -74,11 +72,31 @@ const isAuthenticated = !!user;
               Get Started Free
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </button>
-            <button onclick="window.openAuthPopup('signup')" class="ds-btn ds-btn-outline ds-btn-lg ripple-btn">Create Account</button>
+            <button id="lp-guest-btn" class="ds-btn ds-btn-outline ds-btn-lg ripple-btn">Try it as a guest</button>
           </>
         )}
       </div>
-      <p class="lp-hero-footnote animate-slide-up delay-4">No credit card. No commitment. Start instantly.</p>
+      <p class="ds-error-text hidden" id="lp-guest-error" role="status" style="margin-top:var(--ds-space-2);padding:var(--ds-space-1) var(--ds-space-2);background:var(--ds-danger-bg);border:1px solid var(--ds-danger-border);border-radius:var(--ds-radius-md);"></p>
+      <p class="lp-hero-footnote animate-slide-up delay-4" id="lp-guest-msg">Free to start. No credit card. Create an account anytime — or stay a guest.</p>
+    </div>
+
+    <div class="lp-hero-stats animate-fade-in delay-3" aria-hidden="true">
+      <div class="lp-hero-stat">
+        <span class="lp-hero-stat-num">381</span>
+        <span class="lp-hero-stat-label">chapters tracked</span>
+      </div>
+      <div class="lp-hero-stat">
+        <span class="lp-hero-stat-num">8</span>
+        <span class="lp-hero-stat-label">exam syllabi</span>
+      </div>
+      <div class="lp-hero-stat">
+        <span class="lp-hero-stat-num">6</span>
+        <span class="lp-hero-stat-label">revision states</span>
+      </div>
+      <div class="lp-hero-stat">
+        <span class="lp-hero-stat-num">30s</span>
+        <span class="lp-hero-stat-label">to log a session</span>
+      </div>
     </div>
   </section>
 
@@ -86,16 +104,37 @@ const isAuthenticated = !!user;
   <section id="features" class="lp-section reveal-on-scroll">
     <div class="lp-section-inner">
       <div class="lp-section-header">
-        <h2 class="lp-section-title">Everything you need, nothing you don't</h2>
-        <p class="lp-section-sub">Built for competitive exam prep. Focused on consistency, not complexity.</p>
+        <h2 class="lp-section-title font-headline">Consistency, engineered</h2>
+        <p class="lp-section-sub">Built for competitive exam prep. One chapter at a time, one revision state closer to mastered.</p>
       </div>
       <div class="lp-features-grid">
-        <div class="lp-feature-card card-lift" style="--stagger-index:0">
+        <!-- Featured: Daily Log with inline product mock -->
+        <div class="lp-feature-card lp-feature-card--featured card-lift" style="--stagger-index:0">
           <div class="lp-feature-icon" style="background:var(--ds-accent-bg);border-color:var(--ds-accent-border);">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--ds-accent-400);"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
           </div>
           <h3 class="lp-feature-title">30-Second Daily Log</h3>
-          <p class="lp-feature-desc">Log what you studied, hours, and focus level in seconds. No complex journaling — just the signal.</p>
+          <p class="lp-feature-desc">Subject, chapter, hours, focus. That's the whole form — most sessions take less than a minute.</p>
+          <div class="lp-log-mock" aria-hidden="true">
+            <div class="lp-log-row">
+              <span class="lp-log-chip lp-log-chip-phy">Phy</span>
+              <div class="lp-log-mid">
+                <span class="lp-log-subject">Physics · Rotational Motion</span>
+                <div class="lp-log-bar"><div class="lp-log-bar-fill" style="width:62%"></div></div>
+              </div>
+              <span class="lp-log-hours">4.5h</span>
+              <span class="lp-log-focus">F5</span>
+            </div>
+            <div class="lp-log-row">
+              <span class="lp-log-chip lp-log-chip-math">Math</span>
+              <div class="lp-log-mid">
+                <span class="lp-log-subject">Maths · Integration</span>
+                <div class="lp-log-bar"><div class="lp-log-bar-fill lp-log-bar-fill-warn" style="width:38%"></div></div>
+              </div>
+              <span class="lp-log-hours">2.0h</span>
+              <span class="lp-log-focus">F4</span>
+            </div>
+          </div>
         </div>
 
         <div class="lp-feature-card card-lift" style="--stagger-index:1">
@@ -103,7 +142,7 @@ const isAuthenticated = !!user;
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#34d399;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
           </div>
           <h3 class="lp-feature-title">AI Weekly Reviews</h3>
-          <p class="lp-feature-desc">Automated weekly analysis of your study patterns. Strengths, weaknesses, and what to adjust — generated by AI.</p>
+          <p class="lp-feature-desc">Automated analysis of your study patterns. What's working, what isn't, what to adjust — every week.</p>
         </div>
 
         <div class="lp-feature-card card-lift" style="--stagger-index:2">
@@ -111,32 +150,55 @@ const isAuthenticated = !!user;
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#fbbf24;"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect width="6" height="4" x="9" y="3" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
           </div>
           <h3 class="lp-feature-title">Chapter-by-Chapter Syllabus</h3>
-          <p class="lp-feature-desc">Track progress at the chapter level. See completion %, revision cycles, and subject weak spots at a glance.</p>
+          <p class="lp-feature-desc">Completion %, revision cycles, and subject weak spots at a glance. No more guessing what's left.</p>
         </div>
 
         <div class="lp-feature-card card-lift" style="--stagger-index:3">
           <div class="lp-feature-icon" style="background:rgba(167,139,250,0.1);border-color:rgba(167,139,250,0.25);">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--ds-accent-300);"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
           </div>
-          <h3 class="lp-feature-title">Multi-Exam Ready</h3>
-          <p class="lp-feature-desc">JEE, NEET, CBSE, CUET, CAT, UPSC — switch between exams anytime. Your data stays organized per exam.</p>
+          <h3 class="lp-feature-title">Personal AI Mentor</h3>
+          <p class="lp-feature-desc">"What should I study today?", "Quiz me on magnetism", "Explain this concept." It reads your history.</p>
         </div>
 
         <div class="lp-feature-card card-lift" style="--stagger-index:4">
           <div class="lp-feature-icon" style="background:rgba(251,113,133,0.1);border-color:rgba(251,113,133,0.25);">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#fb7185;"><path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><path d="M16 14H8a4 4 0 0 0-4 4v2h16v-2a4 4 0 0 0-4-4z"/></svg>
           </div>
-          <h3 class="lp-feature-title">Personal AI Mentor</h3>
-          <p class="lp-feature-desc">Ask anything: "What should I study today?", "Quiz me on any subject", or "Explain this concept." It knows your history.</p>
+          <h3 class="lp-feature-title">Streak & Pace Tracking</h3>
+          <p class="lp-feature-desc">Daily streaks and weekly pace against your own goal — momentum you can actually see.</p>
         </div>
 
-        <div class="lp-feature-card card-lift" style="--stagger-index:5">
+        <!-- Wide: Multi-Exam with chips -->
+        <div class="lp-feature-card lp-feature-card--wide card-lift" style="--stagger-index:5">
           <div class="lp-feature-icon" style="background:rgba(34,211,238,0.1);border-color:rgba(34,211,238,0.25);">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#22d3ee;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           </div>
-          <h3 class="lp-feature-title">Streak & Pace Tracking</h3>
-          <p class="lp-feature-desc">Know if you're on track. Daily streaks, weekly progress, and pace predictions keep you accountable.</p>
+          <h3 class="lp-feature-title">Multi-Exam Ready</h3>
+          <p class="lp-feature-desc">Every syllabus tracked separately, switch between exams anytime — your data stays organized per exam.</p>
+          <div class="lp-chip-row" aria-hidden="true">
+            <span class="lp-chip">JEE</span>
+            <span class="lp-chip">NEET</span>
+            <span class="lp-chip">CBSE</span>
+            <span class="lp-chip">MHT-CET</span>
+            <span class="lp-chip">CUET</span>
+            <span class="lp-chip">CAT</span>
+            <span class="lp-chip">UPSC</span>
+          </div>
         </div>
+
+        <!-- CTA tile closes the bento -->
+        {isAuthenticated ? (
+          <a href="/daily" class="lp-cta-tile card-lift ripple-btn" style="--stagger-index:6">
+            <span class="lp-cta-tile-kicker">Continue</span>
+            <span class="lp-cta-tile-main font-headline">Back to your dashboard</span>
+          </a>
+        ) : (
+          <button onclick="window.openAuthPopup('signup')" class="lp-cta-tile card-lift ripple-btn" style="--stagger-index:6">
+            <span class="lp-cta-tile-kicker">Start free</span>
+            <span class="lp-cta-tile-main font-headline">Log your first session →</span>
+          </button>
+        )}
       </div>
     </div>
   </section>
@@ -145,7 +207,7 @@ const isAuthenticated = !!user;
   <section id="how-it-works" class="lp-section reveal-on-scroll">
     <div class="lp-section-inner">
       <div class="lp-section-header">
-        <h2 class="lp-section-title">Three steps to stay on track</h2>
+        <h2 class="lp-section-title font-headline">Three steps to stay on track</h2>
         <p class="lp-section-sub">No onboarding labyrinth. Just start.</p>
       </div>
       <div class="lp-steps">
@@ -177,8 +239,8 @@ const isAuthenticated = !!user;
   <!-- ── CTA ── -->
   <section class="lp-section lp-section-last reveal-on-scroll">
     <div class="lp-cta ds-border-gradient ds-border-gradient-glow">
-      <h2 class="lp-cta-title">Ready to study smarter?</h2>
-      <p class="lp-cta-desc">Start tracking your study sessions today. No account required.</p>
+      <h2 class="lp-cta-title font-headline">Ready to study smarter?</h2>
+      <p class="lp-cta-desc">Start tracking today — no account required to try it. Your data stays yours.</p>
       {isAuthenticated ? (
         <a href="/daily" class="ds-btn ds-btn-primary ds-btn-lg lp-cta-btn ripple-btn" style="gap:var(--ds-space-2);">
           Go to Dashboard
@@ -237,6 +299,31 @@ const isAuthenticated = !!user;
       btn.appendChild(ripple);
       ripple.addEventListener('animationend', () => ripple.remove());
     });
+
+    // ── Guest entry: start instantly, no account ──
+    const guestBtn = document.getElementById('lp-guest-btn');
+    const guestError = document.getElementById('lp-guest-error');
+    if (guestBtn) {
+      guestBtn.addEventListener('click', async () => {
+        guestError?.classList.add('hidden');
+        guestBtn.disabled = true;
+        const original = guestBtn.textContent;
+        guestBtn.textContent = 'Entering...';
+        try {
+          const res = await fetch('/api/auth/guest', { method: 'POST' });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data.error || 'Could not start a guest session. Try again in a moment.');
+          window.location.href = '/dashboard';
+        } catch (err) {
+          if (guestError) {
+            guestError.textContent = err instanceof Error ? err.message : 'Something went wrong. Try again.';
+            guestError.classList.remove('hidden');
+          }
+          guestBtn.disabled = false;
+          guestBtn.textContent = original;
+        }
+      });
+    }
   </script>
 
   <style is:global>
@@ -309,7 +396,7 @@ const isAuthenticated = !!user;
 
     /* ── Hero ── */
     .lp-hero {
-      padding: 8rem var(--ds-space-3) 4rem;
+      padding: 8rem var(--ds-space-3) 3.5rem;
       max-width: 48rem;
       margin: 0 auto;
       text-align: center;
@@ -323,36 +410,6 @@ const isAuthenticated = !!user;
       background: radial-gradient(ellipse at 50% 0%, rgba(99, 102, 241, 0.08) 0%, transparent 60%),
                   radial-gradient(ellipse at 80% 20%, rgba(168, 85, 247, 0.05) 0%, transparent 50%);
       pointer-events: none;
-    }
-
-    /* ── Animated Gradient Orbs ── */
-    .lp-hero-gradient-orb {
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(80px);
-      pointer-events: none;
-      z-index: -1;
-      opacity: 0.5;
-    }
-    .lp-hero-orb-1 {
-      width: 400px;
-      height: 400px;
-      background: radial-gradient(circle, rgba(99, 102, 241, 0.15), transparent 70%);
-      top: -10%;
-      right: -10%;
-      animation: orb-drift 8s ease-in-out infinite alternate;
-    }
-    .lp-hero-orb-2 {
-      width: 300px;
-      height: 300px;
-      background: radial-gradient(circle, rgba(168, 85, 247, 0.1), transparent 70%);
-      bottom: -5%;
-      left: -5%;
-      animation: orb-drift 10s ease-in-out infinite alternate-reverse;
-    }
-    @keyframes orb-drift {
-      0% { transform: translate(0, 0) scale(1); }
-      100% { transform: translate(30px, -20px) scale(1.1); }
     }
     .lp-hero-inner {
       display: flex;
@@ -381,7 +438,8 @@ const isAuthenticated = !!user;
       background: var(--ds-accent-400);
     }
     .lp-hero-title {
-      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-size: clamp(1.75rem, 5vw, 3.5rem);
+      text-wrap: balance;
       font-weight: var(--ds-weight-extrabold);
       color: white;
       line-height: 1.1;
@@ -421,6 +479,49 @@ const isAuthenticated = !!user;
       margin-top: var(--ds-space-3);
     }
 
+    /* ── Hero proof stats ── */
+    .lp-hero-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--ds-space-2);
+      width: 100%;
+      max-width: 36rem;
+      margin: var(--ds-space-5) auto 0;
+      position: relative;
+      z-index: 1;
+    }
+    @media (min-width: 640px) {
+      .lp-hero-stats { grid-template-columns: repeat(4, 1fr); }
+    }
+    .lp-hero-stat {
+      background: var(--ds-bg-surface);
+      border: 1px solid var(--ds-border-subtle);
+      border-radius: var(--ds-radius-lg);
+      padding: var(--ds-space-2) var(--ds-space-3);
+      text-align: left;
+      transition: border-color 0.2s ease, transform 0.2s ease;
+    }
+    .lp-hero-stat:hover {
+      border-color: var(--ds-border-default);
+      transform: translateY(-2px);
+    }
+    .lp-hero-stat-num {
+      display: block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: var(--ds-accent-400);
+      line-height: 1.2;
+    }
+    .lp-hero-stat-label {
+      display: block;
+      font-size: var(--ds-text-2xs);
+      color: var(--ds-text-muted);
+      margin-top: 0.15rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
     /* ── Sections ── */
     .lp-section {
       padding: var(--ds-space-5) var(--ds-space-3);
@@ -449,7 +550,7 @@ const isAuthenticated = !!user;
       margin: 0;
     }
 
-    /* ── Features Grid ── */
+    /* ── Features bento grid ── */
     .lp-features-grid {
       display: grid;
       grid-template-columns: 1fr;
@@ -457,6 +558,7 @@ const isAuthenticated = !!user;
     }
     @media (min-width: 640px) {
       .lp-features-grid { grid-template-columns: repeat(2, 1fr); }
+      .lp-cta-tile { grid-column: 1 / -1; }
     }
     @media (min-width: 1024px) {
       .lp-features-grid { grid-template-columns: repeat(3, 1fr); }
@@ -495,6 +597,130 @@ const isAuthenticated = !!user;
       color: var(--ds-text-tertiary);
       line-height: 1.6;
       margin: 0;
+    }
+
+    /* Featured card (spans 2 cols) */
+    @media (min-width: 1024px) {
+      .lp-feature-card--featured { grid-column: span 2; }
+    }
+    .lp-feature-card--featured {
+      padding: var(--ds-space-4);
+      background: linear-gradient(180deg, var(--ds-bg-elevated), var(--ds-bg-surface));
+      border-color: var(--ds-border-default);
+    }
+
+    /* Inline daily-log mock */
+    .lp-log-mock {
+      margin-top: var(--ds-space-3);
+      display: flex;
+      flex-direction: column;
+      gap: var(--ds-space-1);
+    }
+    .lp-log-row {
+      display: flex;
+      align-items: center;
+      gap: var(--ds-space-2);
+      padding: var(--ds-space-1) var(--ds-space-2);
+      background: var(--ds-bg-base);
+      border: 1px solid var(--ds-border-subtle);
+      border-radius: var(--ds-radius-md);
+    }
+    .lp-log-chip {
+      font-size: var(--ds-text-2xs);
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: var(--ds-radius-sm);
+      letter-spacing: 0.04em;
+    }
+    .lp-log-chip-phy { background: rgba(99, 102, 241, 0.15); color: var(--ds-accent-400); }
+    .lp-log-chip-math { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+    .lp-log-mid { flex: 1; min-width: 0; }
+    .lp-log-subject {
+      display: block;
+      font-size: var(--ds-text-xs);
+      color: var(--ds-text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .lp-log-bar {
+      height: 3px;
+      border-radius: 999px;
+      background: var(--ds-bg-elevated);
+      margin-top: 4px;
+      overflow: hidden;
+    }
+    .lp-log-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: var(--ds-accent-500);
+    }
+    .lp-log-bar-fill-warn { background: #fbbf24; }
+    .lp-log-hours {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: var(--ds-text-2xs);
+      color: var(--ds-text-secondary);
+    }
+    .lp-log-focus {
+      font-size: var(--ds-text-2xs);
+      font-weight: 600;
+      color: var(--ds-text-tertiary);
+      border: 1px solid var(--ds-border-subtle);
+      padding: 1px 5px;
+      border-radius: var(--ds-radius-sm);
+    }
+
+    /* Wide card (spans 2 cols) + exam chips */
+    @media (min-width: 1024px) {
+      .lp-feature-card--wide { grid-column: span 2; }
+    }
+    .lp-chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--ds-space-1);
+      margin-top: var(--ds-space-2);
+    }
+    .lp-chip {
+      font-size: var(--ds-text-2xs);
+      color: var(--ds-text-secondary);
+      padding: 3px 8px;
+      border: 1px solid var(--ds-border-subtle);
+      border-radius: 999px;
+      background: var(--ds-bg-base);
+    }
+
+    /* CTA tile (closes the bento) */
+    .lp-cta-tile {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      gap: var(--ds-space-1);
+      padding: var(--ds-space-3);
+      background: var(--ds-accent-600);
+      border-radius: var(--ds-radius-lg);
+      border: 1px solid var(--ds-accent-600);
+      color: white;
+      text-decoration: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: inherit;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      text-align: left;
+    }
+    .lp-cta-tile:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.35);
+    }
+    .lp-cta-tile-kicker {
+      font-size: var(--ds-text-2xs);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      opacity: 0.8;
+    }
+    .lp-cta-tile-main {
+      font-size: var(--ds-text-md);
+      font-weight: 700;
     }
 
     /* ── How It Works │ Steps ── */

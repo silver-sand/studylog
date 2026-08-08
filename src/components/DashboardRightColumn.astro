@@ -32,23 +32,8 @@ const today = new Date();
 const hour = today.getHours();
 const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
-// Compute grades
-function getGrade(pct: number): { letter: string } {
-  if (pct >= 90) return { letter: 'A+' };
-  if (pct >= 80) return { letter: 'A' };
-  if (pct >= 70) return { letter: 'B+' };
-  if (pct >= 60) return { letter: 'B' };
-  if (pct >= 50) return { letter: 'C+' };
-  if (pct >= 40) return { letter: 'C' };
-  return { letter: 'D' };
-}
-
-const subjectGrades = subjectBreakdown.map(s => ({
-  subject: s.subject,
-  ...getGrade(s.percentage),
-  hours: s.hours,
-  percentage: s.percentage,
-}));
+// Subject split shows share of study time (hours per subject), not exam scores.
+// Grades were misleading here — time allocation is not mastery.
 
 // Weekly hours bar chart data (Mon-Sun)
 const weekBars = Array.from({ length: 7 }, (_, i) => {
@@ -163,12 +148,13 @@ const insight = getInsight();
     </div>
   </div>
 
-  <!-- Subject Stats Bento Grid -->
+  <!-- Subject Time Split — share of study hours, not exam scores -->
   <div class="grid grid-cols-2 md:grid-cols-4 gap-4" style="--stagger-index:3">
-    {subjectGrades.length > 0 ? subjectGrades.slice(0, 3).map((sg, i) => (
+    {subjectBreakdown.length > 0 ? subjectBreakdown.slice(0, 3).map((sg, i) => (
       <div class="p-4 ds-card-gradient rounded-2xl card-lift" style={`--stagger-index:${i}`}>
         <p class="text-[10px] text-neutral-500 uppercase tracking-widest mb-1">{sg.subject}</p>
-        <p class="text-xl font-bold text-white">{sg.letter}</p>
+        <p class="text-xl font-bold text-white">{sg.percentage}%</p>
+        <p class="text-[10px] text-neutral-600 mt-0.5">{sg.hours}h of study time</p>
       </div>
     )) : (
       fallbackSubjects.map((subject, i) => (
@@ -178,23 +164,11 @@ const insight = getInsight();
         </div>
       ))
     )}
-    <!-- Avg Score always shown -->
+    <!-- Subjects tracked -->
     <div class="p-4 ds-card-gradient rounded-2xl card-lift" style="--stagger-index:4">
-      <p class="text-[10px] text-neutral-500 uppercase tracking-widest mb-1">Avg Score</p>
-      {subjectGrades.length > 0 ? (
-        <div class="flex items-center gap-1 text-emerald-400">
-          <p class="text-xl font-bold">
-            {subjectGrades.length > 0
-              ? `${Math.round(subjectGrades.reduce((a, b) => a + b.percentage, 0) / subjectGrades.length)}%`
-              : '--'}
-          </p>
-          {weekComparison && weekComparison.change > 0 && (
-            <span class="material-symbols-outlined text-sm">trending_up</span>
-          )}
-        </div>
-      ) : (
-        <p class="text-xl font-bold text-neutral-600">--</p>
-      )}
+      <p class="text-[10px] text-neutral-500 uppercase tracking-widest mb-1">Subjects Tracked</p>
+      <p class="text-xl font-bold text-white">{subjectBreakdown.length > 0 ? subjectBreakdown.length : '--'}</p>
+      <p class="text-[10px] text-neutral-600 mt-0.5">active this week</p>
     </div>
   </div>
 

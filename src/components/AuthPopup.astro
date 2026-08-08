@@ -60,9 +60,18 @@
       <button type="submit" class="ds-btn ds-btn-primary ripple-btn" id="popup-signup-btn" style="width:100%;margin-top:var(--ds-space-1);">Create account</button>
     </form>
 
+    <!-- Guest divider + entry -->
+    <div style="display:flex;align-items:center;gap:var(--ds-space-2);margin:var(--ds-space-1) 0;">
+      <div style="flex:1;height:1px;background:var(--ds-border-subtle);"></div>
+      <span style="font-size:var(--ds-text-2xs);color:var(--ds-text-muted);">or</span>
+      <div style="flex:1;height:1px;background:var(--ds-border-subtle);"></div>
+    </div>
+    <button type="button" id="auth-guest-btn" class="ds-btn ds-btn-ghost ripple-btn" style="width:100%;">Continue as guest</button>
+    <div class="ds-error-text hidden" id="popup-guest-error" role="status" style="margin-top:var(--ds-space-2);padding:var(--ds-space-1) var(--ds-space-2);background:var(--ds-danger-bg);border:1px solid var(--ds-danger-border);border-radius:var(--ds-radius-md);"></div>
+
     <!-- Footer -->
     <div style="margin-top:var(--ds-space-2);display:flex;flex-direction:column;align-items:center;gap:var(--ds-space-1);">
-      <p style="font-size:var(--ds-text-2xs);color:var(--ds-text-muted);margin:0;">An account is required to use StudyLog. Your data stays safe across updates.</p>
+      <p style="font-size:var(--ds-text-2xs);color:var(--ds-text-muted);margin:0;">Start instantly with no account. Create one anytime — your data stays.</p>
       <a href="/" id="auth-popup-home" class="ds-link" style="font-size:var(--ds-text-2xs);color:var(--ds-text-muted);">Back to Home</a>
     </div>
   </div>
@@ -213,6 +222,29 @@
       signupError.classList.remove('hidden');
       signupBtn.disabled = false;
       signupBtn.textContent = 'Create account';
+    }
+  });
+
+  // ── Guest mode ──
+  const guestBtn = document.getElementById('auth-guest-btn');
+  const guestError = document.getElementById('popup-guest-error');
+  guestBtn?.addEventListener('click', async () => {
+    guestError?.classList.add('hidden');
+    guestBtn.disabled = true;
+    guestBtn.textContent = 'Entering...';
+
+    try {
+      const res = await fetch('/api/auth/guest', { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Could not start a guest session. Try again in a moment.');
+      window.location.href = '/dashboard';
+    } catch (err) {
+      if (guestError) {
+        guestError.textContent = err instanceof Error ? err.message : 'Something went wrong';
+        guestError.classList.remove('hidden');
+      }
+      guestBtn.disabled = false;
+      guestBtn.textContent = 'Continue as guest';
     }
   });
 })();
